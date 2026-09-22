@@ -57,12 +57,13 @@ def test_agent_body_points_at_our_llm_and_uses_sarvam_for_hearing_and_speaking()
     assert body["llm"]["system_messages"] == []
 
 
-def test_the_chosen_language_pins_both_hearing_and_speaking():
+def test_listening_auto_detects_language_but_speaking_uses_the_chosen_accent():
+    """ASR hears either language turn by turn (no restart needed to switch); only the TTS base accent is pinned."""
     s = Settings(public_base_url="https://api.example.com", agora_app_id=APP_ID, jwt_secret="x" * 32, sarvam_api_key="sk-test")
     hi = AgoraClient(s).agent_body("s1", "vt-s1", "tok", 2001, "sekret", "नमस्ते", "female", 1.0, "hinglish")["properties"]
-    assert hi["asr"]["params"]["language"] == "hi-IN" and hi["tts"]["params"]["target_language_code"] == "hi-IN"
+    assert hi["asr"]["params"]["language"] == "unknown" and hi["tts"]["params"]["target_language_code"] == "hi-IN"
     en = AgoraClient(s).agent_body("s1", "vt-s1", "tok", 2001, "sekret", "Hi", "female", 1.0, "en")["properties"]
-    assert en["asr"]["params"]["language"] == "en-IN" and en["tts"]["params"]["target_language_code"] == "en-IN"
+    assert en["asr"]["params"]["language"] == "unknown" and en["tts"]["params"]["target_language_code"] == "en-IN"
     assert en["tts"]["params"]["speaker"] == "simran"
 
 

@@ -36,14 +36,18 @@ class AgoraClient:
         if not s.sarvam_api_key and not (s.agora_asr_json and s.agora_tts_json):
             raise AgoraError("Speech isn't configured on this server (SARVAM_API_KEY).")
         sv = s.sarvam_api_key
-        # The user picked a language first, so listen for and speak exactly that one.
+        # Listen in whichever language the user actually speaks, turn by turn: Sarvam auto-detects it
+        # ("unknown"), and the reply language follows the same per-turn choice (see llm/prompts.py). This
+        # needs no restart, unlike pinning ASR/TTS to one language, which meant rebuilding the whole voice
+        # connection (and a mid-sentence pause) just to answer a question asked in the other language.
         asr = s.agora_asr_json or {
             "credential_mode": "byok", "vendor": "sarvam", "language": "en-US",
-            "params": {"api_key": sv, "language": "en-IN" if language == "en" else "hi-IN"},
+            "params": {"api_key": sv, "language": "unknown"},
         }
         tts = s.agora_tts_json or {
             "credential_mode": "byok", "vendor": "sarvam",
             "params": {"api_subscription_key": sv, "speaker": s.sarvam_speaker_female, "model": s.sarvam_tts_model,
+                       # bulbul:v3 code-switches Hindi/English mid-sentence natively; this is only the base accent.
                        "target_language_code": "en-IN" if language == "en" else "hi-IN",
                        "pace": max(0.5, min(1.6, speech_rate * s.sarvam_pace)), "sample_rate": 24000},
         }

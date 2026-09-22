@@ -104,16 +104,20 @@ _HINDI_WORDS = set(
 
 
 def reply_language(text: str, session_language: str) -> str:
-    """'hindi' or 'english' for this turn, decided from what the user actually said (not from the app setting)."""
-    if session_language == "en":
-        return "english"
+    """'hindi' or 'english' for this turn, decided from what the user actually said: hear English, answer
+    English; hear Hindi, answer Hindi, whichever language they picked at the start. Their choice is only the
+    fallback for a turn with no language signal at all (a bare number, a company name, an empty transcript)."""
     if any("ऀ" <= ch <= "ॿ" for ch in text):
         # Devanagari with real Hindi words is Hindi. Devanagari without any (e.g. "व्हाट इज द प्राइस") is English
         # speech that the recogniser wrote in Devanagari letters.
         tokens = {w.strip(".,?!।'\"") for w in text.split()}
         return "hindi" if tokens & _HINDI_WORDS else "english"
     words = {w.strip(".,?!'\"").lower() for w in text.split()}
-    return "hindi" if words & _HINGLISH_WORDS else "english"
+    if words & _HINGLISH_WORDS:
+        return "hindi"
+    if not any(w.isalpha() for w in words):  # a bare number or empty turn carries no language signal
+        return "english" if session_language == "en" else "hindi"
+    return "english"
 
 
 def build_system_prompt(kill_switch: bool, active_preview: dict | None, wallets_line: str, now: datetime | None = None,

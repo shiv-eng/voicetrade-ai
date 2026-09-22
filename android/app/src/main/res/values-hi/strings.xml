@@ -72,6 +72,7 @@
     <string name="wallet_usd">डॉलर का वॉलेट</string>
     <string name="today_move">आज %1$s</string>
     <string name="holdings">होल्डिंग्स</string>
+    <string name="holdings_count">होल्डिंग्स (%1$d)</string>
     <string name="see_all">सब देखें</string>
     <string name="holdings_empty">अभी आपके पास कोई शेयर नहीं है। बोलकर देखें \"10 इंफोसिस खरीदो\"।</string>
     <string name="watchlist_empty_home">आपकी वॉचलिस्ट खाली है। बोलकर देखें \"टाटा मोटर्स को मेरी वॉचलिस्ट में जोड़ो\"।</string>
@@ -86,9 +87,12 @@
     <string name="voice_unavailable_banner">इस सर्वर पर वॉइस अभी सेट नहीं है, इसलिए आप नीचे मीरा को टाइप कर सकते हैं।</string>
     <string name="talk_to_mira">मीरा से बात करें</string>
     <string name="balance_title">प्रैक्टिस बैलेंस</string>
-    <string name="cash_in">कैश %1$s</string>
+    <string name="wallet_india">भारतीय शेयर</string>
+    <string name="wallet_us">अमेरिकी शेयर</string>
     <string name="total_value">कुल मूल्य</string>
     <string name="invested">निवेशित</string>
+    <string name="current_value">वर्तमान</string>
+    <string name="pnl">लाभ/हानि</string>
     <string name="unrealized">अनरियलाइज़्ड</string>
     <string name="realized">रियलाइज़्ड</string>
     <string name="more">और विकल्प</string>

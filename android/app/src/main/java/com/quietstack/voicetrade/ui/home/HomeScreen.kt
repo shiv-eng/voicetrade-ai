@@ -10,7 +10,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -63,6 +62,8 @@ import com.quietstack.voicetrade.core.designsystem.PaperBadge
 import com.quietstack.voicetrade.core.designsystem.Panel
 import com.quietstack.voicetrade.core.designsystem.PersonAvatar
 import com.quietstack.voicetrade.core.designsystem.SectionHeader
+import com.quietstack.voicetrade.core.designsystem.Stat
+import com.quietstack.voicetrade.core.designsystem.StatusChip
 import com.quietstack.voicetrade.core.designsystem.StockRow
 import com.quietstack.voicetrade.core.designsystem.TabularNumbers
 import com.quietstack.voicetrade.core.designsystem.pnlColor
@@ -147,7 +148,7 @@ fun HomeScreen(
                 if (state.market?.indices?.isNotEmpty() == true) item { IndexTiles(state.market) }
 
                 state.account?.let { acc ->
-                    item { BalanceCard(acc.wallets, state.pnl?.items?.associate { it.currency to it.daily }.orEmpty()) }
+                    item { BalanceCard(acc.wallets, state.pnl?.items?.associate { it.currency to it.daily }.orEmpty(), onOpenPortfolio) }
                 }
 
                 item { IpoEntry(onOpenIpos) }
@@ -296,38 +297,49 @@ private fun VoiceCard(onTap: () -> Unit, onPick: (String) -> Unit) {
     }
 }
 
-/** Both practice wallets side by side: what you have, and how the day went. */
+/** Cash you can spend, the total wallet is worth, and today's move as a percentage — one wallet at a time,
+ * stacked, so nothing is cramped. Tap for the full portfolio (holdings, breakdown). */
 @Composable
-private fun BalanceCard(wallets: List<Wallet>, dayByCurrency: Map<String, BigDecimal>) {
-    Panel {
-        Row(Modifier.padding(start = 20.dp, end = 16.dp, top = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                stringResource(R.string.balance_title), style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f),
-            )
-            PaperBadge()
-        }
-        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(vertical = 14.dp)) {
+private fun BalanceCard(wallets: List<Wallet>, dayByCurrency: Map<String, BigDecimal>, onOpenPortfolio: () -> Unit) {
+    Panel(onClick = onOpenPortfolio) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.balance_title), style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f),
+                )
+                PaperBadge()
+            }
             wallets.forEachIndexed { i, w ->
-                if (i > 0) Box(Modifier.width(1.dp).fillMaxSize().background(MaterialTheme.colorScheme.outline.copy(alpha = 0.16f)))
-                Column(Modifier.weight(1f).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(w.currency, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (i > 0) Hairline()
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
-                        MoneyFormatter.format(w.netLiquidation, w.currency, 0),
-                        style = MaterialTheme.typography.titleLarge.merge(TabularNumbers), fontWeight = FontWeight.Bold,
-                        maxLines = 1, softWrap = false,
+                        stringResource(if (w.currency == "INR") R.string.wallet_india else R.string.wallet_us),
+                        style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    val day = dayByCurrency[w.currency]
-                    if (day != null) {
-                        Text(
-                            stringResource(R.string.today_move, MoneyFormatter.formatSigned(day, w.currency, 0)),
-                            style = MaterialTheme.typography.bodySmall.merge(TabularNumbers), color = pnlColor(day), fontWeight = FontWeight.SemiBold,
+                    Row(Modifier.fillMaxWidth()) {
+                        Stat(stringResource(R.string.cash), MoneyFormatter.format(w.cash, w.currency, 0), Modifier.weight(1f))
+                        Stat(
+                            stringResource(R.string.total_value), MoneyFormatter.format(w.netLiquidation, w.currency, 0),
+                            Modifier.weight(1f), align = TextAlign.End,
                         )
                     }
-                    Text(
-                        stringResource(R.string.cash_in, MoneyFormatter.format(w.cash, w.currency, 0)),
-                        style = MaterialTheme.typography.bodySmall.merge(TabularNumbers), color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    val day = dayByCurrency[w.currency]
+                    if (day != null) {
+                        val base = w.netLiquidation.subtract(day)
+                        val pct = if (base.signum() > 0) day.multiply(BigDecimal(100)).divide(base, 2, RoundingMode.HALF_UP) else BigDecimal.ZERO
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                stringResource(R.string.today), style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f),
+                            )
+                            Text(
+                                MoneyFormatter.formatSigned(day, w.currency, 0), style = MaterialTheme.typography.bodyMedium.merge(TabularNumbers),
+                                fontWeight = FontWeight.SemiBold, color = pnlColor(day),
+                            )
+                            Box(Modifier.padding(start = 8.dp)) { StatusChip(MoneyFormatter.formatPercent(pct), pnlColor(day)) }
+                        }
+                    }
                 }
             }
         }

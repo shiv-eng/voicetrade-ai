@@ -72,6 +72,7 @@
     <string name="wallet_usd">Dollar wallet</string>
     <string name="today_move">Today %1$s</string>
     <string name="holdings">Holdings</string>
+    <string name="holdings_count">Holdings (%1$d)</string>
     <string name="see_all">See all</string>
     <string name="holdings_empty">You don\'t hold anything yet. Try saying \"buy 10 Infosys\".</string>
     <string name="watchlist_empty_home">Nothing on your watchlist. Try saying \"add Tata Motors to my watchlist\".</string>
@@ -86,9 +87,12 @@
     <string name="voice_unavailable_banner">Voice isn\'t set up on this server yet, so you can type to Mira below.</string>
     <string name="talk_to_mira">Talk to Mira</string>
     <string name="balance_title">Practice balance</string>
-    <string name="cash_in">Cash %1$s</string>
+    <string name="wallet_india">Indian stocks</string>
+    <string name="wallet_us">US stocks</string>
     <string name="total_value">Total value</string>
     <string name="invested">Invested</string>
+    <string name="current_value">Current</string>
+    <string name="pnl">P&amp;L</string>
     <string name="unrealized">Unrealised</string>
     <string name="realized">Realised</string>
     <string name="more">More options</string>

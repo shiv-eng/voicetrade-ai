@@ -10,6 +10,8 @@ import re
 from dataclasses import dataclass
 from typing import Any, AsyncIterator, Callable, Protocol
 
+from openai import APIConnectionError, APIStatusError
+
 from ..config import Settings
 from ..ledger import Ledger
 from ..portfolio import Portfolio
@@ -302,7 +304,7 @@ class Orchestrator:
                             spoke = True
                             yield held
                         break
-                    except (asyncio.TimeoutError, _Leaked) as problem:
+                    except (asyncio.TimeoutError, _Leaked, APIStatusError, APIConnectionError) as problem:
                         if released or attempt == 1:
                             if isinstance(problem, _Leaked):
                                 log.warning("model leaked its reasoning twice; apologising instead")
@@ -310,7 +312,12 @@ class Orchestrator:
                                     yield FAILURE_TEXT
                                 return
                             raise
-                        log.warning("model %s; retrying once", "leaked its reasoning" if isinstance(problem, _Leaked) else "stalled before its first sentence")
+                        reason = (
+                            "leaked its reasoning" if isinstance(problem, _Leaked)
+                            else f"errored ({problem})" if isinstance(problem, (APIStatusError, APIConnectionError))
+                            else "stalled before its first sentence"
+                        )
+                        log.warning("model %s; retrying once", reason)
                         round_text.clear()
                         calls = None
                 if not calls:

@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
@@ -50,6 +51,7 @@ import com.quietstack.voicetrade.core.designsystem.Panel
 import com.quietstack.voicetrade.core.designsystem.SectionHeader
 import com.quietstack.voicetrade.core.designsystem.SegmentedTabs
 import com.quietstack.voicetrade.core.designsystem.Stat
+import com.quietstack.voicetrade.core.designsystem.StatusChip
 import com.quietstack.voicetrade.core.designsystem.StockRow
 import com.quietstack.voicetrade.core.designsystem.TabularNumbers
 import com.quietstack.voicetrade.core.designsystem.pnlColor
@@ -194,27 +196,68 @@ fun PortfolioScreen(onBack: (() -> Unit)?, onOpenStock: (Long) -> Unit = {}, vie
                     }
                     item { HistoryCard(state.history[currency]) }
                     if (wallet != null) item { AllocationCard(wallet, positions) }
-                    item { SectionHeader(stringResource(R.string.holdings)) }
+                    item {
+                        SectionHeader(
+                            if (positions.isEmpty()) stringResource(R.string.holdings)
+                            else stringResource(R.string.holdings_count, positions.size),
+                        )
+                    }
                     if (positions.isEmpty()) {
                         item { EmptyState(stringResource(R.string.no_positions), Modifier.height(200.dp)) }
-                    } else item {
-                        Panel {
-                            positions.forEachIndexed { i, p ->
-                                if (i > 0) Hairline()
-                                val c = p.instrument.currency
-                                val cost = p.avgCost.multiply(p.quantity)
-                                val ret = if (cost.signum() > 0) p.unrealizedPnl.multiply(BigDecimal(100)).divide(cost, 2, RoundingMode.HALF_UP) else BigDecimal.ZERO
-                                StockRow(
-                                    p.instrument,
-                                    subtitle = stringResource(R.string.qty_avg, p.quantity.stripTrailingZeros().toPlainString(), MoneyFormatter.format(p.avgCost, c)),
-                                    price = MoneyFormatter.format(p.marketValue, c, 0),
-                                    secondary = MoneyFormatter.formatSigned(p.unrealizedPnl, c, 0) + "  (" + MoneyFormatter.formatPercent(ret) + ")",
-                                    secondaryColor = pnlColor(p.unrealizedPnl),
-                                    onClick = { onOpenStock(p.instrument.conid) },
-                                )
+                    } else {
+                        item {
+                            val invested = positions.fold(BigDecimal.ZERO) { acc, p -> acc + p.avgCost.multiply(p.quantity) }
+                            val current = positions.fold(BigDecimal.ZERO) { acc, p -> acc + p.marketValue }
+                            HoldingsSummaryCard(invested, current, currency.orEmpty())
+                        }
+                        item {
+                            Panel {
+                                positions.forEachIndexed { i, p ->
+                                    if (i > 0) Hairline()
+                                    val c = p.instrument.currency
+                                    val cost = p.avgCost.multiply(p.quantity)
+                                    val ret = if (cost.signum() > 0) p.unrealizedPnl.multiply(BigDecimal(100)).divide(cost, 2, RoundingMode.HALF_UP) else BigDecimal.ZERO
+                                    StockRow(
+                                        p.instrument,
+                                        subtitle = stringResource(R.string.qty_avg, p.quantity.stripTrailingZeros().toPlainString(), MoneyFormatter.format(p.avgCost, c)),
+                                        price = MoneyFormatter.format(p.marketValue, c, 0),
+                                        secondary = MoneyFormatter.formatSigned(p.unrealizedPnl, c, 0) + "  (" + MoneyFormatter.formatPercent(ret) + ")",
+                                        secondaryColor = pnlColor(p.unrealizedPnl),
+                                        onClick = { onOpenStock(p.instrument.conid) },
+                                    )
+                                }
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+/** What you put into your stocks versus what they are worth now, and the gain or loss between them. */
+@Composable
+private fun HoldingsSummaryCard(invested: BigDecimal, current: BigDecimal, currency: String) {
+    val pnl = current.subtract(invested)
+    val pct = if (invested.signum() > 0) pnl.multiply(BigDecimal(100)).divide(invested, 2, RoundingMode.HALF_UP) else BigDecimal.ZERO
+    Panel {
+        Column(Modifier.padding(horizontal = 20.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(Modifier.fillMaxWidth()) {
+                Stat(stringResource(R.string.invested), MoneyFormatter.format(invested, currency, 0), Modifier.weight(1f))
+                Stat(stringResource(R.string.current_value), MoneyFormatter.format(current, currency, 0), Modifier.weight(1f), align = TextAlign.End)
+            }
+            Hairline()
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.pnl), style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f),
+                )
+                Text(
+                    MoneyFormatter.formatSigned(pnl, currency, 0), style = MaterialTheme.typography.titleMedium.merge(TabularNumbers),
+                    fontWeight = FontWeight.Bold, color = pnlColor(pnl),
+                )
+                Box(Modifier.padding(start = 8.dp)) {
+                    StatusChip(MoneyFormatter.formatPercent(pct), pnlColor(pnl))
                 }
             }
         }
