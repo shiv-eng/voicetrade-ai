@@ -1,0 +1,8 @@
+# Caddy obtains and renews the HTTPS certificate for API_DOMAIN by itself.
+{$API_DOMAIN} {
+	encode zstd gzip
+	# flush_interval -1: stream immediately, needed for the Agora SSE replies and the app's WebSocket.
+	reverse_proxy backend:8000 {
+		flush_interval -1
+	}
+}

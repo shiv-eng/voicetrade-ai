@@ -1,0 +1,35 @@
+# Fly.io deployment. Always on: one machine that never stops, in Singapore, with HTTPS handled by Fly.
+# Secrets (Agora, Gemini, Deepgram, JWT, DATABASE_URL) are set with `fly secrets set`, never written here.
+app = "voicetrade-api"
+primary_region = "sin"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  TRUST_PROXY = "true"
+  FILL_WHEN_MARKET_CLOSED = "true"
+  SARVAM_SPEAKER_FEMALE = "simran"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "off"     # Agora calls in at any moment; a sleeping server would drop voice turns
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 200
+    hard_limit = 250
+
+  [[http_service.checks]]
+    grace_period = "20s"
+    interval = "30s"
+    method = "GET"
+    path = "/healthz"
+    timeout = "5s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
