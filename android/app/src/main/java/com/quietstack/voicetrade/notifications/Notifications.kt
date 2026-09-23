@@ -1,6 +1,7 @@
 package com.quietstack.voicetrade.notifications
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -41,6 +42,9 @@ object Notifications {
         return PendingIntent.getActivity(context, requestCode, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
+    // canNotify() already does the real check (POST_NOTIFICATIONS on 33+); lint can't trace through a
+    // private helper to see that, so it flags the call below as unchecked without this.
+    @SuppressLint("MissingPermission")
     fun showAlert(context: Context, alert: PriceAlert) {
         if (!canNotify(context)) return
         val price = alert.triggerPrice ?: alert.target
@@ -60,6 +64,7 @@ object Notifications {
 
     /** A push that arrived while the app was in the foreground: FCM only auto-shows notifications when
      * backgrounded, so a visible one is our job the rest of the time. */
+    @SuppressLint("MissingPermission")  // see the note on showAlert() above
     fun showRemote(context: Context, title: String, text: String) {
         if (!canNotify(context)) return
         val n = NotificationCompat.Builder(context, CHANNEL_ALERTS)
@@ -73,6 +78,7 @@ object Notifications {
         NotificationManagerCompat.from(context).notify(3000 + text.hashCode(), n)
     }
 
+    @SuppressLint("MissingPermission")  // see the note on showAlert() above
     fun showBriefing(context: Context, title: String, text: String) {
         if (!canNotify(context)) return
         val n = NotificationCompat.Builder(context, CHANNEL_BRIEFING)

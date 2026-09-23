@@ -6,7 +6,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from .db import Database
-from .dto import money, quote_dto
+from .dto import quote_dto
 from .instruments import Instrument, Instruments
 from .ledger import Ledger, utcnow
 from .market.base import MarketData, MarketDataError, RawQuote

@@ -11,7 +11,7 @@ from .config import Settings
 from .db import Database
 from .instruments import Instruments
 from .ledger import Ledger
-from .market.base import MarketData, SymbolInfo
+from .market.base import MarketData
 from .market.research import Research
 from .portfolio import Portfolio
 
@@ -75,7 +75,6 @@ class Insights:
         indices = indices if isinstance(indices, list) else []
         by_name = {i["name"]: i for i in indices}
 
-        ipo_lines: list[str] = []
         ipo_facts: list[dict[str, str]] = []
         if isinstance(ipos, dict):
             from .market.research import _day

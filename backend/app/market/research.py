@@ -455,7 +455,7 @@ class Research:
         } for i in upcoming if i.get("companyName") not in open_names and i.get("status") != "Active"]
         recent = []
         for p in past:
-            listed, closed = _day(p.get("listingDate")), _day(p.get("ipoEndDate"))
+            listed = _day(p.get("listingDate"))
             if listed and today - timedelta(days=14) <= listed <= today:
                 recent.append({"name": p.get("company"), "type": kind(p.get("securityType")), "listed_on": p.get("listingDate"),
                                "price_band": p.get("priceRange"), "symbol": p.get("symbol")})

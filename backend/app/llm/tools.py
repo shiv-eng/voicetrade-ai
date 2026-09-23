@@ -12,7 +12,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any, Awaitable, Callable
 
 from ..db import Database
-from ..dto import money, order_dto, quote_dto
+from ..dto import money, quote_dto
 from ..events import Hub
 from ..guard import is_confirmation
 from ..instruments import Instruments
@@ -428,7 +428,7 @@ class ToolBox:
             return {"error": "IPO_NOT_FOUND", "message": f"I couldn't find an IPO called {query} on the current India list."}
         symbol, series, name = found
         d = await self._need_research().ipo_detail(symbol, series, name)
-        lot, high, low = d["lot_size"], d["price_high"], d["price_low"]
+        lot, high = d["lot_size"], d["price_high"]
         if not lot or not high:
             return {"error": "NO_PRICE", "message": "The exchange hasn't published the price band or lot size yet."}
         sme = d["type"] == "SME"
