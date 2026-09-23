@@ -30,9 +30,7 @@ class SettingsDataStore @Inject constructor(@ApplicationContext private val cont
             prefs[LANGUAGE] = next.language.name
             prefs[VOICE] = next.voice.name
             prefs[RATE] = next.speechRate
-            prefs[BIOMETRIC] = next.biometricOn
             prefs[THEME] = next.theme.name
-            prefs[LARGE_TEXT] = next.largeText
             prefs[ONBOARDED] = next.onboardingDone
         }
     }
@@ -41,9 +39,7 @@ class SettingsDataStore @Inject constructor(@ApplicationContext private val cont
         language = enumOr(this[LANGUAGE], Language.HINGLISH),
         voice = enumOr(this[VOICE], VoiceGender.FEMALE),
         speechRate = this[RATE] ?: 1.0f,
-        biometricOn = this[BIOMETRIC] ?: false,
         theme = enumOr(this[THEME], ThemeMode.SYSTEM),
-        largeText = this[LARGE_TEXT] ?: false,
         onboardingDone = this[ONBOARDED] ?: false,
     )
 
@@ -54,9 +50,7 @@ class SettingsDataStore @Inject constructor(@ApplicationContext private val cont
         val LANGUAGE = stringPreferencesKey("language")
         val VOICE = stringPreferencesKey("voice")
         val RATE = floatPreferencesKey("speech_rate")
-        val BIOMETRIC = booleanPreferencesKey("biometric")
         val THEME = stringPreferencesKey("theme")
-        val LARGE_TEXT = booleanPreferencesKey("large_text")
         val ONBOARDED = booleanPreferencesKey("onboarded")
     }
 }

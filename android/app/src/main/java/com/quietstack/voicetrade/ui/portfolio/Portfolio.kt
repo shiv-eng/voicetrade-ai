@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -35,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -159,7 +161,19 @@ fun PortfolioScreen(onBack: (() -> Unit)?, onOpenStock: (Long) -> Unit = {}, vie
                     PortfolioSort.PNL to R.string.sort_pnl,
                     PortfolioSort.SYMBOL to R.string.sort_symbol,
                 ).forEach { (sort, label) ->
-                    DropdownMenuItem(text = { Text(stringResource(label)) }, onClick = { viewModel.onEvent(PortfolioEvent.SortBy(sort)); menu = false })
+                    val active = state.sort == sort
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                stringResource(label), fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
+                                color = if (active) MaterialTheme.colorScheme.primary else Color.Unspecified,
+                            )
+                        },
+                        leadingIcon = if (active) {
+                            { Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
+                        } else null,
+                        onClick = { viewModel.onEvent(PortfolioEvent.SortBy(sort)); menu = false },
+                    )
                 }
             }
             IconButton(onClick = { viewModel.onEvent(PortfolioEvent.Refresh) }) {
@@ -283,11 +297,15 @@ private fun Summary(wallet: Wallet, daily: BigDecimal?, unrealized: BigDecimal, 
             }
         }
         Panel {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-                Stat(stringResource(R.string.cash), MoneyFormatter.format(wallet.cash, c, 0))
-                Stat(stringResource(R.string.invested), MoneyFormatter.format(wallet.positionsValue, c, 0))
-                Stat(stringResource(R.string.unrealized), MoneyFormatter.formatSigned(unrealized, c, 0), valueColor = pnlColor(unrealized))
-                Stat(stringResource(R.string.realized), MoneyFormatter.formatSigned(realized, c, 0), valueColor = pnlColor(realized))
+            Column(Modifier.padding(horizontal = 20.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Stat(stringResource(R.string.cash), MoneyFormatter.format(wallet.cash, c, 0), Modifier.weight(1f))
+                    Stat(stringResource(R.string.invested), MoneyFormatter.format(wallet.positionsValue, c, 0), Modifier.weight(1f))
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Stat(stringResource(R.string.unrealized), MoneyFormatter.formatSigned(unrealized, c, 0), Modifier.weight(1f), valueColor = pnlColor(unrealized))
+                    Stat(stringResource(R.string.realized), MoneyFormatter.formatSigned(realized, c, 0), Modifier.weight(1f), valueColor = pnlColor(realized))
+                }
             }
         }
     }

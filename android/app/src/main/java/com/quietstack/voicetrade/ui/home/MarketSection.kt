@@ -3,17 +3,30 @@ package com.quietstack.voicetrade.ui.home
 import androidx.compose.foundation.Canvas
 import com.quietstack.voicetrade.core.i18n.tr
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -65,7 +78,10 @@ fun Sparkline(values: List<Double>, positive: Boolean, modifier: Modifier = Modi
 @Composable
 private fun IndexTileCard(tile: IndexTile) {
     Column(
-        Modifier.width(150.dp).background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(20.dp)).padding(14.dp),
+        Modifier.width(132.dp)
+            .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(22.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.14f), RoundedCornerShape(22.dp))
+            .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(tile.name, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
@@ -77,13 +93,34 @@ private fun IndexTileCard(tile: IndexTile) {
     }
 }
 
-/** Nifty, Sensex, Nasdaq and S&P 500 at a glance. */
+/** Nifty, Sensex, Nasdaq and S&P 500 at a glance. A right-edge fade + peek of the next card hints that this
+ * scrolls sideways — on a narrow phone, Sensex or Nasdaq can otherwise sit just out of view with no sign of it. */
 @Composable
 fun IndexTiles(market: MarketOverview?) {
     val tiles = market?.indices.orEmpty()
     if (tiles.isEmpty()) return
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(0.dp)) {
-        items(tiles, key = { it.symbol }) { IndexTileCard(it) }
+    Box {
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(end = 28.dp)) {
+            items(tiles, key = { it.symbol }) { IndexTileCard(it) }
+        }
+        if (tiles.size > 1) {
+            Box(
+                Modifier.align(Alignment.CenterEnd).width(36.dp).fillMaxHeight()
+                    .background(Brush.horizontalGradient(listOf(Color.Transparent, MaterialTheme.colorScheme.background))),
+            )
+            // An unmissable "there's more" cue, not just a fade: a chevron badge sitting on the row's edge.
+            Box(
+                Modifier.align(Alignment.CenterEnd).offset(x = 6.dp).size(26.dp).clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp),
+                )
+            }
+        }
     }
 }
 

@@ -46,7 +46,7 @@ private val DarkExtra = ExtraColors(
     loss = Color(0xFFF87171),
     paper = Color(0xFF3B2A07),
     onPaper = Color(0xFFFCD34D),
-    orbIdle = Color(0xFF64748B),
+    orbIdle = Color(0xFF2DD4BF),
     orbListening = Color(0xFF60A5FA),
     orbThinking = Color(0xFFA78BFA),
     orbSpeaking = Color(0xFF4ADE80),
@@ -126,6 +126,6 @@ fun VoiceTradeTheme(
         LocalExtraColors provides if (dark) DarkExtra else LightExtra,
         LocalDensity provides scaled,
     ) {
-        MaterialTheme(colorScheme = if (dark) DarkColors else LightColors, content = content)
+        MaterialTheme(colorScheme = if (dark) DarkColors else LightColors, typography = VoiceTradeTypography, content = content)
     }
 }

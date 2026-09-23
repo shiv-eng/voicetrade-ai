@@ -56,14 +56,6 @@ fun ChangePill(pct: BigDecimal, modifier: Modifier = Modifier) {
     StatusChip(arrow + MoneyFormatter.formatPercent(pct).trimStart('+', '-'), pnlColor(pct), modifier)
 }
 
-@Composable
-fun SectionTitle(text: String, modifier: Modifier = Modifier, trailing: @Composable (() -> Unit)? = null) {
-    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-        trailing?.invoke()
-    }
-}
-
 /** Where today's price sits inside its 52-week range. */
 @Composable
 fun RangeBar(low: BigDecimal, high: BigDecimal, current: BigDecimal, currency: String, modifier: Modifier = Modifier) {

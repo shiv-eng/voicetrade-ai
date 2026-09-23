@@ -78,7 +78,7 @@ class Ledger:
     # ---- users and wallets ------------------------------------------------------------------------
 
     def create_user(self, name: str, email: str | None = None, google_sub: str | None = None, picture: str | None = None) -> str:
-        """New account with fresh paper wallets and default risk limits."""
+        """New account with fresh paper wallets."""
         user_id = "u_" + uuid.uuid4().hex[:12]
         now = self.clock().isoformat()
         with self.db.transaction():
@@ -88,11 +88,6 @@ class Ledger:
             )
             for currency, cash in (("INR", self.settings.start_cash_inr), ("USD", self.settings.start_cash_usd)):
                 self.db.execute("INSERT INTO wallets (user_id, currency, cash) VALUES (?, ?, ?)", (user_id, currency, str(cash)))
-            self.db.execute(
-                "INSERT INTO risk_settings (user_id, max_order_value_inr, max_qty, max_orders_per_day, updated_at) VALUES (?, ?, ?, ?, ?)",
-                (user_id, str(self.settings.default_max_order_value_inr), self.settings.default_max_qty,
-                 self.settings.default_max_orders_per_day, now),
-            )
         return user_id
 
     def user_exists(self, user_id: str) -> bool:

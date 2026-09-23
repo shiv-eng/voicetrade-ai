@@ -58,7 +58,7 @@ class MainActivity : FragmentActivity() {
         setContent {
             val app: AppViewModel = hiltViewModel()
             val settings by app.settings.collectAsStateWithLifecycle()
-            VoiceTradeTheme(themeMode = settings.theme, largeText = settings.largeText) {
+            VoiceTradeTheme(themeMode = settings.theme) {
                 AppNavHost(
                     signedIn = app.signedIn.collectAsStateWithLifecycle().value,
                     launchPrompt = launchPrompt.value, launchOpen = launchOpen.value,

@@ -15,17 +15,21 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -259,7 +263,6 @@ private fun TopBar(state: VoiceSessionUiState) {
     ) {
         Text("Mira", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         PaperBadge()
-        if (state.killSwitchOn) StatusChip(stringResource(R.string.kill_switch_on), MaterialTheme.extra.loss)
         Box(Modifier.weight(1f))
         val (label, color) = when (state.connection) {
             Connection.Idle, Connection.Connecting -> stringResource(R.string.connecting) to MaterialTheme.extra.orbAwaiting
@@ -520,7 +523,7 @@ private fun ControlBar(
                     }
                 }
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 FilledTonalIconButton(onClick = onMute, modifier = Modifier.size(56.dp), enabled = !state.textOnly) {
                     Icon(
                         if (state.isMuted) Icons.Filled.MicOff else Icons.Filled.Mic,
@@ -536,13 +539,14 @@ private fun ControlBar(
                 FilledTonalIconButton(onClick = onKeyboard, modifier = Modifier.size(56.dp)) {
                     Icon(Icons.Filled.Keyboard, contentDescription = stringResource(R.string.keyboard))
                 }
-                FilledIconButton(
-                    onClick = onEnd,
-                    modifier = Modifier.size(56.dp),
-                    shape = CircleShape,
-                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError),
+                Row(
+                    Modifier.weight(1f).height(56.dp).clip(RoundedCornerShape(28.dp))
+                        .background(MaterialTheme.colorScheme.error).clickable(onClick = onEnd),
+                    horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(Icons.Filled.CallEnd, contentDescription = stringResource(R.string.end))
+                    Icon(Icons.Filled.CallEnd, contentDescription = null, tint = MaterialTheme.colorScheme.onError)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.end), color = MaterialTheme.colorScheme.onError, fontWeight = FontWeight.Bold)
                 }
             }
         }

@@ -52,10 +52,10 @@ class FormatterTest {
         assertEquals("flat", SpeechNumberFormatter.spokenPercent(bd("0")))
     }
 
-    @Test fun `biometric is required only above the threshold and only when enabled`() {
-        assertTrue(BiometricPolicy.requiresAuth(Money(bd("25001"), "INR"), enabled = true))
-        assertFalse(BiometricPolicy.requiresAuth(Money(bd("25000"), "INR"), enabled = true))
-        assertFalse(BiometricPolicy.requiresAuth(Money(bd("900000"), "INR"), enabled = false))
-        assertTrue(BiometricPolicy.requiresAuth(Money(bd("301"), "USD"), enabled = true))
+    @Test fun `biometric is required only above the threshold, a fixed rule with no setting to turn it off`() {
+        assertTrue(BiometricPolicy.requiresAuth(Money(bd("25001"), "INR")))
+        assertFalse(BiometricPolicy.requiresAuth(Money(bd("25000"), "INR")))
+        assertTrue(BiometricPolicy.requiresAuth(Money(bd("301"), "USD")))
+        assertFalse(BiometricPolicy.requiresAuth(Money(bd("300"), "USD")))
     }
 }

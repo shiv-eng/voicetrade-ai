@@ -1,21 +1,39 @@
 package com.quietstack.voicetrade.ui.navigation
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.ListAlt
+import androidx.compose.material.icons.automirrored.filled.ListAlt
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.quietstack.voicetrade.ui.ipo.IpoDetailScreen
 import com.quietstack.voicetrade.ui.ipo.IpoScreen
 import com.quietstack.voicetrade.ui.stock.StockDetailScreen
@@ -25,9 +43,14 @@ import android.content.pm.PackageManager
 import android.Manifest
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
@@ -70,7 +93,7 @@ private class Tab(val route: Any, val type: KClass<*>, val label: Int, val icon:
 private val tabs = listOf(
     Tab(Home, Home::class, R.string.tab_home, Icons.Filled.Home),
     Tab(Portfolio, Portfolio::class, R.string.portfolio, Icons.Filled.AccountBalanceWallet),
-    Tab(Orders, Orders::class, R.string.orders, Icons.Filled.ListAlt),
+    Tab(Orders, Orders::class, R.string.orders, Icons.AutoMirrored.Filled.ListAlt),
     Tab(Watchlist, Watchlist::class, R.string.watchlist, Icons.Filled.Visibility),
 )
 
@@ -113,28 +136,22 @@ fun AppNavHost(
         restoreState = true
     }
 
+    var pendingMicPrompt by remember { mutableStateOf(false) }
+    val micLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (pendingMicPrompt) { navController.navigate(Session(granted, null)) { launchSingleTop = true } }
+        pendingMicPrompt = false
+    }
+    fun startVoiceSession() {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            navController.navigate(Session(true, null)) { launchSingleTop = true }
+        } else {
+            pendingMicPrompt = true
+            micLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
     Scaffold(
-        bottomBar = {
-            if (showBar) {
-                NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow, tonalElevation = 0.dp) {
-                    tabs.forEach { tab ->
-                        NavigationBarItem(
-                            selected = destination?.hierarchy?.any { it.hasRoute(tab.type) } == true,
-                            onClick = { goTab(tab.route) },
-                            icon = { Icon(tab.icon, contentDescription = null) },
-                            label = { Text(stringResource(tab.label), style = MaterialTheme.typography.labelMedium, maxLines = 1) },
-                            colors = NavigationBarItemDefaults.colors(
-                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                                selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                selectedTextColor = MaterialTheme.colorScheme.primary,
-                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            ),
-                        )
-                    }
-                }
-            }
-        },
+        bottomBar = { if (showBar) FloatingBottomNav(destination, ::goTab, ::startVoiceSession) },
     ) { inner ->
         NavHost(navController, startDestination = Splash, modifier = Modifier.padding(inner).consumeWindowInsets(inner)) {
             composable<Splash> {
@@ -209,5 +226,54 @@ fun AppNavHost(
                 )
             }
         }
+    }
+}
+
+/** A floating pill, not an edge-to-edge bar, with a raised mic button astride its top edge that always
+ * opens a fresh voice session — the one control that is the same from anywhere in the app. */
+@Composable
+private fun FloatingBottomNav(destination: NavDestination?, onTab: (Any) -> Unit, onMic: () -> Unit) {
+    val barHeight = 68.dp
+    val fabSize = 56.dp
+    val poke = 26.dp // how far the mic button rises above the pill
+    Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp).height(barHeight + poke)) {
+        Surface(
+            modifier = Modifier.fillMaxWidth().height(barHeight).align(Alignment.BottomCenter),
+            shape = RoundedCornerShape(26.dp),
+            color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.94f),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.18f)),
+            shadowElevation = 12.dp,
+        ) {
+            Row(Modifier.fillMaxSize().padding(horizontal = 6.dp), horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically) {
+                tabs.take(2).forEach { NavItem(it, destination, onTab) }
+                Spacer(Modifier.width(fabSize))
+                tabs.drop(2).forEach { NavItem(it, destination, onTab) }
+            }
+        }
+        Box(
+            Modifier.align(Alignment.TopCenter).size(fabSize).clip(CircleShape)
+                .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer)))
+                .clickable(onClick = onMic),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Icons.Filled.Mic, contentDescription = stringResource(R.string.talk_to_mira), tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(26.dp))
+        }
+    }
+}
+
+@Composable
+private fun NavItem(tab: Tab, destination: NavDestination?, onClick: (Any) -> Unit) {
+    val selected = destination?.hierarchy?.any { it.hasRoute(tab.type) } == true
+    val color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+    androidx.compose.foundation.layout.Column(
+        Modifier.width(62.dp).clickable(onClick = { onClick(tab.route) }),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
+        Icon(tab.icon, contentDescription = null, tint = color, modifier = Modifier.size(24.dp))
+        Text(
+            stringResource(tab.label), style = MaterialTheme.typography.labelSmall,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium, color = color, maxLines = 1,
+        )
     }
 }

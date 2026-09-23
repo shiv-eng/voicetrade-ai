@@ -2,19 +2,32 @@ package com.quietstack.voicetrade.ui.stock
 
 import android.widget.Toast
 import com.quietstack.voicetrade.core.i18n.tr
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddAlert
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -25,10 +38,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.quietstack.voicetrade.core.designsystem.extra
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -189,9 +205,10 @@ fun StockDetailScreen(
             ov == null -> Column(Modifier.padding(padding).padding(16.dp)) {
                 InlineError(messageText(context, s.error!!), { viewModel.load() })
             }
-            else -> LazyColumn(
-                Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 32.dp),
+            else -> Box(Modifier.fillMaxSize().padding(padding)) {
+            LazyColumn(
+                Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 150.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp),
             ) {
                 item { Header(ov) }
@@ -223,21 +240,55 @@ fun StockDetailScreen(
                         }
                     }
                 }
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                            Button(onClick = { onAsk("Buy ${ov.instrument.name}") }, modifier = Modifier.weight(1f)) { Text(tr("Buy")) }
-                            FilledTonalButton(onClick = { onAsk("Sell ${ov.instrument.name}") }, modifier = Modifier.weight(1f)) { Text(tr("Sell")) }
-                            OutlinedButton(onClick = viewModel::addToWatchlist, modifier = Modifier.weight(1f)) { Text(tr("Watch")) }
-                        }
-                        OutlinedButton(onClick = { showAlert = true }, modifier = Modifier.fillMaxWidth()) { Text(tr("Set a price alert")) }
-                        OutlinedButton(onClick = { onAsk("Tell me about ${ov.instrument.name}") }, modifier = Modifier.fillMaxWidth()) {
-                            Text(tr("Ask Mira about this stock"))
-                        }
+            }
+            Column(
+                Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                    .background(Brush.verticalGradient(listOf(Color.Transparent, MaterialTheme.colorScheme.background), startY = 0f, endY = 120f))
+                    .padding(horizontal = 16.dp).padding(top = 24.dp, bottom = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    SmallActionChip(Icons.Filled.Visibility, tr("Watch"), Modifier.weight(1f), onClick = viewModel::addToWatchlist)
+                    SmallActionChip(Icons.Filled.AddAlert, tr("Alert"), Modifier.weight(1f), onClick = { showAlert = true })
+                    SmallActionChip(
+                        Icons.Filled.Mic, tr("Ask Mira"), Modifier.weight(1.3f), tinted = true,
+                        onClick = { onAsk("Tell me about ${ov.instrument.name}") },
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(
+                        onClick = { onAsk("Sell ${ov.instrument.name}") }, modifier = Modifier.weight(1f).height(54.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.extra.loss),
+                        border = BorderStroke(1.dp, MaterialTheme.extra.loss.copy(alpha = 0.4f)),
+                    ) { Text(tr("Sell"), fontWeight = FontWeight.Bold) }
+                    Button(onClick = { onAsk("Buy ${ov.instrument.name}") }, modifier = Modifier.weight(1f).height(54.dp)) {
+                        Text(tr("Buy"), fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
+        }
+    }
+}
+
+@Composable
+private fun SmallActionChip(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, modifier: Modifier = Modifier, tinted: Boolean = false, onClick: () -> Unit) {
+    Row(
+        modifier.height(36.dp)
+            .background(if (tinted) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(12.dp))
+            .then(if (tinted) Modifier.border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f), RoundedCornerShape(12.dp)) else Modifier)
+            .clickable(onClick = onClick),
+        horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            icon, contentDescription = null, tint = if (tinted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.height(18.dp),
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold,
+            color = if (tinted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+        )
     }
 }
 

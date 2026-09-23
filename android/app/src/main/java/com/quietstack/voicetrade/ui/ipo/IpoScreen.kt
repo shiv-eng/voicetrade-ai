@@ -1,21 +1,28 @@
 package com.quietstack.voicetrade.ui.ipo
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import com.quietstack.voicetrade.core.i18n.tr
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.lazy.items
 import com.quietstack.voicetrade.core.designsystem.IpoCard
+import com.quietstack.voicetrade.core.designsystem.extra
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -109,7 +116,16 @@ fun IpoScreen(
                 ) {
                     list.sections.forEach { section ->
                         item(key = "h_" + section.title) {
-                            Text(tr(section.title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
+                            val dot = when {
+                                section.title.contains("open", true) -> MaterialTheme.extra.gain
+                                section.title.contains("soon", true) -> MaterialTheme.extra.orbAwaiting
+                                section.title.contains("listed", true) -> MaterialTheme.colorScheme.secondary
+                                else -> null
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
+                                if (dot != null) Box(Modifier.size(7.dp).background(dot, CircleShape))
+                                Text(tr(section.title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            }
                         }
                         items(section.items.size, key = { i -> section.title + section.items[i].symbol + section.items[i].name }) { i ->
                             val item = section.items[i]

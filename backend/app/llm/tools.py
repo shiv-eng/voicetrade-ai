@@ -21,11 +21,8 @@ from ..market.aliases import resolve_alias
 from ..market.base import MarketData, MarketDataError
 from ..market.research import _day
 from ..portfolio import Portfolio
-from ..risk import RiskEngine
 from ..speech import show_big_money, show_money, speak_big_money, speak_money, speak_percent
 from ..trading import TradeError, TradingService
-
-ORDER_TOOLS = {"preview_order", "confirm_order", "preview_cancel", "discard_preview"}
 
 
 @dataclass
@@ -126,12 +123,12 @@ _REPRESENTATIVE = {"NSE": "RELIANCE.NS", "BSE": "RELIANCE.BO", "NASDAQ": "AAPL",
 
 class ToolBox:
     def __init__(self, db: Database, instruments: Instruments, market: MarketData, ledger: Ledger, trading: TradingService,
-                 portfolio: Portfolio, risk: RiskEngine, hub: Hub, research: Any = None, alerts: Any = None, insights: Any = None) -> None:
+                 portfolio: Portfolio, hub: Hub, research: Any = None, alerts: Any = None, insights: Any = None) -> None:
         self.research, self.alerts, self.insights = research, alerts, insights
         self._recent_cards: dict[tuple, float] = {}
         self._recent: dict[str, list[dict]] = {}
         self.db, self.instruments, self.market, self.ledger = db, instruments, market, ledger
-        self.trading, self.portfolio, self.risk, self.hub = trading, portfolio, risk, hub
+        self.trading, self.portfolio, self.hub = trading, portfolio, hub
         self._handlers: dict[str, Callable[[ToolContext, dict], Awaitable[dict]]] = {
             "search_instrument": self._search, "get_quote": self._quote, "get_market_status": self._market_status,
             "get_account_summary": self._account, "get_positions": self._positions, "get_pnl": self._pnl,
@@ -151,10 +148,7 @@ class ToolBox:
             lines.append(f"- {age // 60} min {age % 60} s ago: {r['tool']}({json.dumps(r['args'], ensure_ascii=False)}) -> {r['result']}")
         return "\n".join(lines)
 
-    def schemas(self, user_id: str) -> list[dict[str, Any]]:
-        """With the kill switch on, order tools are not even offered to the model."""
-        if self.risk.kill_switch(user_id):
-            return [s for s in SCHEMAS if s["function"]["name"] not in ORDER_TOOLS]
+    def schemas(self) -> list[dict[str, Any]]:
         return SCHEMAS
 
     async def call(self, name: str, raw_args: str, ctx: ToolContext) -> str:
@@ -166,8 +160,6 @@ class ToolBox:
         handler = self._handlers.get(name)
         if handler is None:
             result: dict = {"error": "UNKNOWN_TOOL"}
-        elif name in ORDER_TOOLS and self.risk.kill_switch(ctx.user_id):
-            result = {"error": "DISABLED", "message": "Trading is switched off. The user can turn it back on in Settings."}
         else:
             try:
                 result = await handler(ctx, args)
@@ -188,10 +180,13 @@ class ToolBox:
         return json.dumps(result, default=str)
 
     def _card(self, ctx: ToolContext, card: dict) -> None:
-        # The speed shortcut and the model can both fetch the same thing: show the card once.
+        # The speed shortcut and the model can both fetch the same thing: show the card once. This applies to
+        # every card kind, not just the ones with a per-instrument key (positions/account have none, so the
+        # dedup key just falls back to session+kind) — a free-tier model re-calling a tool it already has the
+        # answer for is common, and every kind is equally capable of duplicating.
         key = (ctx.session_id, card.get("kind"), (card.get("instrument") or {}).get("conid") or card.get("symbol"), card.get("period"))
         now = time.monotonic()
-        if key[1] in ("overview", "chart", "quote", "ipos", "ipo_detail") and now - self._recent_cards.get(key, -99.0) < 20.0:
+        if now - self._recent_cards.get(key, -99.0) < 20.0:
             return
         self._recent_cards[key] = now
         self.hub.emit(ctx.session_id, "card", {"messageId": "c_" + uuid.uuid4().hex[:8], "card": card})

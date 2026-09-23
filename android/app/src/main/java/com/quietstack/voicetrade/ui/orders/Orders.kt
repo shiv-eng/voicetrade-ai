@@ -1,5 +1,8 @@
 package com.quietstack.voicetrade.ui.orders
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,14 +12,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,9 +28,11 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -173,17 +178,21 @@ fun OrdersScreen(onBack: (() -> Unit)?, viewModel: OrdersViewModel = hiltViewMod
         },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
-            TabRow(selectedTabIndex = tab) {
-                Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text(stringResource(R.string.tab_open)) })
-                Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text(stringResource(R.string.tab_filled)) })
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)
+                    .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(16.dp)).padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                OrderTab(stringResource(R.string.tab_filled), tab == 0, Modifier.weight(1f)) { tab = 0 }
+                OrderTab(stringResource(R.string.tab_open), tab == 1, Modifier.weight(1f)) { tab = 1 }
             }
             state.error?.let {
                 InlineError(messageText(context, it), { viewModel.onEvent(OrdersEvent.Refresh) }, Modifier.padding(16.dp))
             }
-            val list = if (tab == 0) state.openOrders else state.executions
+            val list = if (tab == 0) state.executions else state.openOrders
             when {
                 state.loading && list.isEmpty() -> LoadingBox()
-                list.isEmpty() -> EmptyState(stringResource(if (tab == 0) R.string.no_open_orders else R.string.no_fills))
+                list.isEmpty() -> EmptyState(stringResource(if (tab == 0) R.string.no_fills else R.string.no_open_orders))
                 else -> LazyColumn(
                     Modifier.fillMaxWidth(),
                     contentPadding = PaddingValues(16.dp),
@@ -212,6 +221,23 @@ fun OrdersScreen(onBack: (() -> Unit)?, viewModel: OrdersViewModel = hiltViewMod
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun OrderTab(label: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Row(
+        modifier
+            .background(if (selected) MaterialTheme.colorScheme.surfaceContainerHigh else Color.Transparent, RoundedCornerShape(12.dp))
+            .then(if (selected) Modifier.border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(12.dp)) else Modifier)
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp),
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold,
+            color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

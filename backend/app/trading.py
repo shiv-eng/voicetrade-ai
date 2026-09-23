@@ -164,8 +164,6 @@ class TradingService:
         order = self.ledger.order(user_id, internal)
         if not order or order.status != "Working":
             return self._blocked("ORDER_NOT_FOUND", "That order isn't open, so there's nothing to cancel.")
-        if self.risk.kill_switch(user_id):
-            return self._blocked("KILL_SWITCH", "Trading is switched off. You can turn it back on in Settings.")
         inst = self.instruments.by_conid(order.instrument_id)
         assert inst
         self._supersede(user_id)
@@ -191,9 +189,6 @@ class TradingService:
         row = self.db.one("SELECT * FROM previews WHERE id = ? AND user_id = ?", (preview_id, user_id))
         if not row or row["status"] != "ACTIVE":
             raise TradeError("PREVIEW_EXPIRED", "That preview is no longer valid.")
-        if self.risk.kill_switch(user_id):
-            self._close(user_id, preview_id, "REJECTED")
-            raise TradeError("KILL_SWITCH", "Trading is switched off.")
         if datetime.fromisoformat(row["expires_at"]) <= self.clock():
             self._close(user_id, preview_id, "EXPIRED")
             raise TradeError("PREVIEW_EXPIRED", "That preview expired.")

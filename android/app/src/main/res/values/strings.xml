@@ -43,6 +43,10 @@
     <string name="disclaimer">VoiceTrade AI is a demo on a paper-trading account. It does not provide investment advice. Trading involves risk.</string>
     <string name="signin_title">Create your practice account</string>
     <string name="signin_body">Sign in with Google to keep your practice money, holdings and watchlist safe, even if you change phones.</string>
+    <string name="signin_benefit_wallet_body">Practice money. Prices are real and live.</string>
+    <string name="signin_benefit_orders">Every order read back</string>
+    <string name="signin_benefit_orders_body">Nothing is placed without your confirmation.</string>
+    <string name="signin_benefit_biometric_body">A built-in safety limit, always on.</string>
     <string name="continue_with_google">Continue with Google</string>
     <string name="continue_as_guest">Continue as guest (debug build only)</string>
     <string name="google_not_configured">Google sign-in isn\'t set up in this build yet. The server owner needs to add the Google client ID.</string>
@@ -98,7 +102,7 @@
     <string name="more">More options</string>
     <string name="lang_choose_title">Choose your language</string>
     <string name="lang_choose_subtitle">अपनी भाषा चुनें</string>
-    <string name="app_language">Language (screens and voice)</string>
+    <string name="app_language">Language</string>
     <string name="lang_english_only">English</string>
     <string name="lang_hindi_only">हिन्दी</string>
     <string name="tap_to_talk">Tap to talk</string>
@@ -149,7 +153,6 @@
     <string name="end">End</string>
     <string name="type_message">Type a message</string>
     <string name="send">Send</string>
-    <string name="kill_switch_on">TRADING OFF</string>
     <string name="quote_speech">%1$s, %2$s, %3$s today</string>
 
     <!-- Order cards -->
@@ -192,11 +195,12 @@
     <string name="move_down">Move down</string>
     <string name="history_empty">No past sessions yet.</string>
     <string name="history_detail">Session</string>
+    <string name="history_resume_hint">Open any session to read it back or continue the conversation with Mira.</string>
     <string name="history_continue">Continue</string>
 
     <!-- Settings -->
     <string name="settings_voice">Voice</string>
-    <string name="settings_safety">Safety and limits</string>
+    <string name="settings_safety">Notifications</string>
     <string name="settings_appearance">Appearance</string>
     <string name="settings_data">Data and connection</string>
     <string name="about">About</string>
@@ -205,21 +209,10 @@
     <string name="voice_female">Female voice</string>
     <string name="voice_male">Male voice</string>
     <string name="speech_speed">Speech speed: %1$sx</string>
-    <string name="kill_switch">Kill switch</string>
-    <string name="kill_switch_desc">Turns off all order actions instantly. Quotes and portfolio stay available.</string>
     <string name="biometric">Biometric check for large orders</string>
-    <string name="biometric_desc">Ask for fingerprint or face before confirming a large order.</string>
-    <string name="risk_limits">Risk limits</string>
-    <string name="risk_unavailable">Limits are unavailable right now.</string>
-    <string name="risk_invalid">Enter positive numbers that are within the server maximum.</string>
-    <string name="max_order_value">Max value per order</string>
-    <string name="max_quantity">Max shares per order</string>
-    <string name="max_orders_day">Max orders per day</string>
     <string name="theme_system">System</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
-    <string name="large_text">Large text</string>
-    <string name="large_text_desc">Bigger text across the app.</string>
     <string name="delete_history">Delete session history</string>
     <string name="delete_history_confirm">This removes every saved transcript from this phone.</string>
     <string name="unlink_device">Sign out</string>
@@ -242,7 +235,6 @@
     <string name="err_risk_blocked">This order is above one of your risk limits. Change the limit in Settings or try a smaller order.</string>
     <string name="err_preview_expired">That preview expired, so nothing was placed. Ask Mira to set the order up again.</string>
     <string name="err_price_drift">The price moved too much since the preview, so nothing was placed. Ask for a new preview.</string>
-    <string name="err_kill_switch">Trading is switched off. Turn the kill switch off in Settings to place orders.</string>
     <string name="err_unknown">Something went wrong.</string>
     <string name="err_market_data">I couldn\'t get live prices just now. Please try again in a moment.</string>
     <string name="err_bad_pairing">That pairing code isn\'t right. Check the code shown when you started the backend.</string>

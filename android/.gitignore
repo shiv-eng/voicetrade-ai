@@ -10,3 +10,4 @@ build/
 *.jks
 *.keystore
 .env
+/app/google-services.json

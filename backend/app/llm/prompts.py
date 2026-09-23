@@ -120,20 +120,22 @@ def reply_language(text: str, session_language: str) -> str:
     return "english"
 
 
-def build_system_prompt(kill_switch: bool, active_preview: dict | None, wallets_line: str, now: datetime | None = None,
-                        language: str = "en", user_text: str = "") -> str:
+def build_system_prompt(active_preview: dict | None, wallets_line: str, now: datetime | None = None,
+                        bilingual: bool = True, session_language: str = "en", user_text: str = "") -> str:
+    """[bilingual] is whether Hindi speech is even possible on this server (Sarvam configured) — a hard technical
+    limit, not the user's choice. Whenever it's true, every turn picks its own language fresh from what was just
+    said (see reply_language): the language the user picked at onboarding is only that turn's tie-breaker."""
     now = (now or datetime.now(timezone.utc)).astimezone(_IST)
     lines = [
         f"now={now.strftime('%A %d %B %Y, %I:%M %p')} IST",
         "mode=PAPER (practice money, real prices)",
-        f"kill_switch={'ON, order tools are disabled' if kill_switch else 'off'}",
         f"active_preview={active_preview if active_preview else 'none'}",
         f"wallets={wallets_line}",
     ]
     prompt = SYSTEM_PROMPT.format(context="\n".join(lines))
-    if language == "en":
+    if not bilingual:
         return prompt + ENGLISH_RULES
-    if reply_language(user_text, language) == "hindi":
+    if reply_language(user_text, session_language) == "hindi":
         turn = "\n\nFor THIS reply: the user spoke Hindi, so answer in Hindi (Devanagari)."
     else:
         turn = "\n\nFor THIS reply: the user spoke English, so answer ONLY in English. Do not use Devanagari or Hindi words."

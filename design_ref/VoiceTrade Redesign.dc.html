@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..600,0..1,0&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#050912;font-family:Manrope,system-ui,sans-serif;color:#E8EDF5;-webkit-font-smoothing:antialiased}
+a{color:#2DD4BF;text-decoration:none}a:hover{color:#5EEAD4}
+@keyframes vtPulse{0%,100%{transform:scale(.9)}50%{transform:scale(1.05)}}
+@keyframes vtWave{0%{transform:scale(.5);opacity:.55}100%{transform:scale(1);opacity:0}}
+@keyframes vtSpin{to{transform:rotate(360deg)}}
+@keyframes vtBreathe{0%,100%{transform:scale(.92);opacity:.14}50%{transform:scale(1.04);opacity:.26}}
+@keyframes vtBlink{0%,100%{opacity:1}50%{opacity:.35}}
+</style>
+</helmet>
+<section style="padding:64px 64px 96px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:8px;max-width:820px">
+<div style="display:flex;align-items:center;gap:12px"><div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(145deg,#2DD4BF,#4F46E5);display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:24px;line-height:1;color:#04121A">graphic_eq</span></div><span style="font-size:30px;font-weight:800;letter-spacing:-0.02em">VoiceTrade AI — redesign</span></div>
+<div style="font-size:16px;line-height:24px;color:#A9B4C6;text-wrap:pretty">Every screen, rebuilt on the app's existing dark palette: teal primary, indigo secondary, the gain/loss pair and Mira's orb state colours. Current UI for comparison lives in <a href="VoiceTrade Current.dc.html">VoiceTrade Current</a>.</div>
+</div>
+<div style="display:flex;gap:48px;flex-wrap:wrap;align-items:flex-start">
+
+<div id="01" data-screen-label="01 Welcome" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;font-weight:800;color:#042F2E;background:#2DD4BF;border-radius:6px;padding:3px 7px">01</span><span style="font-size:15px;font-weight:600;color:#A9B4C6">Welcome · language</span></div>
+<div style="width:390px;height:844px;border-radius:44px;overflow:hidden;background:#0B1220;position:relative;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(124,138,161,.18),0 40px 80px -20px rgba(0,0,0,.7)">
+<div style="position:absolute;top:-180px;left:-105px;width:600px;height:600px;background:radial-gradient(circle,rgba(45,212,191,.20),transparent 62%)"></div>
+<div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-weight:700;font-size:15px;flex:none;position:relative"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">wifi</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:19px;line-height:1">battery_full</span></span></div>
+<div style="display:flex;align-items:center;gap:10px;padding:12px 24px;position:relative">
+<div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#2DD4BF,#4F46E5);display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:20px;line-height:1;color:#04121A">graphic_eq</span></div>
+<span style="font-size:17px;font-weight:800;letter-spacing:-0.01em;flex:1">VoiceTrade AI</span>
+<span style="background:#3B2A07;color:#FCD34D;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800;letter-spacing:.06em">PAPER</span>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 28px;position:relative">
+<div style="width:240px;height:240px;display:flex;align-items:center;justify-content:center">{{ orbWelcome }}</div>
+<div style="font-size:36px;line-height:42px;font-weight:800;letter-spacing:-0.03em;text-align:center">Talk to the market.</div>
+<div style="font-size:15px;line-height:23px;color:#A9B4C6;text-align:center;text-wrap:pretty">Ask about prices, your holdings and your orders in plain English or Hinglish. Mira answers out loud and can place orders for you.</div>
+</div>
+<div style="padding:0 24px 40px;display:flex;flex-direction:column;gap:12px;position:relative">
+<div style="display:flex;align-items:center;gap:10px;justify-content:center;font-size:13px;font-weight:600;color:#7C8AA1;padding-bottom:4px"><span>Choose your language</span><span style="width:4px;height:4px;border-radius:50%;background:#7C8AA1"></span><span>अपनी भाषा चुनें</span></div>
+<div style="height:60px;border-radius:18px;background:#2DD4BF;color:#042F2E;display:flex;align-items:center;padding:0 22px;gap:12px;box-shadow:0 12px 30px -10px rgba(45,212,191,.6)"><span style="font-size:20px;font-weight:800;flex:1">हिन्दी</span><span style="font-size:13px;font-weight:700;opacity:.7">Hindi</span><span style="font-family:'Material Symbols Rounded';font-size:22px;line-height:1">arrow_forward</span></div>
+<div style="height:60px;border-radius:18px;background:#131C30;border:1px solid rgba(124,138,161,.22);display:flex;align-items:center;padding:0 22px;gap:12px"><span style="font-size:20px;font-weight:800;flex:1">English</span><span style="font-family:'Material Symbols Rounded';font-size:22px;line-height:1;color:#A9B4C6">arrow_forward</span></div>
+<div style="font-size:12px;line-height:18px;color:#7C8AA1;text-align:center;padding-top:6px">Mira speaks both Hindi and English · you can change this later</div>
+</div>
+</div>
+</div>
+
+<div id="02" data-screen-label="02 Sign in" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;font-weight:800;color:#042F2E;background:#2DD4BF;border-radius:6px;padding:3px 7px">02</span><span style="font-size:15px;font-weight:600;color:#A9B4C6">Sign in</span></div>
+<div style="width:390px;height:844px;border-radius:44px;overflow:hidden;background:#0B1220;position:relative;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(124,138,161,.18),0 40px 80px -20px rgba(0,0,0,.7)">
+<div style="position:absolute;top:-220px;left:-105px;width:600px;height:600px;background:radial-gradient(circle,rgba(129,140,248,.16),transparent 62%)"></div>
+<div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-weight:700;font-size:15px;flex:none;position:relative"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">wifi</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:19px;line-height:1">battery_full</span></span></div>
+<div style="display:flex;align-items:center;padding:8px 16px;position:relative">
+<span style="width:44px;height:44px;border-radius:14px;background:#131C30;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:22px;line-height:1">arrow_back</span></span>
+<span style="flex:1"></span>
+<span style="display:flex;gap:6px;align-items:center;padding-right:8px"><span style="width:6px;height:6px;border-radius:3px;background:rgba(124,138,161,.4)"></span><span style="width:6px;height:6px;border-radius:3px;background:rgba(124,138,161,.4)"></span><span style="width:6px;height:6px;border-radius:3px;background:rgba(124,138,161,.4)"></span><span style="width:22px;height:6px;border-radius:3px;background:#2DD4BF"></span></span>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;padding:28px 24px 0;gap:14px;position:relative">
+<div style="width:72px;height:72px;border-radius:22px;background:linear-gradient(145deg,rgba(45,212,191,.22),rgba(129,140,248,.22));border:1px solid rgba(45,212,191,.35);display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:36px;line-height:1;color:#2DD4BF">verified_user</span></div>
+<div style="font-size:30px;line-height:36px;font-weight:800;letter-spacing:-0.03em;text-wrap:pretty">Create your practice account</div>
+<div style="font-size:15px;line-height:23px;color:#A9B4C6;text-wrap:pretty">Sign in with Google to keep your practice money, holdings and watchlist safe, even if you change phones.</div>
+<div style="margin-top:10px;background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;padding:6px 0;display:flex;flex-direction:column">
+<div style="display:flex;gap:14px;align-items:center;padding:14px 18px"><span style="width:40px;height:40px;border-radius:12px;background:rgba(45,212,191,.12);display:flex;align-items:center;justify-content:center;flex:none"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:22px;line-height:1;color:#2DD4BF">account_balance_wallet</span></span><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">₹10,00,000 + $10,000</span><span style="font-size:13px;color:#A9B4C6;line-height:18px">Practice money. Prices are real and live.</span></div></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin-left:72px"></div>
+<div style="display:flex;gap:14px;align-items:center;padding:14px 18px"><span style="width:40px;height:40px;border-radius:12px;background:rgba(129,140,248,.14);display:flex;align-items:center;justify-content:center;flex:none"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:22px;line-height:1;color:#818CF8">record_voice_over</span></span><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:700">Every order read back</span><span style="font-size:13px;color:#A9B4C6;line-height:18px">Nothing is placed without your confirmation.</span></div></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin-left:72px"></div>
+<div style="display:flex;gap:14px;align-items:center;padding:14px 18px"><span style="width:40px;height:40px;border-radius:12px;background:rgba(251,191,36,.12);display:flex;align-items:center;justify-content:center;flex:none"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:22px;line-height:1;color:#FBBF24">fingerprint</span></span><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:700">Biometric check for large orders</span><span style="font-size:13px;color:#A9B4C6;line-height:18px">Plus a kill switch in Settings.</span></div></div>
+</div>
+</div>
+<div style="padding:0 24px 40px;display:flex;flex-direction:column;gap:14px;position:relative">
+<div style="height:58px;border-radius:18px;background:#FFFFFF;color:#1F1F1F;display:flex;align-items:center;justify-content:center;gap:12px"><span style="font-size:20px;font-weight:800;color:#4285F4">G</span><span style="font-size:16px;font-weight:700">Continue with Google</span></div>
+<div style="font-size:12px;line-height:18px;color:#7C8AA1;text-align:center;text-wrap:pretty">VoiceTrade AI is a demo on a paper-trading account. It does not provide investment advice. Trading involves risk.</div>
+</div>
+</div>
+</div>
+
+<div id="03" data-screen-label="03 Home" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;font-weight:800;color:#042F2E;background:#2DD4BF;border-radius:6px;padding:3px 7px">03</span><span style="font-size:15px;font-weight:600;color:#A9B4C6">Home · full scroll</span></div>
+<div style="width:390px;border-radius:44px;overflow:hidden;background:#0B1220;position:relative;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(124,138,161,.18),0 40px 80px -20px rgba(0,0,0,.7)">
+<div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-weight:700;font-size:15px;flex:none"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">wifi</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:19px;line-height:1">battery_full</span></span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 16px 6px 20px">
+<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#2DD4BF,#818CF8);display:flex;align-items:center;justify-content:center;color:#042F2E;font-weight:800;font-size:18px">A</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:1px"><span style="font-size:13px;color:#A9B4C6;font-weight:500">Good evening</span><span style="font-size:21px;font-weight:800;letter-spacing:-0.02em">Aarav</span></div>
+<div style="display:flex;gap:6px">
+<span style="width:40px;height:40px;border-radius:13px;background:#131C30;display:flex;align-items:center;justify-content:center;position:relative"><span style="font-family:'Material Symbols Rounded';font-size:21px;line-height:1">notifications</span><span style="position:absolute;top:9px;right:10px;width:7px;height:7px;border-radius:50%;background:#FBBF24;box-shadow:0 0 0 2px #131C30"></span></span>
+<span style="width:40px;height:40px;border-radius:13px;background:#131C30;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:21px;line-height:1">history</span></span>
+<span style="width:40px;height:40px;border-radius:13px;background:#131C30;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:21px;line-height:1">settings</span></span>
+</div>
+</div>
+<div style="padding:14px 16px 124px;display:flex;flex-direction:column;gap:24px">
+<div style="position:relative;overflow:hidden;border-radius:30px;background:#0F1727;border:1px solid rgba(124,138,161,.14);padding:18px 0 20px;display:flex;flex-direction:column;align-items:center">
+<div style="position:absolute;top:-160px;left:50%;margin-left:-220px;width:440px;height:440px;background:radial-gradient(circle,rgba(45,212,191,.22),transparent 60%)"></div>
+<div style="width:150px;height:150px;display:flex;align-items:center;justify-content:center;position:relative">{{ orbHome }}</div>
+<div style="font-size:24px;font-weight:800;letter-spacing:-0.02em;position:relative">Talk to Mira</div>
+<div style="font-size:14px;line-height:21px;color:#A9B4C6;text-align:center;padding:6px 36px 0;position:relative;text-wrap:pretty">Ask about any stock, check what you hold, or place a practice trade. Just talk.</div>
+<div style="align-self:stretch;display:flex;flex-direction:column;gap:10px;padding-top:18px;position:relative">
+<span style="font-size:11px;font-weight:800;letter-spacing:.1em;color:#7C8AA1;padding-left:18px">TRY SAYING</span>
+<div style="display:flex;gap:8px;overflow:hidden;padding:0 18px">
+<span style="flex:none;background:#1B2538;border:1px solid rgba(124,138,161,.16);border-radius:999px;padding:9px 14px;font-size:13px;font-weight:600">How is Reliance doing?</span>
+<span style="flex:none;background:#1B2538;border:1px solid rgba(124,138,161,.16);border-radius:999px;padding:9px 14px;font-size:13px;font-weight:600">What do I own?</span>
+<span style="flex:none;background:#1B2538;border:1px solid rgba(124,138,161,.16);border-radius:999px;padding:9px 14px;font-size:13px;font-weight:600">Buy 10 Infosys</span>
+</div>
+</div>
+</div>
+<div style="position:relative;overflow:hidden;border-radius:28px;background:linear-gradient(140deg,#0F766E 0%,#134E4A 70%);padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 40px -20px rgba(15,118,110,.8)">
+<div style="position:absolute;right:-70px;top:-90px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.14),transparent 65%)"></div>
+<div style="display:flex;align-items:center;gap:8px;position:relative">
+<span style="font-size:13px;font-weight:600;color:rgba(255,255,255,.78);flex:1">Practice balance · Indian stocks</span>
+<span style="display:flex;background:rgba(4,47,46,.45);border-radius:999px;padding:3px"><span style="background:#FFFFFF;color:#042F2E;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800">INR</span><span style="color:rgba(255,255,255,.78);padding:4px 10px;font-size:11px;font-weight:800">USD</span></span>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;position:relative">
+<span style="font-size:36px;line-height:40px;font-weight:800;letter-spacing:-0.03em;color:#FFFFFF;font-variant-numeric:tabular-nums">₹10,38,420</span>
+<span style="display:flex;align-items:center;gap:8px"><span style="background:rgba(74,222,128,.2);color:#BBF7D0;border-radius:8px;padding:3px 8px;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums">▲ 0.80%</span><span style="font-size:13px;font-weight:600;color:rgba(255,255,255,.85);font-variant-numeric:tabular-nums">+₹8,214 today</span></span>
+</div>
+<div style="display:flex;align-items:center;gap:0;background:rgba(4,47,46,.35);border-radius:18px;padding:12px 14px;position:relative">
+<div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.7)">Cash</span><span style="font-size:15px;font-weight:800;color:#fff;font-variant-numeric:tabular-nums">₹6,42,180</span></div>
+<div style="width:1px;align-self:stretch;background:rgba(255,255,255,.14);margin:0 14px"></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.7)">Invested</span><span style="font-size:15px;font-weight:800;color:#fff;font-variant-numeric:tabular-nums">₹3,96,238</span></div>
+<span style="width:34px;height:34px;border-radius:12px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:20px;line-height:1;color:#fff">arrow_forward</span></span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;padding:0 4px"><span style="font-size:18px;font-weight:800;letter-spacing:-0.01em;flex:1">Markets</span><span style="display:flex;align-items:center;gap:6px;background:rgba(74,222,128,.12);color:#4ADE80;border:1px solid rgba(74,222,128,.35);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700"><span style="width:6px;height:6px;border-radius:50%;background:#4ADE80"></span>Market open</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:22px;padding:14px;display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;font-weight:700;color:#A9B4C6">NIFTY 50</span><span style="font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-0.01em">24,812.35</span><span style="font-size:12px;font-weight:700;color:#4ADE80;font-variant-numeric:tabular-nums">▲ 0.64%</span><svg viewBox="0 0 140 30" preserveAspectRatio="none" style="width:100%;height:30px;margin-top:6px"><defs><linearGradient id="hs1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4ADE80" stop-opacity=".3"></stop><stop offset="1" stop-color="#4ADE80" stop-opacity="0"></stop></linearGradient></defs><polygon points="0,24 18,21 35,22 52,15 70,17 88,11 105,12 122,7 140,4 140,30 0,30" fill="url(#hs1)"></polygon><polyline points="0,24 18,21 35,22 52,15 70,17 88,11 105,12 122,7 140,4" fill="none" stroke="#4ADE80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline></svg></div>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:22px;padding:14px;display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;font-weight:700;color:#A9B4C6">SENSEX</span><span style="font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-0.01em">81,203.10</span><span style="font-size:12px;font-weight:700;color:#4ADE80;font-variant-numeric:tabular-nums">▲ 0.51%</span><svg viewBox="0 0 140 30" preserveAspectRatio="none" style="width:100%;height:30px;margin-top:6px"><defs><linearGradient id="hs2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4ADE80" stop-opacity=".3"></stop><stop offset="1" stop-color="#4ADE80" stop-opacity="0"></stop></linearGradient></defs><polygon points="0,22 18,23 35,18 52,19 70,14 88,15 105,10 122,11 140,6 140,30 0,30" fill="url(#hs2)"></polygon><polyline points="0,22 18,23 35,18 52,19 70,14 88,15 105,10 122,11 140,6" fill="none" stroke="#4ADE80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline></svg></div>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:22px;padding:14px;display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;font-weight:700;color:#A9B4C6">NASDAQ</span><span style="font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-0.01em">18,340.62</span><span style="font-size:12px;font-weight:700;color:#F87171;font-variant-numeric:tabular-nums">▼ 0.22%</span><svg viewBox="0 0 140 30" preserveAspectRatio="none" style="width:100%;height:30px;margin-top:6px"><defs><linearGradient id="hs3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F87171" stop-opacity=".3"></stop><stop offset="1" stop-color="#F87171" stop-opacity="0"></stop></linearGradient></defs><polygon points="0,8 18,10 35,7 52,12 70,11 88,16 105,14 122,19 140,20 140,30 0,30" fill="url(#hs3)"></polygon><polyline points="0,8 18,10 35,7 52,12 70,11 88,16 105,14 122,19 140,20" fill="none" stroke="#F87171" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline></svg></div>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:22px;padding:14px;display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;font-weight:700;color:#A9B4C6">S&amp;P 500</span><span style="font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-0.01em">5,702.55</span><span style="font-size:12px;font-weight:700;color:#4ADE80;font-variant-numeric:tabular-nums">▲ 0.18%</span><svg viewBox="0 0 140 30" preserveAspectRatio="none" style="width:100%;height:30px;margin-top:6px"><defs><linearGradient id="hs4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4ADE80" stop-opacity=".3"></stop><stop offset="1" stop-color="#4ADE80" stop-opacity="0"></stop></linearGradient></defs><polygon points="0,18 18,14 35,17 52,13 70,16 88,12 105,14 122,10 140,11 140,30 0,30" fill="url(#hs4)"></polygon><polyline points="0,18 18,14 35,17 52,13 70,16 88,12 105,14 122,10 140,11" fill="none" stroke="#4ADE80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline></svg></div>
+</div>
+</div>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;padding:16px 18px;display:flex;align-items:center;gap:14px">
+<span style="width:44px;height:44px;border-radius:14px;background:rgba(251,191,36,.12);display:flex;align-items:center;justify-content:center;flex:none"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:24px;line-height:1;color:#FBBF24">rocket_launch</span></span>
+<div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;font-weight:800">IPOs</span><span style="font-size:13px;line-height:18px;color:#A9B4C6">See what is open now, coming soon and just listed</span></div>
+<span style="font-family:'Material Symbols Rounded';font-size:24px;line-height:1;color:#2DD4BF">chevron_right</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;padding:0 4px"><span style="font-size:18px;font-weight:800;letter-spacing:-0.01em;flex:1">Top movers</span>
+<span style="display:flex;background:#131C30;border-radius:999px;padding:3px;gap:2px"><span onClick="{{ showGainers }}" style="cursor:pointer;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:800;background:{{ gBg }};color:{{ gFg }}">Gainers</span><span onClick="{{ showLosers }}" style="cursor:pointer;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:800;background:{{ lBg }};color:{{ lFg }}">Losers</span></span></div>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;display:flex;flex-direction:column;overflow:hidden">
+<sc-for list="{{ movers }}" as="m" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-top:{{ m.border }}">
+<div style="width:42px;height:42px;border-radius:14px;background:{{ m.bg }};color:{{ m.fg }};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">{{ m.mono }}</div>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.name }}</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">{{ m.sym }} · NSE</span></div>
+<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">{{ m.price }}</span><span style="font-size:12px;font-weight:800;border-radius:8px;padding:2px 7px;font-variant-numeric:tabular-nums;color:{{ m.cc }};background:{{ m.cbg }}">{{ m.chg }}</span></div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;padding:0 4px"><span style="font-size:18px;font-weight:800;letter-spacing:-0.01em;flex:1">Holdings</span><span style="font-size:14px;font-weight:700;color:#2DD4BF">See all</span></div>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:14px;padding:13px 16px"><div style="width:42px;height:42px;border-radius:14px;background:rgba(20,184,166,.16);color:#5EEAD4;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">RE</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700">Reliance Industries</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">Qty 40 · ₹2,948.60</span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">₹1,17,944</span><span style="font-size:12px;font-weight:700;color:#4ADE80;font-variant-numeric:tabular-nums">+₹6,120 (+5.47%)</span></div></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin-left:72px"></div>
+<div style="display:flex;align-items:center;gap:14px;padding:13px 16px"><div style="width:42px;height:42px;border-radius:14px;background:rgba(59,130,246,.16);color:#93C5FD;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">HD</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700">HDFC Bank</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">Qty 60 · ₹1,712.45</span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">₹1,02,747</span><span style="font-size:12px;font-weight:700;color:#4ADE80;font-variant-numeric:tabular-nums">+₹4,380 (+4.45%)</span></div></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin-left:72px"></div>
+<div style="display:flex;align-items:center;gap:14px;padding:13px 16px"><div style="width:42px;height:42px;border-radius:14px;background:rgba(99,102,241,.16);color:#A5B4FC;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">IN</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700">Infosys</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">Qty 50 · ₹1,862.30</span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">₹93,115</span><span style="font-size:12px;font-weight:700;color:#F87171;font-variant-numeric:tabular-nums">−₹1,840 (−1.94%)</span></div></div>
+</div>
+</div>
+</div>
+<div style="position:absolute;left:16px;right:16px;bottom:22px;height:68px;border-radius:26px;background:rgba(19,28,48,.94);border:1px solid rgba(124,138,161,.18);box-shadow:0 20px 40px -10px rgba(0,0,0,.7);display:flex;align-items:center;justify-content:space-around;padding:0 6px">
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:62px;color:#2DD4BF"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:24px;line-height:1">home</span><span style="font-size:11px;font-weight:800">Home</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:62px;color:#7C8AA1"><span style="font-family:'Material Symbols Rounded';font-size:24px;line-height:1">account_balance_wallet</span><span style="font-size:11px;font-weight:700">Portfolio</span></div>
+<sc-if value="{{ micInNav }}" hint-placeholder-val="{{ true }}"><div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(145deg,#2DD4BF,#0F766E);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px -4px rgba(45,212,191,.6);margin-top:-30px;border:4px solid #0B1220;flex:none"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:26px;line-height:1;color:#042F2E">mic</span></div></sc-if>
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:62px;color:#7C8AA1"><span style="font-family:'Material Symbols Rounded';font-size:24px;line-height:1">list_alt</span><span style="font-size:11px;font-weight:700">Orders</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:62px;color:#7C8AA1"><span style="font-family:'Material Symbols Rounded';font-size:24px;line-height:1">visibility</span><span style="font-size:11px;font-weight:700">Watchlist</span></div>
+</div>
+</div>
+</div>
+
+<div id="04" data-screen-label="04 Voice session" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;font-weight:800;color:#042F2E;background:#2DD4BF;border-radius:6px;padding:3px 7px">04</span><span style="font-size:15px;font-weight:600;color:#A9B4C6">Voice session · orb state is a tweak</span></div>
+<div style="width:390px;height:844px;border-radius:44px;overflow:hidden;background:#0B1220;position:relative;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(124,138,161,.18),0 40px 80px -20px rgba(0,0,0,.7)">
+<div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-weight:700;font-size:15px;flex:none;position:relative;z-index:1"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">wifi</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:19px;line-height:1">battery_full</span></span></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 16px;position:relative;z-index:1">
+<span style="width:40px;height:40px;border-radius:13px;background:#131C30;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:21px;line-height:1">arrow_back</span></span>
+<span style="font-size:20px;font-weight:800;letter-spacing:-0.01em">Mira</span>
+<span style="background:#3B2A07;color:#FCD34D;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800;letter-spacing:.06em">PAPER</span>
+<span style="flex:1"></span>
+<span style="display:flex;align-items:center;gap:6px;background:rgba(74,222,128,.12);color:#4ADE80;border:1px solid rgba(74,222,128,.35);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700"><span style="width:6px;height:6px;border-radius:50%;background:#4ADE80;animation:vtBlink 1.4s ease-in-out infinite"></span>Live</span>
+</div>
+<div style="display:flex;flex-direction:column;align-items:center;padding-top:30px;gap:8px">
+<div style="width:280px;height:260px;display:flex;align-items:center;justify-content:center">{{ orbSession }}</div>
+<span style="font-size:15px;font-weight:700;color:#A9B4C6;letter-spacing:.01em">{{ orbLabel }}</span>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 28px 0;gap:18px">
+<div style="font-size:17px;line-height:26px;color:#E8EDF5;text-align:center;font-weight:600;text-wrap:pretty">Just start talking. Try <span style="color:#2DD4BF">"How is Reliance doing today?"</span> or <span style="color:#2DD4BF">"What do I own?"</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center">
+<span style="border:1px solid rgba(124,138,161,.28);background:#0F1727;border-radius:999px;padding:9px 14px;font-size:13px;font-weight:600">How much cash do I have?</span>
+<span style="border:1px solid rgba(124,138,161,.28);background:#0F1727;border-radius:999px;padding:9px 14px;font-size:13px;font-weight:600">What's on my watchlist?</span>
+<span style="border:1px solid rgba(124,138,161,.28);background:#0F1727;border-radius:999px;padding:9px 14px;font-size:13px;font-weight:600">Buy 10 Infosys</span>
+</div>
+</div>
+<div style="margin:0 16px 26px;background:#131C30;border:1px solid rgba(124,138,161,.16);border-radius:34px;padding:10px;display:flex;align-items:center;gap:10px;box-shadow:0 20px 40px -10px rgba(0,0,0,.6)">
+<span style="width:56px;height:56px;border-radius:50%;background:#1B2538;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:24px;line-height:1">mic</span></span>
+<span style="width:56px;height:56px;border-radius:50%;background:#1B2538;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:24px;line-height:1">pause</span></span>
+<span style="width:56px;height:56px;border-radius:50%;background:#1B2538;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:24px;line-height:1">keyboard</span></span>
+<span style="flex:1;height:56px;border-radius:28px;background:#F87171;color:#2A0A0A;display:flex;align-items:center;justify-content:center;gap:8px"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:24px;line-height:1">call_end</span><span style="font-size:15px;font-weight:800">End</span></span>
+</div>
+</div>
+</div>
+
+<div id="05" data-screen-label="05 Order confirmation" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;font-weight:800;color:#042F2E;background:#2DD4BF;border-radius:6px;padding:3px 7px">05</span><span style="font-size:15px;font-weight:600;color:#A9B4C6">Session · order confirmation</span></div>
+<div style="width:390px;height:844px;border-radius:44px;overflow:hidden;background:#0B1220;position:relative;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(124,138,161,.18),0 40px 80px -20px rgba(0,0,0,.7)">
+<div style="position:absolute;top:-200px;left:-105px;width:600px;height:500px;background:radial-gradient(circle,rgba(251,191,36,.12),transparent 62%)"></div>
+<div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-weight:700;font-size:15px;flex:none;position:relative"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">wifi</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:19px;line-height:1">battery_full</span></span></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 16px;position:relative">
+<span style="width:40px;height:40px;border-radius:13px;background:#131C30;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:21px;line-height:1">arrow_back</span></span>
+<span style="font-size:20px;font-weight:800;letter-spacing:-0.01em">Mira</span>
+<span style="background:#3B2A07;color:#FCD34D;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800;letter-spacing:.06em">PAPER</span>
+<span style="flex:1"></span>
+<span style="display:flex;align-items:center;gap:6px;background:rgba(74,222,128,.12);color:#4ADE80;border:1px solid rgba(74,222,128,.35);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700"><span style="width:6px;height:6px;border-radius:50%;background:#4ADE80"></span>Live</span>
+</div>
+<div style="display:flex;align-items:center;gap:14px;padding:6px 20px 10px;position:relative">
+<div style="width:84px;height:84px;display:flex;align-items:center;justify-content:center;flex:none">{{ orbCompact }}</div>
+<div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:16px;font-weight:800;color:#FBBF24">Waiting for your confirmation</span><span style="font-size:13px;color:#A9B4C6">Say "confirm" or tap below</span></div>
+</div>
+<div style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:14px;padding:6px 16px 0;position:relative">
+<div style="align-self:flex-end;max-width:80%;background:#0F3D3A;color:#CCFBF1;border-radius:22px 22px 6px 22px;padding:11px 16px;font-size:15px;line-height:22px;font-weight:600">Buy 10 Infosys at market</div>
+<div style="display:flex;gap:10px;padding-right:20px">
+<span style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#2DD4BF,#818CF8);display:flex;align-items:center;justify-content:center;flex:none;margin-top:2px"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:14px;line-height:1;color:#042F2E">mic</span></span>
+<span style="font-size:16px;line-height:24px;font-weight:500">Ten shares of Infosys on NSE at market, about ₹18,623. Paper account. Shall I place it?</span>
+</div>
+<div style="background:#0F1727;border:1px solid rgba(251,191,36,.35);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:0 0 0 4px rgba(251,191,36,.06)">
+<div style="display:flex;align-items:center;gap:8px">
+<span style="background:rgba(74,222,128,.14);color:#4ADE80;border:1px solid rgba(74,222,128,.45);border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800;letter-spacing:.06em">BUY</span>
+<span style="background:#3B2A07;color:#FCD34D;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800;letter-spacing:.06em">PAPER</span>
+<span style="flex:1"></span>
+<svg width="28" height="28" viewBox="0 0 28 28" style="transform:rotate(-90deg)"><circle cx="14" cy="14" r="11" fill="none" stroke="#FBBF24" stroke-opacity=".2" stroke-width="3"></circle><circle cx="14" cy="14" r="11" fill="none" stroke="#FBBF24" stroke-width="3" stroke-linecap="round" stroke-dasharray="48.4 69.1"></circle></svg>
+<span style="font-size:14px;font-weight:800;font-variant-numeric:tabular-nums">42s</span>
+</div>
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:44px;height:44px;border-radius:14px;background:rgba(99,102,241,.16);color:#A5B4FC;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">IN</div>
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:21px;font-weight:800;letter-spacing:-0.02em">10 × Infosys</span><span style="font-size:13px;color:#A9B4C6;font-weight:500">INFY · NSE · Market order</span></div>
+</div>
+<div style="background:#0B1220;border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;font-size:14px"><span style="flex:1;color:#A9B4C6">Estimated value</span><span style="font-weight:800;font-variant-numeric:tabular-nums">₹18,623.00</span></div>
+<div style="display:flex;font-size:14px"><span style="flex:1;color:#A9B4C6">Estimated fees</span><span style="font-weight:700;font-variant-numeric:tabular-nums">₹20.48</span></div>
+</div>
+<div style="display:flex;gap:24px;padding-top:2px">
+<span style="flex:1;height:52px;border-radius:16px;border:1px solid rgba(124,138,161,.4);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">Cancel</span>
+<span style="flex:1;height:52px;border-radius:16px;background:#2DD4BF;color:#042F2E;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;box-shadow:0 10px 24px -8px rgba(45,212,191,.6)">Confirm order</span>
+</div>
+</div>
+</div>
+<div style="margin:12px 16px 26px;background:#131C30;border:1px solid rgba(124,138,161,.16);border-radius:34px;padding:10px;display:flex;align-items:center;gap:10px;position:relative">
+<span style="width:56px;height:56px;border-radius:50%;background:#1B2538;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:24px;line-height:1">mic</span></span>
+<span style="width:56px;height:56px;border-radius:50%;background:#1B2538;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:24px;line-height:1">pause</span></span>
+<span style="width:56px;height:56px;border-radius:50%;background:#1B2538;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:24px;line-height:1">keyboard</span></span>
+<span style="flex:1;height:56px;border-radius:28px;background:#F87171;color:#2A0A0A;display:flex;align-items:center;justify-content:center;gap:8px"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:24px;line-height:1">call_end</span><span style="font-size:15px;font-weight:800">End</span></span>
+</div>
+</div>
+</div>
+
+<div id="06" data-screen-label="06 Portfolio" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;font-weight:800;color:#042F2E;background:#2DD4BF;border-radius:6px;padding:3px 7px">06</span><span style="font-size:15px;font-weight:600;color:#A9B4C6">Portfolio · full scroll</span></div>
+<div style="width:390px;border-radius:44px;overflow:hidden;background:#0B1220;position:relative;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(124,138,161,.18),0 40px 80px -20px rgba(0,0,0,.7)">
+<div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-weight:700;font-size:15px;flex:none"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">wifi</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:19px;line-height:1">battery_full</span></span></div>
+<div style="display:flex;align-items:center;gap:6px;padding:10px 16px 4px 20px">
+<span style="font-size:28px;font-weight:800;letter-spacing:-0.03em;flex:1">Portfolio</span>
+<span style="width:40px;height:40px;border-radius:13px;background:#131C30;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:21px;line-height:1">sort</span></span>
+<span style="width:40px;height:40px;border-radius:13px;background:#131C30;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:21px;line-height:1">refresh</span></span>
+</div>
+<div style="padding:12px 16px 124px;display:flex;flex-direction:column;gap:18px">
+<span style="display:flex;align-self:flex-start;background:#131C30;border-radius:999px;padding:4px;gap:2px"><span style="background:#2DD4BF;color:#042F2E;border-radius:999px;padding:7px 18px;font-size:13px;font-weight:800">INR</span><span style="color:#A9B4C6;border-radius:999px;padding:7px 18px;font-size:13px;font-weight:800">USD</span></span>
+<div style="display:flex;flex-direction:column;gap:6px;padding:0 4px">
+<span style="font-size:13px;font-weight:700;color:#A9B4C6">Total value</span>
+<span style="font-size:42px;line-height:46px;font-weight:800;letter-spacing:-0.035em;font-variant-numeric:tabular-nums">₹10,38,420</span>
+<span style="display:flex;align-items:center;gap:8px"><span style="background:rgba(74,222,128,.12);color:#4ADE80;border-radius:8px;padding:3px 8px;font-size:12px;font-weight:800">▲ 0.80%</span><span style="font-size:14px;font-weight:700;color:#4ADE80;font-variant-numeric:tabular-nums">+₹8,214 today</span></span>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;overflow:hidden">
+<div style="padding:14px 18px;display:flex;flex-direction:column;gap:3px;border-right:1px solid rgba(124,138,161,.12);border-bottom:1px solid rgba(124,138,161,.12)"><span style="font-size:12px;font-weight:700;color:#A9B4C6">Cash</span><span style="font-size:17px;font-weight:800;font-variant-numeric:tabular-nums">₹6,42,180</span></div>
+<div style="padding:14px 18px;display:flex;flex-direction:column;gap:3px;border-bottom:1px solid rgba(124,138,161,.12)"><span style="font-size:12px;font-weight:700;color:#A9B4C6">Invested</span><span style="font-size:17px;font-weight:800;font-variant-numeric:tabular-nums">₹3,96,238</span></div>
+<div style="padding:14px 18px;display:flex;flex-direction:column;gap:3px;border-right:1px solid rgba(124,138,161,.12)"><span style="font-size:12px;font-weight:700;color:#A9B4C6">Unrealised</span><span style="font-size:17px;font-weight:800;color:#4ADE80;font-variant-numeric:tabular-nums">+₹10,772</span></div>
+<div style="padding:14px 18px;display:flex;flex-direction:column;gap:3px"><span style="font-size:12px;font-weight:700;color:#A9B4C6">Realised</span><span style="font-size:17px;font-weight:800;color:#4ADE80;font-variant-numeric:tabular-nums">+₹3,410</span></div>
+</div>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;padding:16px 16px 12px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:flex-start"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;font-weight:700;color:#A9B4C6">Account value</span><span style="font-size:20px;font-weight:800;font-variant-numeric:tabular-nums">₹10,38,420</span></div><span style="font-size:13px;font-weight:800;color:#4ADE80;padding-top:4px">▲ 3.84%</span></div>
+<svg viewBox="0 0 326 130" preserveAspectRatio="none" style="width:100%;height:130px"><defs><linearGradient id="pv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4ADE80" stop-opacity=".28"></stop><stop offset="1" stop-color="#4ADE80" stop-opacity="0"></stop></linearGradient></defs><line x1="0" y1="32" x2="326" y2="32" stroke="rgba(124,138,161,.12)" stroke-dasharray="3 5"></line><line x1="0" y1="72" x2="326" y2="72" stroke="rgba(124,138,161,.12)" stroke-dasharray="3 5"></line><polygon points="0,104 20,100 40,106 60,96 80,98 100,88 120,92 140,80 160,84 180,74 200,78 220,62 240,66 260,52 280,56 300,40 326,30 326,130 0,130" fill="url(#pv)"></polygon><polyline points="0,104 20,100 40,106 60,96 80,98 100,88 120,92 140,80 160,84 180,74 200,78 220,62 240,66 260,52 280,56 300,40 326,30" fill="none" stroke="#4ADE80" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"></polyline><circle cx="326" cy="30" r="4" fill="#4ADE80"></circle></svg>
+<span style="font-size:11px;font-weight:600;color:#7C8AA1">Since your first trade</span>
+</div>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<span style="font-size:13px;font-weight:700;color:#A9B4C6">Allocation</span>
+<div style="display:flex;height:12px;border-radius:999px;overflow:hidden;gap:2px"><span style="width:11.4%;background:#14B8A6"></span><span style="width:9.9%;background:#6366F1"></span><span style="width:9%;background:#F59E0B"></span><span style="width:7.9%;background:#EC4899"></span><span style="flex:1;background:#64748B"></span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 16px">
+<div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="width:8px;height:8px;border-radius:50%;background:#14B8A6"></span><span style="flex:1">Reliance</span><span style="font-weight:800;font-variant-numeric:tabular-nums">11.4%</span></div>
+<div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="width:8px;height:8px;border-radius:50%;background:#6366F1"></span><span style="flex:1">HDFC Bank</span><span style="font-weight:800;font-variant-numeric:tabular-nums">9.9%</span></div>
+<div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="width:8px;height:8px;border-radius:50%;background:#F59E0B"></span><span style="flex:1">Infosys</span><span style="font-weight:800;font-variant-numeric:tabular-nums">9.0%</span></div>
+<div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="width:8px;height:8px;border-radius:50%;background:#EC4899"></span><span style="flex:1">Tata Motors</span><span style="font-weight:800;font-variant-numeric:tabular-nums">7.9%</span></div>
+<div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="width:8px;height:8px;border-radius:50%;background:#64748B"></span><span style="flex:1">Cash</span><span style="font-weight:800;font-variant-numeric:tabular-nums">61.8%</span></div>
+</div>
+</div>
+<div style="display:flex;align-items:center;padding:4px 4px 0"><span style="font-size:18px;font-weight:800;flex:1">Holdings (4)</span><span style="font-size:13px;font-weight:700;color:#A9B4C6">Sorted by value</span></div>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;display:flex;flex-direction:column">
+<div style="display:flex;padding:14px 18px;gap:10px;background:linear-gradient(180deg,rgba(74,222,128,.06),transparent);border-bottom:1px solid rgba(124,138,161,.12);border-radius:24px 24px 0 0">
+<div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:11px;font-weight:700;color:#A9B4C6">Invested</span><span style="font-size:14px;font-weight:800;font-variant-numeric:tabular-nums">₹3,85,466</span></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:11px;font-weight:700;color:#A9B4C6">Current</span><span style="font-size:14px;font-weight:800;font-variant-numeric:tabular-nums">₹3,96,238</span></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:2px;align-items:flex-end"><span style="font-size:11px;font-weight:700;color:#A9B4C6">P&amp;L</span><span style="font-size:14px;font-weight:800;color:#4ADE80;font-variant-numeric:tabular-nums">+₹10,772 · 2.79%</span></div>
+</div>
+<div style="display:flex;align-items:center;gap:14px;padding:13px 16px"><div style="width:42px;height:42px;border-radius:14px;background:rgba(20,184,166,.16);color:#5EEAD4;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">RE</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700">Reliance Industries</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">Qty 40 · avg ₹2,795.60</span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">₹1,17,944</span><span style="font-size:12px;font-weight:700;color:#4ADE80;font-variant-numeric:tabular-nums">+₹6,120 (+5.47%)</span></div></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin-left:72px"></div>
+<div style="display:flex;align-items:center;gap:14px;padding:13px 16px"><div style="width:42px;height:42px;border-radius:14px;background:rgba(59,130,246,.16);color:#93C5FD;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">HD</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700">HDFC Bank</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">Qty 60 · avg ₹1,639.45</span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">₹1,02,747</span><span style="font-size:12px;font-weight:700;color:#4ADE80;font-variant-numeric:tabular-nums">+₹4,380 (+4.45%)</span></div></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin-left:72px"></div>
+<div style="display:flex;align-items:center;gap:14px;padding:13px 16px"><div style="width:42px;height:42px;border-radius:14px;background:rgba(99,102,241,.16);color:#A5B4FC;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">IN</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700">Infosys</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">Qty 50 · avg ₹1,899.10</span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">₹93,115</span><span style="font-size:12px;font-weight:700;color:#F87171;font-variant-numeric:tabular-nums">−₹1,840 (−1.94%)</span></div></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin-left:72px"></div>
+<div style="display:flex;align-items:center;gap:14px;padding:13px 16px"><div style="width:42px;height:42px;border-radius:14px;background:rgba(236,72,153,.16);color:#F9A8D4;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">TA</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700">Tata Motors</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">Qty 80 · avg ₹1,004.00</span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">₹82,432</span><span style="font-size:12px;font-weight:700;color:#4ADE80;font-variant-numeric:tabular-nums">+₹2,112 (+2.63%)</span></div></div>
+</div>
+</div>
+<div style="position:absolute;left:16px;right:16px;bottom:22px;height:68px;border-radius:26px;background:rgba(19,28,48,.94);border:1px solid rgba(124,138,161,.18);box-shadow:0 20px 40px -10px rgba(0,0,0,.7);display:flex;align-items:center;justify-content:space-around;padding:0 6px">
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:62px;color:#7C8AA1"><span style="font-family:'Material Symbols Rounded';font-size:24px;line-height:1">home</span><span style="font-size:11px;font-weight:700">Home</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:62px;color:#2DD4BF"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:24px;line-height:1">account_balance_wallet</span><span style="font-size:11px;font-weight:800">Portfolio</span></div>
+<sc-if value="{{ micInNav }}" hint-placeholder-val="{{ true }}"><div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(145deg,#2DD4BF,#0F766E);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px -4px rgba(45,212,191,.6);margin-top:-30px;border:4px solid #0B1220;flex:none"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:26px;line-height:1;color:#042F2E">mic</span></div></sc-if>
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:62px;color:#7C8AA1"><span style="font-family:'Material Symbols Rounded';font-size:24px;line-height:1">list_alt</span><span style="font-size:11px;font-weight:700">Orders</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:62px;color:#7C8AA1"><span style="font-family:'Material Symbols Rounded';font-size:24px;line-height:1">visibility</span><span style="font-size:11px;font-weight:700">Watchlist</span></div>
+</div>
+</div>
+</div>
+
+<div id="07" data-screen-label="07 Orders" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;font-weight:800;color:#042F2E;background:#2DD4BF;border-radius:6px;padding:3px 7px">07</span><span style="font-size:15px;font-weight:600;color:#A9B4C6">Orders</span></div>
+<div style="width:390px;height:844px;border-radius:44px;overflow:hidden;background:#0B1220;position:relative;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(124,138,161,.18),0 40px 80px -20px rgba(0,0,0,.7)">
+<div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-weight:700;font-size:15px;flex:none"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">wifi</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:19px;line-height:1">battery_full</span></span></div>
+<div style="display:flex;align-items:center;gap:10px;padding:10px 16px 4px 20px">
+<span style="font-size:28px;font-weight:800;letter-spacing:-0.03em">Orders</span>
+<span style="background:#3B2A07;color:#FCD34D;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800;letter-spacing:.06em">PAPER</span>
+<span style="flex:1"></span>
+<span style="width:40px;height:40px;border-radius:13px;background:#131C30;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:21px;line-height:1">refresh</span></span>
+</div>
+<div style="padding:14px 16px 0;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;background:#131C30;border-radius:16px;padding:4px;gap:4px">
+<span style="flex:1;text-align:center;background:#1B2538;border:1px solid rgba(124,138,161,.2);border-radius:12px;padding:9px 0;font-size:14px;font-weight:800">Open <span style="color:#2DD4BF">2</span></span>
+<span style="flex:1;text-align:center;border-radius:12px;padding:10px 0;font-size:14px;font-weight:700;color:#A9B4C6">Filled <span style="color:#7C8AA1">5</span></span>
+</div>
+<div style="display:flex;align-items:center;gap:8px;padding:0 4px;font-size:12px;font-weight:600;color:#7C8AA1"><span style="width:6px;height:6px;border-radius:50%;background:#60A5FA;animation:vtBlink 1.4s ease-in-out infinite"></span>Working orders update on their own</div>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:8px"><span style="background:rgba(96,165,250,.14);color:#60A5FA;border:1px solid rgba(96,165,250,.45);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700">Working</span><span style="flex:1"></span><span style="font-size:12px;color:#7C8AA1;font-weight:600">10:42</span></div>
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:44px;height:44px;border-radius:14px;background:rgba(236,72,153,.16);color:#F9A8D4;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">TA</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:17px;font-weight:800"><span style="color:#4ADE80">BUY</span> 25 × Tata Motors</span><span style="font-size:13px;color:#A9B4C6">Limit at ₹1,020.00 · Now ₹1,030.40</span></div>
+</div>
+<div style="display:flex;align-items:center;border-top:1px solid rgba(124,138,161,.12);padding-top:12px"><span style="flex:1;font-size:12px;color:#7C8AA1;font-weight:600">Order OV-24817</span><span style="border:1px solid rgba(248,113,113,.45);color:#F87171;border-radius:12px;padding:8px 14px;font-size:13px;font-weight:700">Cancel order</span></div>
+</div>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:8px"><span style="background:rgba(96,165,250,.14);color:#60A5FA;border:1px solid rgba(96,165,250,.45);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700">Partly filled 20 of 50</span><span style="flex:1"></span><span style="font-size:12px;color:#7C8AA1;font-weight:600">10:15</span></div>
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:44px;height:44px;border-radius:14px;background:rgba(245,158,11,.16);color:#FCD34D;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">WI</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:17px;font-weight:800"><span style="color:#F87171">SELL</span> 50 × Wipro</span><span style="font-size:13px;color:#A9B4C6">Filled at ₹534.40 · Limit ₹534.00</span></div>
+</div>
+<div style="height:6px;border-radius:3px;background:#1B2538;overflow:hidden"><div style="width:40%;height:100%;background:#60A5FA;border-radius:3px"></div></div>
+<div style="display:flex;align-items:center;border-top:1px solid rgba(124,138,161,.12);padding-top:12px"><span style="flex:1;font-size:12px;color:#7C8AA1;font-weight:600">Order OV-24802</span><span style="border:1px solid rgba(248,113,113,.45);color:#F87171;border-radius:12px;padding:8px 14px;font-size:13px;font-weight:700">Cancel order</span></div>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px dashed rgba(124,138,161,.28);border-radius:20px">
+<span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:22px;line-height:1;color:#2DD4BF">mic</span>
+<span style="font-size:13px;line-height:19px;color:#A9B4C6">Say <span style="color:#E8EDF5;font-weight:700">"cancel my Tata Motors order"</span> to cancel by voice.</span>
+</div>
+</div>
+<div style="position:absolute;left:16px;right:16px;bottom:22px;height:68px;border-radius:26px;background:rgba(19,28,48,.94);border:1px solid rgba(124,138,161,.18);box-shadow:0 20px 40px -10px rgba(0,0,0,.7);display:flex;align-items:center;justify-content:space-around;padding:0 6px">
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:62px;color:#7C8AA1"><span style="font-family:'Material Symbols Rounded';font-size:24px;line-height:1">home</span><span style="font-size:11px;font-weight:700">Home</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:62px;color:#7C8AA1"><span style="font-family:'Material Symbols Rounded';font-size:24px;line-height:1">account_balance_wallet</span><span style="font-size:11px;font-weight:700">Portfolio</span></div>
+<sc-if value="{{ micInNav }}" hint-placeholder-val="{{ true }}"><div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(145deg,#2DD4BF,#0F766E);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px -4px rgba(45,212,191,.6);margin-top:-30px;border:4px solid #0B1220;flex:none"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:26px;line-height:1;color:#042F2E">mic</span></div></sc-if>
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:62px;color:#2DD4BF"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:24px;line-height:1">list_alt</span><span style="font-size:11px;font-weight:800">Orders</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:62px;color:#7C8AA1"><span style="font-family:'Material Symbols Rounded';font-size:24px;line-height:1">visibility</span><span style="font-size:11px;font-weight:700">Watchlist</span></div>
+</div>
+</div>
+</div>
+
+<div id="08" data-screen-label="08 Watchlist" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;font-weight:800;color:#042F2E;background:#2DD4BF;border-radius:6px;padding:3px 7px">08</span><span style="font-size:15px;font-weight:600;color:#A9B4C6">Watchlist</span></div>
+<div style="width:390px;height:844px;border-radius:44px;overflow:hidden;background:#0B1220;position:relative;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(124,138,161,.18),0 40px 80px -20px rgba(0,0,0,.7)">
+<div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-weight:700;font-size:15px;flex:none"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">wifi</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:19px;line-height:1">battery_full</span></span></div>
+<div style="display:flex;align-items:center;gap:10px;padding:10px 16px 4px 20px">
+<span style="font-size:28px;font-weight:800;letter-spacing:-0.03em;flex:1">Watchlist</span>
+<span style="width:40px;height:40px;border-radius:13px;background:#2DD4BF;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:24px;line-height:1;color:#042F2E">add</span></span>
+</div>
+<div style="padding:12px 16px 0;display:flex;flex-direction:column;gap:12px">
+<div style="height:48px;border-radius:16px;background:#131C30;border:1px solid rgba(124,138,161,.16);display:flex;align-items:center;gap:10px;padding:0 14px"><span style="font-family:'Material Symbols Rounded';font-size:22px;line-height:1;color:#7C8AA1">search</span><span style="font-size:14px;color:#7C8AA1;font-weight:500">Search company or symbol</span></div>
+<div style="display:flex;align-items:center;gap:8px;padding:0 4px"><span style="width:7px;height:7px;border-radius:50%;background:#4ADE80;box-shadow:0 0 0 4px rgba(74,222,128,.15);animation:vtBlink 1.6s ease-in-out infinite"></span><span style="font-size:12px;font-weight:600;color:#A9B4C6;flex:1">Live prices, refreshing every 5 seconds</span><span style="font-size:12px;font-weight:600;color:#7C8AA1">6 of 20</span></div>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:12px;padding:13px 6px 13px 16px"><div style="width:42px;height:42px;border-radius:14px;background:rgba(236,72,153,.16);color:#F9A8D4;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">TA</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Tata Motors</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">TATAMOTORS · NSE</span></div><svg viewBox="0 0 50 22" style="width:50px;height:22px;flex:none"><polyline points="0,16 8,14 16,15 24,10 32,11 40,6 50,5" fill="none" stroke="#4ADE80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline></svg><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;width:84px"><span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">₹1,030.40</span><span style="font-size:12px;font-weight:800;color:#4ADE80;font-variant-numeric:tabular-nums">▲ 1.12%</span></div><span style="font-family:'Material Symbols Rounded';font-size:20px;line-height:1;color:#7C8AA1;padding:8px 4px">more_vert</span></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin-left:70px"></div>
+<div style="display:flex;align-items:center;gap:12px;padding:13px 6px 13px 16px"><div style="width:42px;height:42px;border-radius:14px;background:rgba(245,158,11,.16);color:#FCD34D;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">ZO</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Zomato</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">ZOMATO · NSE</span></div><svg viewBox="0 0 50 22" style="width:50px;height:22px;flex:none"><polyline points="0,18 8,17 16,12 24,13 32,8 40,9 50,3" fill="none" stroke="#4ADE80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline></svg><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;width:84px"><span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">₹262.15</span><span style="font-size:12px;font-weight:800;color:#4ADE80;font-variant-numeric:tabular-nums">▲ 2.34%</span></div><span style="font-family:'Material Symbols Rounded';font-size:20px;line-height:1;color:#7C8AA1;padding:8px 4px">more_vert</span></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin-left:70px"></div>
+<div style="display:flex;align-items:center;gap:12px;padding:13px 6px 13px 16px"><div style="width:42px;height:42px;border-radius:14px;background:rgba(16,185,129,.16);color:#6EE7B7;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">IT</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">ITC</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">ITC · NSE</span></div><svg viewBox="0 0 50 22" style="width:50px;height:22px;flex:none"><polyline points="0,5 8,7 16,6 24,11 32,10 40,15 50,17" fill="none" stroke="#F87171" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline></svg><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;width:84px"><span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">₹478.65</span><span style="font-size:12px;font-weight:800;color:#F87171;font-variant-numeric:tabular-nums">▼ 1.10%</span></div><span style="font-family:'Material Symbols Rounded';font-size:20px;line-height:1;color:#7C8AA1;padding:8px 4px">more_vert</span></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin-left:70px"></div>
+<div style="display:flex;align-items:center;gap:12px;padding:13px 6px 13px 16px"><div style="width:42px;height:42px;border-radius:14px;background:rgba(99,102,241,.16);color:#A5B4FC;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">AA</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Apple</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">AAPL · NASDAQ</span></div><svg viewBox="0 0 50 22" style="width:50px;height:22px;flex:none"><polyline points="0,14 8,12 16,14 24,11 32,12 40,9 50,9" fill="none" stroke="#4ADE80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline></svg><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;width:84px"><span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">$228.20</span><span style="font-size:12px;font-weight:800;color:#4ADE80;font-variant-numeric:tabular-nums">▲ 0.42%</span></div><span style="font-family:'Material Symbols Rounded';font-size:20px;line-height:1;color:#7C8AA1;padding:8px 4px">more_vert</span></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin-left:70px"></div>
+<div style="display:flex;align-items:center;gap:12px;padding:13px 6px 13px 16px"><div style="width:42px;height:42px;border-radius:14px;background:rgba(20,184,166,.16);color:#5EEAD4;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">TI</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Titan Company</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">TITAN · NSE</span></div><svg viewBox="0 0 50 22" style="width:50px;height:22px;flex:none"><polyline points="0,9 8,10 16,8 24,12 32,11 40,13 50,12" fill="none" stroke="#F87171" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline></svg><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;width:84px"><span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">₹3,412.00</span><span style="font-size:12px;font-weight:800;color:#F87171;font-variant-numeric:tabular-nums">▼ 0.38%</span></div><span style="font-family:'Material Symbols Rounded';font-size:20px;line-height:1;color:#7C8AA1;padding:8px 4px">more_vert</span></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin-left:70px"></div>
+<div style="display:flex;align-items:center;gap:12px;padding:13px 6px 13px 16px"><div style="width:42px;height:42px;border-radius:14px;background:rgba(59,130,246,.16);color:#93C5FD;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">SB</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">State Bank of India</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">SBIN · NSE</span></div><svg viewBox="0 0 50 22" style="width:50px;height:22px;flex:none"><polyline points="0,15 8,13 16,14 24,10 32,12 40,8 50,8" fill="none" stroke="#4ADE80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polyline></svg><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;width:84px"><span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">₹812.55</span><span style="font-size:12px;font-weight:800;color:#4ADE80;font-variant-numeric:tabular-nums">▲ 0.91%</span></div><span style="font-family:'Material Symbols Rounded';font-size:20px;line-height:1;color:#7C8AA1;padding:8px 4px">more_vert</span></div>
+</div>
+</div>
+<div style="position:absolute;left:16px;right:16px;bottom:22px;height:68px;border-radius:26px;background:rgba(19,28,48,.94);border:1px solid rgba(124,138,161,.18);box-shadow:0 20px 40px -10px rgba(0,0,0,.7);display:flex;align-items:center;justify-content:space-around;padding:0 6px">
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:62px;color:#7C8AA1"><span style="font-family:'Material Symbols Rounded';font-size:24px;line-height:1">home</span><span style="font-size:11px;font-weight:700">Home</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:62px;color:#7C8AA1"><span style="font-family:'Material Symbols Rounded';font-size:24px;line-height:1">account_balance_wallet</span><span style="font-size:11px;font-weight:700">Portfolio</span></div>
+<sc-if value="{{ micInNav }}" hint-placeholder-val="{{ true }}"><div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(145deg,#2DD4BF,#0F766E);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px -4px rgba(45,212,191,.6);margin-top:-30px;border:4px solid #0B1220;flex:none"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:26px;line-height:1;color:#042F2E">mic</span></div></sc-if>
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:62px;color:#7C8AA1"><span style="font-family:'Material Symbols Rounded';font-size:24px;line-height:1">list_alt</span><span style="font-size:11px;font-weight:700">Orders</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:62px;color:#2DD4BF"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:24px;line-height:1">visibility</span><span style="font-size:11px;font-weight:800">Watchlist</span></div>
+</div>
+</div>
+</div>
+
+<div id="09" data-screen-label="09 Stock detail" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;font-weight:800;color:#042F2E;background:#2DD4BF;border-radius:6px;padding:3px 7px">09</span><span style="font-size:15px;font-weight:600;color:#A9B4C6">Stock detail · full scroll</span></div>
+<div style="width:390px;border-radius:44px;overflow:hidden;background:#0B1220;position:relative;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(124,138,161,.18),0 40px 80px -20px rgba(0,0,0,.7)">
+<div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-weight:700;font-size:15px;flex:none"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">wifi</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:19px;line-height:1">battery_full</span></span></div>
+<div style="display:flex;align-items:center;gap:6px;padding:8px 16px">
+<span style="width:40px;height:40px;border-radius:13px;background:#131C30;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:21px;line-height:1">arrow_back</span></span>
+<span style="flex:1;text-align:center;font-size:15px;font-weight:800;letter-spacing:.04em">RELIANCE</span>
+<span style="width:40px;height:40px;border-radius:13px;background:#131C30;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:21px;line-height:1">notifications</span></span>
+</div>
+<div style="padding:10px 16px 150px;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;flex-direction:column;gap:14px;padding:0 4px">
+<div style="display:flex;align-items:center;gap:14px">
+<div style="width:52px;height:52px;border-radius:16px;background:rgba(20,184,166,.16);color:#5EEAD4;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex:none">RE</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.02em">Reliance Industries</span><span style="font-size:13px;color:#A9B4C6;font-weight:600">RELIANCE · NSE</span></div>
+<span style="display:flex;align-items:center;gap:6px;background:rgba(74,222,128,.12);color:#4ADE80;border:1px solid rgba(74,222,128,.35);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700"><span style="width:6px;height:6px;border-radius:50%;background:#4ADE80"></span>Open</span>
+</div>
+<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><span style="font-size:42px;line-height:46px;font-weight:800;letter-spacing:-0.035em;font-variant-numeric:tabular-nums">₹2,948.60</span><span style="font-size:14px;font-weight:800;color:#4ADE80;font-variant-numeric:tabular-nums">▲ 1.24%  +₹36.10</span></div>
+</div>
+<div style="display:flex;background:#131C30;border-radius:14px;padding:4px;gap:2px">
+<span style="flex:1;text-align:center;padding:8px 0;font-size:13px;font-weight:800;color:#A9B4C6">1D</span><span style="flex:1;text-align:center;padding:8px 0;font-size:13px;font-weight:800;color:#A9B4C6">1W</span><span style="flex:1;text-align:center;padding:8px 0;font-size:13px;font-weight:800;background:#2DD4BF;color:#042F2E;border-radius:10px">1M</span><span style="flex:1;text-align:center;padding:8px 0;font-size:13px;font-weight:800;color:#A9B4C6">6M</span><span style="flex:1;text-align:center;padding:8px 0;font-size:13px;font-weight:800;color:#A9B4C6">1Y</span><span style="flex:1;text-align:center;padding:8px 0;font-size:13px;font-weight:800;color:#A9B4C6">5Y</span>
+</div>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;padding:16px 16px 14px;display:flex;flex-direction:column;gap:10px">
+<svg viewBox="0 0 326 190" preserveAspectRatio="none" style="width:100%;height:190px"><defs><linearGradient id="sd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4ADE80" stop-opacity=".26"></stop><stop offset="1" stop-color="#4ADE80" stop-opacity="0"></stop></linearGradient></defs><line x1="0" y1="48" x2="326" y2="48" stroke="rgba(124,138,161,.12)" stroke-dasharray="3 5"></line><line x1="0" y1="96" x2="326" y2="96" stroke="rgba(124,138,161,.12)" stroke-dasharray="3 5"></line><line x1="0" y1="144" x2="326" y2="144" stroke="rgba(124,138,161,.12)" stroke-dasharray="3 5"></line><polygon points="0,140 16,132 32,138 48,124 64,128 80,116 96,122 112,108 128,114 144,98 160,104 176,110 192,92 208,96 224,80 240,86 256,70 272,76 288,58 304,62 326,44 326,190 0,190" fill="url(#sd)"></polygon><polyline points="0,140 16,132 32,138 48,124 64,128 80,116 96,122 112,108 128,114 144,98 160,104 176,110 192,92 208,96 224,80 240,86 256,70 272,76 288,58 304,62 326,44" fill="none" stroke="#4ADE80" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"></polyline><line x1="224" y1="0" x2="224" y2="190" stroke="rgba(232,237,245,.35)" stroke-dasharray="2 4"></line><circle cx="224" cy="80" r="5" fill="#0B1220" stroke="#4ADE80" stroke-width="2.5"></circle></svg>
+<div style="display:flex;font-size:12px;font-weight:600;color:#A9B4C6;font-variant-numeric:tabular-nums"><span style="flex:1">Low ₹2,812.40</span><span>High ₹2,961.00</span></div>
+</div>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:10px">
+<div style="position:relative;height:14px;display:flex;align-items:center"><div style="position:absolute;left:0;right:0;height:6px;border-radius:3px;background:#1B2538"></div><div style="position:absolute;left:0;width:73%;height:6px;border-radius:3px;background:linear-gradient(90deg,rgba(45,212,191,.15),rgba(45,212,191,.6))"></div><div style="position:absolute;left:73%;margin-left:-7px;width:14px;height:14px;border-radius:50%;background:#2DD4BF;box-shadow:0 0 0 4px rgba(45,212,191,.2)"></div></div>
+<div style="display:flex;font-size:11px;font-weight:600;color:#A9B4C6;font-variant-numeric:tabular-nums"><span>₹2,220.30</span><span style="flex:1;text-align:center">52-week range</span><span>₹3,217.90</span></div>
+</div>
+<span style="font-size:18px;font-weight:800;padding:4px 4px 0">About the company</span>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;overflow:hidden">
+<div style="padding:14px;display:flex;flex-direction:column;gap:3px;border-right:1px solid rgba(124,138,161,.12);border-bottom:1px solid rgba(124,138,161,.12)"><span style="font-size:11px;font-weight:700;color:#A9B4C6">Market cap</span><span style="font-size:14px;font-weight:800">₹19.9L Cr</span></div>
+<div style="padding:14px;display:flex;flex-direction:column;gap:3px;border-right:1px solid rgba(124,138,161,.12);border-bottom:1px solid rgba(124,138,161,.12)"><span style="font-size:11px;font-weight:700;color:#A9B4C6">P/E</span><span style="font-size:14px;font-weight:800">28.4</span></div>
+<div style="padding:14px;display:flex;flex-direction:column;gap:3px;border-bottom:1px solid rgba(124,138,161,.12)"><span style="font-size:11px;font-weight:700;color:#A9B4C6">Div. yield</span><span style="font-size:14px;font-weight:800">0.34%</span></div>
+<div style="padding:14px;display:flex;flex-direction:column;gap:3px;border-right:1px solid rgba(124,138,161,.12)"><span style="font-size:11px;font-weight:700;color:#A9B4C6">EPS</span><span style="font-size:14px;font-weight:800">₹103.8</span></div>
+<div style="padding:14px;display:flex;flex-direction:column;gap:3px;border-right:1px solid rgba(124,138,161,.12)"><span style="font-size:11px;font-weight:700;color:#A9B4C6">Volume</span><span style="font-size:14px;font-weight:800">6.2M</span></div>
+<div style="padding:14px;display:flex;flex-direction:column;gap:3px"><span style="font-size:11px;font-weight:700;color:#A9B4C6">Sector</span><span style="font-size:14px;font-weight:800">Energy</span></div>
+</div>
+<span style="font-size:18px;font-weight:800;padding:4px 4px 0">In the news</span>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;display:flex;flex-direction:column">
+<div style="padding:14px 16px;display:flex;flex-direction:column;gap:6px"><span style="font-size:15px;line-height:21px;font-weight:700;text-wrap:pretty">Reliance Retail expands quick-commerce to 40 more cities</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">Economic Times · 2h ago</span></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin:0 16px"></div>
+<div style="padding:14px 16px;display:flex;flex-direction:column;gap:6px"><span style="font-size:15px;line-height:21px;font-weight:700;text-wrap:pretty">Jio Platforms subscriber base crosses 490 million</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">Mint · 5h ago</span></div>
+</div>
+</div>
+<div style="position:absolute;left:0;right:0;bottom:0;padding:28px 16px 26px;background:linear-gradient(180deg,rgba(11,18,32,0),#0B1220 36%);display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;gap:8px">
+<span style="flex:1;height:36px;border-radius:12px;background:#131C30;border:1px solid rgba(124,138,161,.18);display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:18px;line-height:1">visibility</span>Watch</span>
+<span style="flex:1;height:36px;border-radius:12px;background:#131C30;border:1px solid rgba(124,138,161,.18);display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:18px;line-height:1">add_alert</span>Alert</span>
+<span style="flex:1.3;height:36px;border-radius:12px;background:rgba(45,212,191,.12);border:1px solid rgba(45,212,191,.35);color:#2DD4BF;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:800"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:18px;line-height:1">mic</span>Ask Mira</span>
+</div>
+<div style="display:flex;gap:10px">
+<span style="flex:1;height:54px;border-radius:18px;background:rgba(248,113,113,.14);border:1px solid rgba(248,113,113,.4);color:#F87171;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800">Sell</span>
+<span style="flex:1;height:54px;border-radius:18px;background:#2DD4BF;color:#042F2E;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;box-shadow:0 10px 24px -8px rgba(45,212,191,.6)">Buy</span>
+</div>
+</div>
+</div>
+</div>
+
+<div id="10" data-screen-label="10 IPOs" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;font-weight:800;color:#042F2E;background:#2DD4BF;border-radius:6px;padding:3px 7px">10</span><span style="font-size:15px;font-weight:600;color:#A9B4C6">IPOs</span></div>
+<div style="width:390px;height:844px;border-radius:44px;overflow:hidden;background:#0B1220;position:relative;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(124,138,161,.18),0 40px 80px -20px rgba(0,0,0,.7)">
+<div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-weight:700;font-size:15px;flex:none"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">wifi</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:19px;line-height:1">battery_full</span></span></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 16px">
+<span style="width:40px;height:40px;border-radius:13px;background:#131C30;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:21px;line-height:1">arrow_back</span></span>
+<span style="font-size:24px;font-weight:800;letter-spacing:-0.02em;flex:1">IPOs</span>
+<span style="display:flex;background:#131C30;border-radius:999px;padding:3px;gap:2px"><span style="background:#2DD4BF;color:#042F2E;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:800">India</span><span style="color:#A9B4C6;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:800">US</span></span>
+</div>
+<div style="padding:10px 16px 0;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:8px;padding:0 4px"><span style="width:7px;height:7px;border-radius:50%;background:#4ADE80"></span><span style="font-size:16px;font-weight:800">Open now</span></div>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:flex-start;gap:12px">
+<div style="width:44px;height:44px;border-radius:14px;background:rgba(245,158,11,.16);color:#FCD34D;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">BP</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-size:16px;font-weight:800">Bharat Precision Castings</span><span style="font-size:12px;color:#A9B4C6;font-weight:600">Mainboard · closes 25 Sep</span></div>
+<span style="font-family:'Material Symbols Rounded';font-size:22px;line-height:1;color:#7C8AA1">chevron_right</span>
+</div>
+<div style="display:flex;gap:10px">
+<div style="flex:1;background:#0B1220;border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:2px"><span style="font-size:11px;font-weight:700;color:#A9B4C6">Price band</span><span style="font-size:14px;font-weight:800">₹440 – ₹463</span></div>
+<div style="flex:1;background:#0B1220;border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:2px"><span style="font-size:11px;font-weight:700;color:#A9B4C6">Lot size</span><span style="font-size:14px;font-weight:800">32 shares</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;font-size:12px;font-weight:700"><span style="flex:1;color:#A9B4C6">Subscribed</span><span style="color:#4ADE80">4.2×</span></div><div style="height:6px;border-radius:3px;background:#1B2538;overflow:hidden"><div style="width:100%;height:100%;background:linear-gradient(90deg,#2DD4BF,#4ADE80)"></div></div></div>
+</div>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:flex-start;gap:12px">
+<div style="width:44px;height:44px;border-radius:14px;background:rgba(16,185,129,.16);color:#6EE7B7;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">NA</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-size:16px;font-weight:800">Nirmal Agro Foods</span><span style="font-size:12px;color:#A9B4C6;font-weight:600">SME · closes 26 Sep</span></div>
+<span style="font-family:'Material Symbols Rounded';font-size:22px;line-height:1;color:#7C8AA1">chevron_right</span>
+</div>
+<div style="display:flex;gap:10px">
+<div style="flex:1;background:#0B1220;border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:2px"><span style="font-size:11px;font-weight:700;color:#A9B4C6">Price band</span><span style="font-size:14px;font-weight:800">₹92 – ₹97</span></div>
+<div style="flex:1;background:#0B1220;border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:2px"><span style="font-size:11px;font-weight:700;color:#A9B4C6">Lot size</span><span style="font-size:14px;font-weight:800">1,200 shares</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;font-size:12px;font-weight:700"><span style="flex:1;color:#A9B4C6">Subscribed</span><span style="color:#E8EDF5">0.6×</span></div><div style="height:6px;border-radius:3px;background:#1B2538;overflow:hidden"><div style="width:60%;height:100%;background:#2DD4BF"></div></div></div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;padding:6px 4px 0"><span style="width:7px;height:7px;border-radius:50%;background:#FBBF24"></span><span style="font-size:16px;font-weight:800">Coming soon</span></div>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:12px;padding:14px 16px"><div style="width:42px;height:42px;border-radius:14px;background:rgba(59,130,246,.16);color:#93C5FD;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">AR</div><div style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700">Aurum Renewables</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">Opens 29 Sep · ₹210 – ₹222</span></div><span style="font-family:'Material Symbols Rounded';font-size:22px;line-height:1;color:#7C8AA1">chevron_right</span></div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;padding:6px 4px 0"><span style="width:7px;height:7px;border-radius:50%;background:#818CF8"></span><span style="font-size:16px;font-weight:800">Just listed</span></div>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:12px;padding:14px 16px"><div style="width:42px;height:42px;border-radius:14px;background:rgba(99,102,241,.16);color:#A5B4FC;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none">KL</div><div style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700">Kaveri Logistics</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">Issue ₹310 · listed 19 Sep</span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">₹382.40</span><span style="font-size:12px;font-weight:800;color:#4ADE80">▲ 23.4%</span></div></div>
+</div>
+<span style="font-size:11px;color:#7C8AA1;font-weight:600;padding:4px 4px 0">Source: NSE India. Information only, not a recommendation.</span>
+</div>
+</div>
+</div>
+
+<div id="11" data-screen-label="11 History" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;font-weight:800;color:#042F2E;background:#2DD4BF;border-radius:6px;padding:3px 7px">11</span><span style="font-size:15px;font-weight:600;color:#A9B4C6">Session history</span></div>
+<div style="width:390px;height:844px;border-radius:44px;overflow:hidden;background:#0B1220;position:relative;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(124,138,161,.18),0 40px 80px -20px rgba(0,0,0,.7)">
+<div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-weight:700;font-size:15px;flex:none"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">wifi</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:19px;line-height:1">battery_full</span></span></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 16px">
+<span style="width:40px;height:40px;border-radius:13px;background:#131C30;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:21px;line-height:1">arrow_back</span></span>
+<span style="font-size:24px;font-weight:800;letter-spacing:-0.02em;flex:1">History</span>
+</div>
+<div style="padding:10px 16px 0;display:flex;flex-direction:column;gap:10px">
+<span style="font-size:11px;font-weight:800;letter-spacing:.1em;color:#7C8AA1;padding:0 4px">TODAY</span>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:14px;padding:14px 16px"><span style="width:42px;height:42px;border-radius:14px;background:rgba(45,212,191,.12);display:flex;align-items:center;justify-content:center;flex:none"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:22px;line-height:1;color:#2DD4BF">graphic_eq</span></span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Buy 10 Infosys at market</span><span style="display:flex;gap:6px;align-items:center;font-size:12px;color:#7C8AA1;font-weight:600">7:42 PM · 3 min<span style="background:rgba(74,222,128,.12);color:#4ADE80;border-radius:6px;padding:1px 6px;font-weight:800">1 order</span></span></div><span style="font-family:'Material Symbols Rounded';font-size:22px;line-height:1;color:#7C8AA1">chevron_right</span></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin-left:72px"></div>
+<div style="display:flex;align-items:center;gap:14px;padding:14px 16px"><span style="width:42px;height:42px;border-radius:14px;background:rgba(45,212,191,.12);display:flex;align-items:center;justify-content:center;flex:none"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:22px;line-height:1;color:#2DD4BF">graphic_eq</span></span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">How is Reliance doing today?</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">11:05 AM · 5 min</span></div><span style="font-family:'Material Symbols Rounded';font-size:22px;line-height:1;color:#7C8AA1">chevron_right</span></div>
+</div>
+<span style="font-size:11px;font-weight:800;letter-spacing:.1em;color:#7C8AA1;padding:8px 4px 0">YESTERDAY</span>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:14px;padding:14px 16px"><span style="width:42px;height:42px;border-radius:14px;background:rgba(129,140,248,.14);display:flex;align-items:center;justify-content:center;flex:none"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:22px;line-height:1;color:#818CF8">translate</span></span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">मेरे पास कितना कैश है?</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">8:20 PM · 2 min</span></div><span style="font-family:'Material Symbols Rounded';font-size:22px;line-height:1;color:#7C8AA1">chevron_right</span></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin-left:72px"></div>
+<div style="display:flex;align-items:center;gap:14px;padding:14px 16px"><span style="width:42px;height:42px;border-radius:14px;background:rgba(45,212,191,.12);display:flex;align-items:center;justify-content:center;flex:none"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:22px;line-height:1;color:#2DD4BF">graphic_eq</span></span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Which IPOs are open this week?</span><span style="font-size:12px;color:#7C8AA1;font-weight:600">1:12 PM · 4 min</span></div><span style="font-family:'Material Symbols Rounded';font-size:22px;line-height:1;color:#7C8AA1">chevron_right</span></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin-left:72px"></div>
+<div style="display:flex;align-items:center;gap:14px;padding:14px 16px"><span style="width:42px;height:42px;border-radius:14px;background:rgba(45,212,191,.12);display:flex;align-items:center;justify-content:center;flex:none"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:22px;line-height:1;color:#2DD4BF">graphic_eq</span></span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sell 50 Wipro at 534</span><span style="display:flex;gap:6px;align-items:center;font-size:12px;color:#7C8AA1;font-weight:600">10:14 AM · 2 min<span style="background:rgba(74,222,128,.12);color:#4ADE80;border-radius:6px;padding:1px 6px;font-weight:800">1 order</span></span></div><span style="font-family:'Material Symbols Rounded';font-size:22px;line-height:1;color:#7C8AA1">chevron_right</span></div>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px dashed rgba(124,138,161,.28);border-radius:20px;margin-top:6px">
+<span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:22px;line-height:1;color:#2DD4BF">play_circle</span>
+<span style="font-size:13px;line-height:19px;color:#A9B4C6">Open any session to read it back or continue the conversation with Mira.</span>
+</div>
+</div>
+</div>
+</div>
+
+<div id="12" data-screen-label="12 Settings" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;font-weight:800;color:#042F2E;background:#2DD4BF;border-radius:6px;padding:3px 7px">12</span><span style="font-size:15px;font-weight:600;color:#A9B4C6">Settings · full scroll</span></div>
+<div style="width:390px;border-radius:44px;overflow:hidden;background:#0B1220;position:relative;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(124,138,161,.18),0 40px 80px -20px rgba(0,0,0,.7)">
+<div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-weight:700;font-size:15px;flex:none"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:17px;line-height:1">wifi</span><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:19px;line-height:1">battery_full</span></span></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 16px">
+<span style="width:40px;height:40px;border-radius:13px;background:#131C30;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:21px;line-height:1">arrow_back</span></span>
+<span style="font-size:24px;font-weight:800;letter-spacing:-0.02em;flex:1">Settings</span>
+</div>
+<div style="padding:10px 16px 40px;display:flex;flex-direction:column;gap:10px">
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;padding:16px;display:flex;align-items:center;gap:14px">
+<div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#2DD4BF,#818CF8);display:flex;align-items:center;justify-content:center;color:#042F2E;font-weight:800;font-size:21px;flex:none">A</div>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:17px;font-weight:800">Aarav Mehta</span><span style="font-size:12px;color:#A9B4C6;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Signed in as aarav.mehta@gmail.com</span></div>
+<span style="background:#3B2A07;color:#FCD34D;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800;letter-spacing:.06em">PAPER</span>
+</div>
+<span style="font-size:11px;font-weight:800;letter-spacing:.1em;color:#7C8AA1;padding:12px 4px 0">VOICE</span>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;display:flex;flex-direction:column">
+<div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px"><span style="font-size:14px;font-weight:700">Language (screens and voice)</span><div style="display:flex;background:#0B1220;border-radius:12px;padding:3px;gap:3px"><span style="flex:1;text-align:center;background:#2DD4BF;color:#042F2E;border-radius:10px;padding:8px 0;font-size:13px;font-weight:800">English</span><span style="flex:1;text-align:center;color:#A9B4C6;padding:8px 0;font-size:13px;font-weight:800">हिन्दी</span></div></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin:0 16px"></div>
+
+<div style="height:1px;background:rgba(124,138,161,.12);margin:0 16px"></div>
+<div style="padding:14px 16px;display:flex;flex-direction:column;gap:12px"><div style="display:flex"><span style="font-size:14px;font-weight:700;flex:1">Speech speed</span><span style="font-size:14px;font-weight:800;color:#2DD4BF;font-variant-numeric:tabular-nums">1.1×</span></div><div style="position:relative;height:20px;display:flex;align-items:center"><div style="position:absolute;left:0;right:0;height:4px;border-radius:2px;background:#1B2538"></div><div style="position:absolute;left:0;width:55%;height:4px;border-radius:2px;background:#2DD4BF"></div><div style="position:absolute;left:55%;margin-left:-10px;width:20px;height:20px;border-radius:50%;background:#E8EDF5;box-shadow:0 2px 8px rgba(0,0,0,.4)"></div></div></div>
+</div>
+<span style="font-size:11px;font-weight:800;letter-spacing:.1em;color:#7C8AA1;padding:12px 4px 0">SAFETY AND LIMITS</span>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;display:flex;flex-direction:column">
+<div style="padding:14px 16px;display:flex;align-items:center;gap:14px"><span style="width:38px;height:38px;border-radius:12px;background:rgba(248,113,113,.12);display:flex;align-items:center;justify-content:center;flex:none"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:20px;line-height:1;color:#F87171">power_settings_new</span></span><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:700">Kill switch</span><span style="font-size:12px;line-height:17px;color:#A9B4C6">Turns off all order actions instantly. Quotes and portfolio stay available.</span></div><span style="width:46px;height:28px;border-radius:14px;background:#1B2538;border:1px solid rgba(124,138,161,.3);display:flex;align-items:center;padding:0 3px;box-sizing:border-box;flex:none"><span style="width:20px;height:20px;border-radius:50%;background:#7C8AA1"></span></span></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin-left:68px"></div>
+<div style="padding:14px 16px;display:flex;align-items:center;gap:14px"><span style="width:38px;height:38px;border-radius:12px;background:rgba(251,191,36,.12);display:flex;align-items:center;justify-content:center;flex:none"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1;font-size:20px;line-height:1;color:#FBBF24">fingerprint</span></span><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:700">Biometric check for large orders</span><span style="font-size:12px;line-height:17px;color:#A9B4C6">Ask for fingerprint or face before confirming a large order.</span></div><span style="width:46px;height:28px;border-radius:14px;background:#2DD4BF;display:flex;align-items:center;justify-content:flex-end;padding:0 3px;box-sizing:border-box;flex:none"><span style="width:22px;height:22px;border-radius:50%;background:#042F2E"></span></span></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin-left:68px"></div>
+<div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+<span style="font-size:14px;font-weight:700">Risk limits</span>
+<div style="display:flex;align-items:center;font-size:13px"><span style="flex:1;color:#A9B4C6">Max value per order</span><span style="background:#0B1220;border:1px solid rgba(124,138,161,.2);border-radius:10px;padding:6px 10px;font-weight:800;font-variant-numeric:tabular-nums">₹2,00,000</span></div>
+<div style="display:flex;align-items:center;font-size:13px"><span style="flex:1;color:#A9B4C6">Max shares per order</span><span style="background:#0B1220;border:1px solid rgba(124,138,161,.2);border-radius:10px;padding:6px 10px;font-weight:800;font-variant-numeric:tabular-nums">500</span></div>
+<div style="display:flex;align-items:center;font-size:13px"><span style="flex:1;color:#A9B4C6">Max orders per day</span><span style="background:#0B1220;border:1px solid rgba(124,138,161,.2);border-radius:10px;padding:6px 10px;font-weight:800;font-variant-numeric:tabular-nums">25</span></div>
+</div>
+</div>
+<span style="font-size:11px;font-weight:800;letter-spacing:.1em;color:#7C8AA1;padding:12px 4px 0">APPEARANCE</span>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;display:flex;flex-direction:column">
+<div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px"><span style="font-size:14px;font-weight:700">Theme</span><div style="display:flex;background:#0B1220;border-radius:12px;padding:3px;gap:3px"><span style="flex:1;text-align:center;color:#A9B4C6;padding:8px 0;font-size:13px;font-weight:800">System</span><span style="flex:1;text-align:center;color:#A9B4C6;padding:8px 0;font-size:13px;font-weight:800">Light</span><span style="flex:1;text-align:center;background:#2DD4BF;color:#042F2E;border-radius:10px;padding:8px 0;font-size:13px;font-weight:800">Dark</span></div></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin:0 16px"></div>
+<div style="padding:14px 16px;display:flex;align-items:center;gap:14px"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:700">Large text</span><span style="font-size:12px;color:#A9B4C6">Bigger text across the app.</span></div><span style="width:46px;height:28px;border-radius:14px;background:#1B2538;border:1px solid rgba(124,138,161,.3);display:flex;align-items:center;padding:0 3px;box-sizing:border-box;flex:none"><span style="width:20px;height:20px;border-radius:50%;background:#7C8AA1"></span></span></div>
+</div>
+<span style="font-size:11px;font-weight:800;letter-spacing:.1em;color:#7C8AA1;padding:12px 4px 0">DATA</span>
+<div style="background:#0F1727;border:1px solid rgba(124,138,161,.14);border-radius:24px;display:flex;flex-direction:column">
+<div style="padding:15px 16px;display:flex;align-items:center;gap:14px"><span style="font-family:'Material Symbols Rounded';font-size:22px;line-height:1;color:#F87171">delete</span><span style="flex:1;font-size:14px;font-weight:700;color:#F87171">Delete session history</span></div>
+<div style="height:1px;background:rgba(124,138,161,.12);margin-left:52px"></div>
+<div style="padding:15px 16px;display:flex;align-items:center;gap:14px"><span style="font-family:'Material Symbols Rounded';font-size:22px;line-height:1;color:#A9B4C6">logout</span><span style="flex:1;font-size:14px;font-weight:700">Sign out</span><span style="font-family:'Material Symbols Rounded';font-size:22px;line-height:1;color:#7C8AA1">chevron_right</span></div>
+</div>
+<span style="font-size:12px;color:#7C8AA1;font-weight:600;text-align:center;padding-top:12px">VoiceTrade AI · Version 1.4.0</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;orbState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;listening&quot;,&quot;thinking&quot;,&quot;speaking&quot;,&quot;awaiting&quot;,&quot;idle&quot;],&quot;default&quot;:&quot;listening&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Voice session&quot;},&quot;micInNav&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Navigation&quot;}}">
+class Component extends DCLogic {
+  state = { tab: 'g' };
+  orb(size, st) {
+    const h = React.createElement;
+    const c = { listening: '#60A5FA', thinking: '#A78BFA', speaking: '#4ADE80', awaiting: '#FBBF24', idle: '#2DD4BF' }[st] || '#2DD4BF';
+    const abs = { position: 'absolute', borderRadius: '50%' };
+    const kids = [h('div', { key: 'g', style: { ...abs, width: size * 1.7, height: size * 1.7, background: `radial-gradient(circle, ${c}40, transparent 62%)` } })];
+    if (st === 'listening') {
+      kids.push(h('div', { key: 'l1', style: { ...abs, width: size, height: size, background: c, opacity: 0.14, animation: 'vtPulse 1.6s ease-in-out infinite' } }));
+      kids.push(h('div', { key: 'l2', style: { ...abs, width: size * 0.78, height: size * 0.78, background: c, opacity: 0.22, animation: 'vtPulse 1.6s ease-in-out .25s infinite' } }));
+    } else if (st === 'speaking') {
+      [0, 0.7, 1.4].forEach((d, i) => kids.push(h('div', { key: 's' + i, style: { ...abs, width: size, height: size, border: `2px solid ${c}`, background: c + '22', animation: `vtWave 2.1s linear ${d}s infinite` } })));
+    } else if (st === 'thinking') {
+      kids.push(h('div', { key: 't', style: { ...abs, width: size * 0.9, height: size * 0.9, background: `conic-gradient(from 0deg, transparent, ${c})`, WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 9px), #000 calc(100% - 8px))', mask: 'radial-gradient(farthest-side, transparent calc(100% - 9px), #000 calc(100% - 8px))', animation: 'vtSpin 1.4s linear infinite' } }));
+    } else if (st === 'awaiting') {
+      const r = size * 0.42, cf = 2 * Math.PI * r;
+      kids.push(h('svg', { key: 'a', width: size, height: size, style: { position: 'absolute', transform: 'rotate(-90deg)' } },
+        h('circle', { cx: size / 2, cy: size / 2, r, fill: 'none', stroke: c, strokeOpacity: 0.18, strokeWidth: 8 }),
+        h('circle', { cx: size / 2, cy: size / 2, r, fill: 'none', stroke: c, strokeWidth: 8, strokeLinecap: 'round', strokeDasharray: `${cf * 0.72} ${cf}` })));
+    } else {
+      kids.push(h('div', { key: 'i', style: { ...abs, width: size * 0.9, height: size * 0.9, background: c, animation: 'vtBreathe 3s ease-in-out infinite' } }));
+    }
+    const core = size * (st === 'awaiting' ? 0.62 : 0.56);
+    kids.push(h('div', { key: 'c', style: { ...abs, width: core, height: core, background: `radial-gradient(circle at 32% 26%, rgba(255,255,255,.55), transparent 42%), ${c}`, boxShadow: `0 0 ${size * 0.28}px ${c}88, inset 0 -8px 18px rgba(0,0,0,.22)`, display: 'flex', alignItems: 'center', justifyContent: 'center' } },
+      h('span', { style: { fontFamily: "'Material Symbols Rounded'", fontVariationSettings: "'FILL' 1", fontSize: core * 0.42, lineHeight: 1, color: '#0B1220' } }, 'mic')));
+    return h('div', { style: { position: 'relative', width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center' } }, ...kids);
+  }
+  renderVals() {
+    const st = this.props.orbState ?? 'listening';
+    const g = this.state.tab === 'g';
+    const pal = [['rgba(20,184,166,.16)', '#5EEAD4'], ['rgba(99,102,241,.16)', '#A5B4FC'], ['rgba(245,158,11,.16)', '#FCD34D'], ['rgba(236,72,153,.16)', '#F9A8D4'], ['rgba(59,130,246,.16)', '#93C5FD'], ['rgba(16,185,129,.16)', '#6EE7B7']];
+    const gainers = [['Adani Ports', 'ADANIPORTS', '₹1,412.20', '4.82'], ['Tata Steel', 'TATASTEEL', '₹152.35', '3.91'], ['Bajaj Finance', 'BAJFINANCE', '₹7,208.00', '3.12'], ['Larsen & Toubro', 'LT', '₹3,684.50', '2.40']];
+    const losers = [['Wipro', 'WIPRO', '₹534.10', '2.86'], ['Hindustan Unilever', 'HINDUNILVR', '₹2,690.25', '1.92'], ['Asian Paints', 'ASIANPAINT', '₹2,988.40', '1.55'], ['ITC', 'ITC', '₹478.65', '1.10']];
+    const movers = (g ? gainers : losers).map((r, i) => {
+      const p = pal[(r[1].length + i) % pal.length];
+      return { name: r[0], sym: r[1], mono: r[1].slice(0, 2), price: r[2], chg: (g ? '▲ ' : '▼ ') + r[3] + '%', cc: g ? '#4ADE80' : '#F87171', cbg: g ? 'rgba(74,222,128,.12)' : 'rgba(248,113,113,.12)', bg: p[0], fg: p[1], border: i ? '1px solid rgba(124,138,161,.12)' : 'none' };
+    });
+    const labels = { listening: 'Listening', thinking: 'Thinking', speaking: 'Speaking', awaiting: 'Waiting for your confirmation', idle: 'Idle' };
+    return {
+      orbWelcome: this.orb(170, 'idle'),
+      orbHome: this.orb(120, 'idle'),
+      orbSession: this.orb(200, st),
+      orbCompact: this.orb(84, 'awaiting'),
+      orbLabel: labels[st] || 'Listening',
+      micInNav: this.props.micInNav ?? true,
+      movers,
+      gBg: g ? '#2DD4BF' : 'transparent', gFg: g ? '#042F2E' : '#A9B4C6',
+      lBg: g ? 'transparent' : '#2DD4BF', lFg: g ? '#A9B4C6' : '#042F2E',
+      showGainers: () => this.setState({ tab: 'g' }),
+      showLosers: () => this.setState({ tab: 'l' }),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -60,9 +60,9 @@ CREATE TABLE IF NOT EXISTS sessions (
     id TEXT PRIMARY KEY, user_id TEXT NOT NULL, agent_id TEXT, channel TEXT NOT NULL,
     secret_hash TEXT NOT NULL, started_at TEXT NOT NULL, ended_at TEXT
 );
-CREATE TABLE IF NOT EXISTS risk_settings (
-    user_id TEXT PRIMARY KEY, max_order_value_inr TEXT NOT NULL, max_qty INTEGER NOT NULL,
-    max_orders_per_day INTEGER NOT NULL, kill_switch INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL
+CREATE TABLE IF NOT EXISTS device_tokens (
+    user_id TEXT NOT NULL, token TEXT NOT NULL, updated_at TEXT NOT NULL,
+    PRIMARY KEY (user_id, token)
 );
 CREATE TABLE IF NOT EXISTS audit_log (
     id @SERIAL@, user_id TEXT, session_id TEXT, actor TEXT NOT NULL,

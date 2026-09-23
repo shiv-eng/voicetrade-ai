@@ -188,21 +188,6 @@ data class TextRequest(val text: String)
 data class ConfirmResponseDto(val orderId: String, val status: String)
 
 @Serializable
-data class RiskLimitsDto(
-    val maxOrderValue: BigDecimal,
-    val maxQty: Int,
-    val maxOrdersPerDay: Int,
-    val killSwitch: Boolean = false,
-    val serverMax: ServerMaxDto? = null,
-)
-
-@Serializable
-data class ServerMaxDto(val maxOrderValue: BigDecimal? = null, val maxQty: Int? = null, val maxOrdersPerDay: Int? = null)
-
-@Serializable
-data class KillSwitchDto(val on: Boolean)
-
-@Serializable
 data class ApiErrorDto(val code: String? = null, val message: String? = null)
 
 // ---- action cards (WebSocket "card" events and local history) ------------
@@ -321,6 +306,9 @@ data class AddAlertResponse(val id: Long)
 
 @Serializable
 data class AckRequest(val ids: List<Long>)
+
+@Serializable
+data class DeviceTokenRequest(val token: String)
 
 @Serializable
 data class InfoRowDto(val label: String, val value: String)

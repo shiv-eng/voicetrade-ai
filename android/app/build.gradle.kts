@@ -7,6 +7,14 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+// Only applied when google-services.json is present, so a checkout without Firebase set up still builds
+// (push notifications and crash reporting are both best-effort — the app works, just without them).
+val hasGoogleServices = file("google-services.json").exists()
+if (hasGoogleServices) {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
+}
+
 fun prop(name: String, default: String): String = (project.findProperty(name) as String?)?.takeIf { it.isNotBlank() } ?: default
 
 android {
@@ -86,6 +94,7 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.retrofit)
@@ -107,6 +116,10 @@ dependencies {
     implementation(libs.google.googleid)
     implementation(libs.timber)
     implementation(libs.agora.voice.sdk)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.crashlytics)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

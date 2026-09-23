@@ -47,7 +47,6 @@ fun mapCode(http: Int, code: String?, message: String?): AppError = when {
     code == "AGENT_FAILED" -> AppError.AgentFailed(message)
     code == "PREVIEW_EXPIRED" -> AppError.PreviewExpired()
     code == "PRICE_DRIFT" -> AppError.PriceDrift()
-    code == "KILL_SWITCH" || http == 423 -> AppError.KillSwitch()
     code == "RISK_BLOCKED" -> AppError.RiskBlocked(message)
     http == 401 || http == 403 -> AppError.Unauthorized()
     http == 503 && code == null -> AppError.BrokerLoggedOut()

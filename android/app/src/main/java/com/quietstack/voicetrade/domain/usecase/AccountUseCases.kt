@@ -12,7 +12,6 @@ import com.quietstack.voicetrade.domain.model.OrderPreview
 import com.quietstack.voicetrade.domain.model.Pnl
 import com.quietstack.voicetrade.domain.model.Position
 import com.quietstack.voicetrade.domain.model.Quote
-import com.quietstack.voicetrade.domain.model.RiskLimits
 import com.quietstack.voicetrade.domain.model.SessionSummary
 import com.quietstack.voicetrade.domain.model.WatchRow
 import com.quietstack.voicetrade.domain.model.UserProfile
@@ -26,7 +25,6 @@ import com.quietstack.voicetrade.domain.repository.WatchlistRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
 data class PortfolioSnapshot(
@@ -91,7 +89,6 @@ class ManageHistoryUseCase @Inject constructor(private val history: HistoryRepos
 class ObserveSettingsUseCase @Inject constructor(private val settings: SettingsRepository) {
     val app: Flow<AppSettings> get() = settings.settings
     val connection: Flow<ConnectionConfig> get() = settings.connection
-    val killSwitch: StateFlow<Boolean> get() = settings.killSwitch
 }
 
 class UpdateSettingsUseCase @Inject constructor(private val settings: SettingsRepository) {
@@ -107,13 +104,8 @@ class SignOutUseCase @Inject constructor(private val auth: AuthRepository) {
     suspend operator fun invoke() = auth.signOut()
 }
 
-class RiskLimitsUseCase @Inject constructor(private val settings: SettingsRepository) {
-    suspend fun load(): Result<RiskLimits> = settings.riskLimits()
-    suspend fun save(limits: RiskLimits): Result<RiskLimits> = settings.updateRiskLimits(limits)
-}
-
-class SetKillSwitchUseCase @Inject constructor(private val settings: SettingsRepository) {
-    suspend operator fun invoke(on: Boolean): Result<Boolean> = settings.setKillSwitch(on)
+class RegisterPushTokenUseCase @Inject constructor(private val push: com.quietstack.voicetrade.domain.repository.PushRepository) {
+    suspend operator fun invoke(token: String) = push.registerToken(token)
 }
 
 class ObserveNetworkUseCase @Inject constructor(private val monitor: com.quietstack.voicetrade.core.util.NetworkMonitor) {

@@ -101,27 +101,18 @@ async def test_value_cap_blocks_with_no_preview(w):
 
 
 async def test_quantity_cap_blocks(w):
-    w.risk.update_limits(w.user, Decimal("500000"), 5, 20)
+    from dataclasses import replace
+    w.risk.settings = replace(w.settings, default_max_qty=5)
     r = await w.trading.preview_order(w.user, "s1", w.infy.conid, "BUY", quantity=6)
     assert r["blocked"]
 
 
 async def test_cannot_spend_more_than_wallet(w):
-    w.risk.update_limits(w.user, Decimal("500000"), 5000, 20)
+    from dataclasses import replace
+    w.risk.settings = replace(w.settings, default_max_qty=5000)
     w.ledger.db.execute("UPDATE wallets SET cash = '1000' WHERE user_id = ? AND currency = 'INR'", (w.user,))
     r = await w.trading.preview_order(w.user, "s1", w.infy.conid, "BUY", quantity=5)
     assert r["blocked"] and "afford" in r["reason"]
-
-
-async def test_kill_switch_blocks_preview_and_confirm(w):
-    r = await buy(w)
-    w.risk.set_kill_switch(w.user, True)
-    with pytest.raises(TradeError) as e:
-        await w.trading.confirm(w.user, r["preview_id"])
-    assert e.value.code == "KILL_SWITCH"
-    blocked = await w.trading.preview_order(w.user, "s1", w.infy.conid, "BUY", quantity=1)
-    assert blocked["blocked"] and blocked["code"] == "KILL_SWITCH"
-    assert w.ledger.cash(w.user, "INR") == Decimal("1000000")
 
 
 async def test_confirm_twice_places_one_order(w):
@@ -227,17 +218,12 @@ async def test_market_data_outage_blocks_orders(w):
 
 
 async def test_daily_order_limit(w):
-    w.risk.update_limits(w.user, Decimal("500000"), 500, 2)
+    from dataclasses import replace
+    w.risk.settings = replace(w.settings, default_max_qty=500, default_max_orders_per_day=2)
     for _ in range(2):
         await w.trading.confirm(w.user, (await buy(w, qty=1))["preview_id"])
     r = await w.trading.preview_order(w.user, "s1", w.infy.conid, "BUY", quantity=1)
     assert r["blocked"] and "limit" in r["reason"]
-
-
-async def test_risk_limits_cannot_exceed_server_maximum(w):
-    from app.risk import RiskBlock
-    with pytest.raises(RiskBlock):
-        w.risk.update_limits(w.user, Decimal("99999999"), 10, 10)
 
 
 async def test_account_reflects_live_prices_and_both_wallets(w):

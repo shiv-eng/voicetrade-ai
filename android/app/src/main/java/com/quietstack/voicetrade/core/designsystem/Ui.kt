@@ -50,8 +50,8 @@ fun Panel(
     Surface(
         modifier = if (onClick != null) base.clickable(onClick = onClick) else base,
         shape = shape,
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.16f)),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.14f)),
     ) { Column(content = content) }
 }
 
@@ -106,15 +106,15 @@ fun StockRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
-            Modifier.weight(1f).padding(start = 16.dp, top = 13.dp, bottom = 13.dp, end = if (trailing == null) 16.dp else 4.dp),
+            Modifier.weight(1f).padding(start = 16.dp, top = 13.dp, bottom = 13.dp, end = if (trailing == null) 16.dp else 2.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            SymbolAvatar(instrument.symbol, size = 44.dp)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            SymbolAvatar(instrument.symbol, size = 40.dp)
+            Column(Modifier.weight(1f, fill = true), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     instrument.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold,
-                    maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = MaterialTheme.typography.titleSmall.fontSize * 1.15f,
                 )
                 Text(
                     subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,

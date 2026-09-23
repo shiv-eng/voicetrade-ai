@@ -149,4 +149,5 @@ abstract class RepositoryModule {
     @Binds abstract fun research(impl: com.quietstack.voicetrade.data.repository.ResearchRepositoryImpl): com.quietstack.voicetrade.domain.repository.ResearchRepository
     @Binds abstract fun voiceSession(impl: VoiceSessionRepositoryImpl): VoiceSessionRepository
     @Binds abstract fun serviceController(impl: AndroidSessionServiceController): SessionServiceController
+    @Binds abstract fun push(impl: com.quietstack.voicetrade.data.repository.PushRepositoryImpl): com.quietstack.voicetrade.domain.repository.PushRepository
 }

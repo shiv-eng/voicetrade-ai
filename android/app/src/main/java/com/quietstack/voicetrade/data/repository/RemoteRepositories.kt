@@ -6,9 +6,8 @@ import com.quietstack.voicetrade.domain.repository.AuthRepository
 import com.quietstack.voicetrade.data.local.prefs.SecureTokenStore
 import com.quietstack.voicetrade.data.local.prefs.SettingsDataStore
 import com.quietstack.voicetrade.data.mapper.toDomain
-import com.quietstack.voicetrade.data.mapper.toDto
 import com.quietstack.voicetrade.data.remote.apiCall
-import com.quietstack.voicetrade.data.remote.dto.KillSwitchDto
+import com.quietstack.voicetrade.data.remote.dto.DeviceTokenRequest
 import com.quietstack.voicetrade.data.remote.dto.GoogleLoginRequest
 import com.quietstack.voicetrade.domain.model.AccountSummary
 import com.quietstack.voicetrade.domain.model.AppSettings
@@ -22,17 +21,14 @@ import com.quietstack.voicetrade.domain.model.OrderPreview
 import com.quietstack.voicetrade.domain.model.Pnl
 import com.quietstack.voicetrade.domain.model.Position
 import com.quietstack.voicetrade.domain.model.Quote
-import com.quietstack.voicetrade.domain.model.RiskLimits
 import com.quietstack.voicetrade.domain.repository.MarketRepository
 import com.quietstack.voicetrade.domain.repository.OrderRepository
 import com.quietstack.voicetrade.domain.repository.PortfolioRepository
+import com.quietstack.voicetrade.domain.repository.PushRepository
 import com.quietstack.voicetrade.domain.repository.SettingsRepository
 import com.quietstack.voicetrade.domain.repository.WatchlistRepository
 import com.quietstack.voicetrade.domain.model.WatchRow
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -46,20 +42,7 @@ class SettingsRepositoryImpl @Inject constructor(
     override val settings: Flow<AppSettings> = dataStore.settings
     override val connection: Flow<ConnectionConfig> = store.connection
 
-    private val _killSwitch = MutableStateFlow(false)
-    override val killSwitch: StateFlow<Boolean> = _killSwitch.asStateFlow()
-
     override suspend fun update(transform: (AppSettings) -> AppSettings) = dataStore.update(transform)
-
-    override suspend fun riskLimits(): Result<RiskLimits> =
-        apiCall { gateway.api().riskLimits().toDomain() }.onSuccess { _killSwitch.value = it.killSwitch }
-
-    override suspend fun updateRiskLimits(limits: RiskLimits): Result<RiskLimits> =
-        apiCall { gateway.api().updateRisk(limits.toDto()).toDomain() }
-
-    override suspend fun setKillSwitch(on: Boolean): Result<Boolean> =
-        apiCall { gateway.api().killSwitch(KillSwitchDto(on)).on }.onSuccess { _killSwitch.value = it }
-
 }
 
 @Singleton
@@ -119,4 +102,10 @@ class AuthRepositoryImpl @Inject constructor(
         store.signIn(r.token, p)
         return p
     }
+}
+
+@Singleton
+class PushRepositoryImpl @Inject constructor(private val gateway: BackendGateway) : PushRepository {
+    override suspend fun registerToken(token: String): Result<Unit> =
+        apiCall { gateway.api().registerDevice(DeviceTokenRequest(token)) }
 }

@@ -31,6 +31,9 @@ class Settings:
     jwt_secret: str = field(default_factory=lambda: _env("JWT_SECRET") or secrets.token_hex(32))
     # Google Sign-In: OAuth *web* client id(s) the app requests ID tokens for (comma separated).
     google_client_ids: list[str] = field(default_factory=lambda: [c.strip() for c in _env("GOOGLE_CLIENT_IDS").split(",") if c.strip()])
+    # Firebase service account JSON (Project Settings > Service Accounts > Generate new private key), for
+    # sending price-alert pushes via FCM's HTTP v1 API. None = pushes are skipped; the 15-minute poll still works.
+    firebase_service_account: dict | None = field(default_factory=lambda: _json_env("FIREBASE_SERVICE_ACCOUNT_JSON"))
     # Development only: lets a debug app sign in without a Google account. Keep false in production.
     allow_guest_login: bool = field(default_factory=lambda: _env("ALLOW_GUEST_LOGIN", "false").lower() == "true")
     max_registrations_per_hour: int = field(default_factory=lambda: int(_env("MAX_REGISTRATIONS_PER_HOUR", "30")))
@@ -55,8 +58,10 @@ class Settings:
     sarvam_tts_model: str = field(default_factory=lambda: _env("SARVAM_TTS_MODEL", "bulbul:v3"))
     # Agora turn detection override, as JSON. Default: end the user's turn after a short pause (lower = snappier).
     agora_turn_detection_json: dict | None = field(default_factory=lambda: _json_env("AGORA_TURN_DETECTION_JSON"))
-    # How long the user must be speaking before Mira stops talking. Short noises and coughs should not cut her off.
-    interrupt_ms: int = field(default_factory=lambda: int(_env("INTERRUPT_MS", "800")))
+    # How long the user must be speaking before Mira stops talking. Short noises and coughs — or a thumb
+    # brushing the mic while scrolling the transcript — should not cut her off, so this sits well above a
+    # brief incidental sound and only fires on speech that keeps going.
+    interrupt_ms: int = field(default_factory=lambda: int(_env("INTERRUPT_MS", "1200")))
     end_of_speech_ms: int = field(default_factory=lambda: int(_env("END_OF_SPEECH_MS", "400")))
     asr_language: str = field(default_factory=lambda: _env("ASR_LANGUAGE", "multi"))
     tts_voice_female: str = field(default_factory=lambda: _env("TTS_VOICE_FEMALE", "coral"))
@@ -81,9 +86,6 @@ class Settings:
     default_max_order_value_inr: Decimal = Decimal("50000")
     default_max_qty: int = 500
     default_max_orders_per_day: int = 20
-    server_max_order_value_inr: Decimal = Decimal("500000")
-    server_max_qty: int = 5000
-    server_max_orders_per_day: int = 100
     limit_poll_interval_s: float = 15.0
 
     @property

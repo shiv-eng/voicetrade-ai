@@ -1,19 +1,26 @@
 package com.quietstack.voicetrade.ui.history
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -29,6 +36,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import com.quietstack.voicetrade.core.designsystem.Hairline
+import com.quietstack.voicetrade.core.designsystem.Panel
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -43,6 +53,7 @@ import com.quietstack.voicetrade.domain.model.SessionSummary
 import com.quietstack.voicetrade.domain.usecase.ManageHistoryUseCase
 import com.quietstack.voicetrade.domain.usecase.ObserveHistoryUseCase
 import com.quietstack.voicetrade.ui.common.EmptyState
+import com.quietstack.voicetrade.ui.common.LoadingBox
 import com.quietstack.voicetrade.ui.common.ScreenScaffold
 import com.quietstack.voicetrade.ui.navigation.HistoryDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -55,7 +66,26 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import javax.inject.Inject
 
-private val dateFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT).withZone(ZoneId.systemDefault())
+private val timeFormat = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withZone(ZoneId.systemDefault())
+private val dayFormat = DateTimeFormatter.ofPattern("d MMM").withZone(ZoneId.systemDefault())
+
+/** "TODAY", "YESTERDAY", or a short date — matches the section labels people actually think in. */
+private fun dayLabel(instant: java.time.Instant): String {
+    val zone = ZoneId.systemDefault()
+    val day = instant.atZone(zone).toLocalDate()
+    val today = java.time.LocalDate.now(zone)
+    return when (day) {
+        today -> "TODAY"
+        today.minusDays(1) -> "YESTERDAY"
+        else -> dayFormat.format(instant).uppercase()
+    }
+}
+
+private fun minutesBetween(start: java.time.Instant, end: java.time.Instant?): String? {
+    if (end == null) return null
+    val mins = java.time.Duration.between(start, end).toMinutes()
+    return if (mins <= 0) "< 1 min" else "$mins min"
+}
 
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
@@ -86,28 +116,62 @@ fun HistoryScreen(onBack: () -> Unit, onOpen: (Long) -> Unit, viewModel: History
     ScreenScaffold(title = stringResource(R.string.history), onBack = onBack) { padding ->
         val list = sessions
         when {
-            list == null -> Unit
+            list == null -> LoadingBox(Modifier.padding(padding))
             list.isEmpty() -> EmptyState(stringResource(R.string.history_empty), Modifier.padding(padding))
-            else -> LazyColumn(
-                Modifier.padding(padding).fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                items(list, key = { it.id }) { s ->
-                    Card(
-                        Modifier.fillMaxWidth().clickable { onOpen(s.id) },
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant),
-                    ) {
-                        Row(Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f)) {
-                                Text(dateFormat.format(s.startedAt), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(s.summary, fontWeight = FontWeight.SemiBold, maxLines = 2)
+            else -> {
+                val grouped = list.groupBy { dayLabel(it.startedAt) }
+                LazyColumn(
+                    Modifier.padding(padding).fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    grouped.forEach { (label, sessions) ->
+                        item(key = "h_$label") {
+                            Text(
+                                label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.ExtraBold,
+                                letterSpacing = 0.1.em, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        item(key = "p_$label") {
+                            Panel {
+                                sessions.forEachIndexed { i, s ->
+                                    if (i > 0) Hairline()
+                                    Row(
+                                        Modifier.fillMaxWidth().clickable { onOpen(s.id) }.padding(14.dp),
+                                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
+                                    ) {
+                                        Box(
+                                            Modifier.size(42.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), CircleShape),
+                                            contentAlignment = Alignment.Center,
+                                        ) { Icon(Icons.Filled.GraphicEq, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
+                                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                            Text(s.summary, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                                            val duration = minutesBetween(s.startedAt, s.endedAt)
+                                            Text(
+                                                timeFormat.format(s.startedAt) + (duration?.let { " · $it" } ?: ""),
+                                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
+                                        IconButton(onClick = { viewModel.delete(s.id) }) {
+                                            Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                    }
+                                }
                             }
-                            IconButton(onClick = { viewModel.delete(s.id) }) {
-                                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete))
-                            }
+                        }
+                    }
+                    item {
+                        Row(
+                            Modifier.fillMaxWidth()
+                                .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.28f), RoundedCornerShape(20.dp))
+                                .padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Icon(Icons.Filled.PlayCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Text(
+                                stringResource(R.string.history_resume_hint), style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
                     }
                 }

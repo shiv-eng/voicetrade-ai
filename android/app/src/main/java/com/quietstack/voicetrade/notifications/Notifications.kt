@@ -58,6 +58,21 @@ object Notifications {
         NotificationManagerCompat.from(context).notify(2000 + alert.id.toInt(), n)
     }
 
+    /** A push that arrived while the app was in the foreground: FCM only auto-shows notifications when
+     * backgrounded, so a visible one is our job the rest of the time. */
+    fun showRemote(context: Context, title: String, text: String) {
+        if (!canNotify(context)) return
+        val n = NotificationCompat.Builder(context, CHANNEL_ALERTS)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setAutoCancel(true)
+            .setContentIntent(open(context, 3000, prompt = title))
+            .build()
+        NotificationManagerCompat.from(context).notify(3000 + text.hashCode(), n)
+    }
+
     fun showBriefing(context: Context, title: String, text: String) {
         if (!canNotify(context)) return
         val n = NotificationCompat.Builder(context, CHANNEL_BRIEFING)

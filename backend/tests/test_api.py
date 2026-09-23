@@ -169,20 +169,6 @@ async def test_TC09_ignore_your_rules_does_not_place_an_order():
     assert svc.ledger.orders(user) == []
 
 
-async def test_kill_switch_hides_order_tools_from_the_model():
-    app, svc, client, chat, market = make([])
-    h = await pair(client)
-    user = user_of(svc, h)
-    s, secret = start_voice_session(svc, user)
-    chat.rounds = [say("ok")]
-    await turn(client, secret, "hello")
-    assert "preview_order" in chat.calls[0]["tools"] and "confirm_order" in chat.calls[0]["tools"]
-    assert (await client.put("/settings/kill-switch", headers=h, json={"on": True})).json() == {"on": True}
-    chat.rounds = [say("ok")]
-    await turn(client, secret, "hello again")
-    assert "preview_order" not in chat.calls[1]["tools"] and "get_quote" in chat.calls[1]["tools"]
-
-
 async def test_tap_confirm_and_double_tap_place_one_order():
     app, svc, client, chat, market = make([])
     h = await pair(client)

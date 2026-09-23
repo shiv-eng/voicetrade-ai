@@ -11,10 +11,15 @@ import io.agora.rtc2.Constants
 import io.agora.rtc2.IRtcEngineEventHandler
 import io.agora.rtc2.RtcEngine
 import io.agora.rtc2.RtcEngineConfig
+import com.quietstack.voicetrade.core.common.ApplicationScope
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 import javax.inject.Inject
@@ -27,6 +32,7 @@ import javax.inject.Singleton
 @Singleton
 class AgoraRtcDataSource @Inject constructor(
     @ApplicationContext private val context: Context,
+    @ApplicationScope private val scope: CoroutineScope,
 ) : RtcDataSource {
 
     private val _events = MutableSharedFlow<RtcEvent>(extraBufferCapacity = 64)
@@ -37,6 +43,12 @@ class AgoraRtcDataSource @Inject constructor(
     private var joinResult: CompletableDeferred<Result<Unit>>? = null
     private var focusRequest: AudioFocusRequest? = null
     private val audioManager get() = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
+    // A transient focus loss (a notification chime, a keyboard click sound, a haptic tick while scrolling)
+    // gives focus back within milliseconds; only a loss that actually sticks around should pause the mic
+    // and interrupt Mira. Debouncing this is what stops those blips from reading as "the user spoke".
+    private var transientLossJob: Job? = null
+    private var focusIsLost = false
 
     private val handler = object : IRtcEngineEventHandler() {
         override fun onJoinChannelSuccess(channel: String, uid: Int, elapsed: Int) {
@@ -168,10 +180,27 @@ class AgoraRtcDataSource @Inject constructor(
             )
             .setOnAudioFocusChangeListener { change ->
                 when (change) {
-                    AudioManager.AUDIOFOCUS_LOSS,
-                    AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
-                    -> _events.tryEmit(RtcEvent.AudioFocusLost)
-                    AudioManager.AUDIOFOCUS_GAIN -> _events.tryEmit(RtcEvent.AudioFocusRegained)
+                    AudioManager.AUDIOFOCUS_LOSS -> {
+                        transientLossJob?.cancel()
+                        focusIsLost = true
+                        _events.tryEmit(RtcEvent.AudioFocusLost)
+                    }
+                    AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                        transientLossJob?.cancel()
+                        transientLossJob = scope.launch {
+                            delay(TRANSIENT_LOSS_GRACE_MS)
+                            focusIsLost = true
+                            _events.tryEmit(RtcEvent.AudioFocusLost)
+                        }
+                    }
+                    AudioManager.AUDIOFOCUS_GAIN -> {
+                        transientLossJob?.cancel()
+                        transientLossJob = null
+                        if (focusIsLost) {
+                            focusIsLost = false
+                            _events.tryEmit(RtcEvent.AudioFocusRegained)
+                        }
+                    }
                 }
             }
             .build()
@@ -180,11 +209,15 @@ class AgoraRtcDataSource @Inject constructor(
     }
 
     private fun abandonAudioFocus() {
+        transientLossJob?.cancel()
+        transientLossJob = null
+        focusIsLost = false
         focusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
         focusRequest = null
     }
 
     private companion object {
         const val JOIN_TIMEOUT_MS = 10_000L
+        const val TRANSIENT_LOSS_GRACE_MS = 400L
     }
 }

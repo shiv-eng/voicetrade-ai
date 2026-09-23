@@ -1,6 +1,12 @@
 package com.quietstack.voicetrade.ui.watchlist
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,12 +20,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -31,13 +39,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -60,6 +70,7 @@ import com.quietstack.voicetrade.domain.usecase.GetWatchlistUseCase
 import com.quietstack.voicetrade.domain.usecase.SearchInstrumentUseCase
 import com.quietstack.voicetrade.domain.usecase.UpdateWatchlistUseCase
 import com.quietstack.voicetrade.ui.common.EmptyState
+import com.quietstack.voicetrade.ui.common.LoadingBox
 import com.quietstack.voicetrade.ui.common.ScreenScaffold
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -180,15 +191,31 @@ fun WatchlistScreen(onBack: (() -> Unit)?, onOpenStock: (Long) -> Unit = {}, vie
     ) { padding ->
         if (state.items.isEmpty()) {
             if (state.loaded) EmptyState(stringResource(R.string.watchlist_empty), Modifier.padding(padding))
+            else LoadingBox(Modifier.padding(padding))
         } else {
             Column(Modifier.padding(padding).fillMaxSize()) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)
+                        .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(16.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.16f), RoundedCornerShape(16.dp))
+                        .clickable { viewModel.onEvent(WatchlistEvent.SetSearchOpen(true)) }
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Icon(Icons.Filled.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        stringResource(R.string.search_company), style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 Row(
                     Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    val alpha by rememberBlink(state.isPolling)
                     Box(
                         Modifier.size(8.dp).background(
-                            if (state.isPolling) MaterialTheme.extra.gain else MaterialTheme.colorScheme.outline, CircleShape,
+                            (if (state.isPolling) MaterialTheme.extra.gain else MaterialTheme.colorScheme.outline).copy(alpha = alpha), CircleShape,
                         ),
                     )
                     Text(
@@ -253,6 +280,14 @@ fun WatchlistScreen(onBack: (() -> Unit)?, onOpenStock: (Long) -> Unit = {}, vie
     }
 }
 
+/** A slow fade in and out, for a "this is live" dot; still while paused. */
+@Composable
+private fun rememberBlink(active: Boolean): State<Float> {
+    if (!active) return remember { mutableFloatStateOf(1f) }
+    val transition = rememberInfiniteTransition(label = "blink")
+    return transition.animateFloat(1f, 0.35f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "blink")
+}
+
 @Composable
 private fun WatchRowItem(row: WatchRow, onOpen: () -> Unit, first: Boolean, last: Boolean, onRemove: () -> Unit, onMove: (up: Boolean) -> Unit) {
     val q = row.quote
@@ -264,7 +299,7 @@ private fun WatchRowItem(row: WatchRow, onOpen: () -> Unit, first: Boolean, last
         onClick = onOpen,
         trailing = {
             Box {
-                IconButton(onClick = { menu = true }) {
+                IconButton(onClick = { menu = true }, modifier = Modifier.size(34.dp)) {
                     Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.more), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {

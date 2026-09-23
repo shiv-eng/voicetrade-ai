@@ -15,7 +15,6 @@ from openai import APIConnectionError, APIStatusError
 from ..config import Settings
 from ..ledger import Ledger
 from ..portfolio import Portfolio
-from ..risk import RiskEngine
 from ..sessions import Session
 from ..speech import speak_money, speech_language
 from ..trading import TradingService
@@ -25,7 +24,9 @@ from .tools import ToolBox, ToolContext
 log = logging.getLogger(__name__)
 
 MAX_ROUNDS = 5
-ACK_AFTER_S = 1.3           # nothing said yet after this long: say a quick acknowledgement
+ACK_AFTER_S = 0.6           # nothing said yet after this long: say a quick filler (voice always lags text, so start early)
+REPEAT_ACK_AFTER_S = 2.2    # a slow multi-step lookup: keep filling the silence, spaced further apart
+MAX_ACKS = 3                # never turn into a wall of "hmm"s if something is genuinely stuck
 FIRST_EVENT_TIMEOUT_S = 7.0
 NEXT_EVENT_TIMEOUT_S = 4.0
 _SENTENCE_END = re.compile(r"[.!?।]\s*$|[.!?।]\s")
@@ -40,8 +41,8 @@ _LEAK = re.compile(
 
 class _Leaked(Exception):
     pass
-_ACKS_EN = ["Sure! ", "One moment. ", "Let me check. ", "Okay! "]
-_ACKS_HI = ["जी, एक सेकंड। ", "ज़रूर, देखती हूँ। ", "ठीक है, अभी देखती हूँ। "]
+_ACKS_EN = ["Hmm, ", "Umm, let's see... ", "Okay, ", "Alright, one sec... ", "Let me check... "]
+_ACKS_HI = ["हम्म, ", "उम्म, एक सेकंड... ", "ठीक है... ", "अच्छा, देखती हूँ... ", "जी, एक सेकंड... "]
 FAILURE_TEXT = "Sorry, I had trouble with that. Please try again."
 
 
@@ -193,9 +194,9 @@ class OpenAIChat:
 
 
 class Orchestrator:
-    def __init__(self, chat: ChatClient, tools: ToolBox, risk: RiskEngine, trading: TradingService,
+    def __init__(self, chat: ChatClient, tools: ToolBox, trading: TradingService,
                  ledger: Ledger, portfolio: Portfolio, settings: Settings) -> None:
-        self.chat, self.tools, self.risk, self.trading = chat, tools, risk, trading
+        self.chat, self.tools, self.trading = chat, tools, trading
         self.ledger, self.portfolio, self.settings = ledger, portfolio, settings
 
     def _wallets_line(self, user_id: str) -> str:
@@ -219,8 +220,11 @@ class Orchestrator:
     async def reply(self, session: Session, convo: list[dict], last_user_text: str) -> AsyncIterator[str]:
         """Yield the text to speak, in order. Never raises: failures become a spoken apology.
 
-        If real work is needed (data, tools, a slow model) and nothing has been said after ACK_AFTER_S, Mira says a
-        short "Sure, one moment" first: the voice takes a second or two to start, so this makes it start sooner."""
+        The voice always lags the text by a beat (synthesis + transport), so silence that starts on our end
+        already feels longer on the user's. If nothing has been said within ACK_AFTER_S, Mira fills it with a
+        short "Hmm..." rather than dead air; a multi-step lookup (quote + overview, say) can stay silent long
+        enough to need a second and third one, spaced out (REPEAT_ACK_AFTER_S) and never repeating back to back,
+        capped at MAX_ACKS so a truly stuck call doesn't turn into a wall of "hmm"s."""
         hindi = False
         if self.settings.sarvam_api_key:
             from .prompts import reply_language
@@ -236,18 +240,25 @@ class Orchestrator:
                 await queue.put(_DONE)
 
         task = asyncio.ensure_future(pump())
-        waiting_first = True
+        filling = True  # still allowed to fill the silence with a filler; false once real speech has started
+        acks_said = 0
+        last_ack: str | None = None
         try:
             while True:
+                timeout = (ACK_AFTER_S if acks_said == 0 else REPEAT_ACK_AFTER_S) if filling else None
                 try:
-                    item = await asyncio.wait_for(queue.get(), timeout=ACK_AFTER_S if waiting_first else None)
+                    item = await asyncio.wait_for(queue.get(), timeout=timeout)
                 except asyncio.TimeoutError:
-                    waiting_first = False
-                    yield random.choice(_ACKS_HI if hindi else _ACKS_EN)
+                    options = [a for a in (_ACKS_HI if hindi else _ACKS_EN) if a != last_ack]
+                    last_ack = random.choice(options)
+                    acks_said += 1
+                    if acks_said >= MAX_ACKS:
+                        filling = False  # give up filling; just wait quietly for the real answer now
+                    yield last_ack
                     continue
                 if item is _DONE:
                     return
-                waiting_first = False
+                filling = False
                 yield item
         finally:
             if not task.done():
@@ -257,8 +268,8 @@ class Orchestrator:
         user_id = session.user_id
         ctx = ToolContext(user_id, session.id, last_user_text)
         system = build_system_prompt(
-            self.risk.kill_switch(user_id), self.trading.active_preview(user_id), self._wallets_line(user_id),
-            language=session.language if self.settings.sarvam_api_key else "en", user_text=last_user_text,
+            self.trading.active_preview(user_id), self._wallets_line(user_id),
+            bilingual=bool(self.settings.sarvam_api_key), session_language=session.language, user_text=last_user_text,
         )
         msgs: list[dict[str, Any]] = [{"role": "system", "content": system}, *convo]
         earlier = self.tools.recent_facts(session.id)
@@ -273,7 +284,7 @@ class Orchestrator:
                 "\n\nLive data already fetched for the user's latest message. Answer from it directly and do not call "
                 "these tools again:\n" + known
             )
-        tool_schemas = self.tools.schemas(user_id)
+        tool_schemas = self.tools.schemas()
         spoke = False
         try:
             for _ in range(MAX_ROUNDS):

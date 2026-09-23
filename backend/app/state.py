@@ -17,8 +17,10 @@ from .llm.tools import ToolBox
 from .market.base import MarketData
 from .market.research import Research
 from .alerts import Alerts
+from .devices import Devices
 from .insights import Insights
 from .portfolio import Portfolio
+from .push import PushClient
 from .risk import RiskEngine
 from .sessions import SessionRegistry
 from .trading import TradingService
@@ -39,6 +41,8 @@ class Services:
     orchestrator: Orchestrator
     sessions: SessionRegistry
     agora: AgoraClient
+    devices: Devices
+    push: PushClient
     research: Research | None = None
     alerts: Alerts | None = None
     insights: Insights | None = None
@@ -55,13 +59,14 @@ def build_services(settings: Settings, market: MarketData, chat: ChatClient | No
     research = Research()
     alerts = Alerts(db, instruments, market)
     insights = Insights(settings, db, research, market, instruments, portfolio, ledger)
-    tools = ToolBox(db, instruments, market, ledger, trading, portfolio, risk, hub, research, alerts, insights)
+    tools = ToolBox(db, instruments, market, ledger, trading, portfolio, hub, research, alerts, insights)
     if chat is None:
         if settings.llm_api_key:
             chat = OpenAIChat(settings)
         else:
             logging.getLogger("voicetrade").warning("LLM_API_KEY not set: using the basic keyless command parser.")
             chat = BasicChat()
-    orchestrator = Orchestrator(chat, tools, risk, trading, ledger, portfolio, settings)
+    orchestrator = Orchestrator(chat, tools, trading, ledger, portfolio, settings)
     return Services(settings, db, market, hub, instruments, ledger, risk, trading, portfolio, tools, orchestrator,
-                    SessionRegistry(db), AgoraClient(settings), research, alerts, insights)
+                    SessionRegistry(db), AgoraClient(settings), Devices(db), PushClient(settings),
+                    research, alerts, insights)

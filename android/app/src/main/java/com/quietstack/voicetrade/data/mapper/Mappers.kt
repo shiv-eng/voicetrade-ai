@@ -27,8 +27,6 @@ import com.quietstack.voicetrade.data.remote.dto.WalletDto
 import com.quietstack.voicetrade.data.remote.dto.WatchRowDto
 import com.quietstack.voicetrade.data.remote.dto.PositionDto
 import com.quietstack.voicetrade.data.remote.dto.QuoteDto
-import com.quietstack.voicetrade.data.remote.dto.RiskLimitsDto
-import com.quietstack.voicetrade.data.remote.dto.ServerMaxDto
 import com.quietstack.voicetrade.data.remote.dto.SessionDto
 import com.quietstack.voicetrade.domain.model.AccountSummary
 import com.quietstack.voicetrade.domain.model.ActionCard
@@ -64,7 +62,6 @@ import com.quietstack.voicetrade.domain.model.Position
 import com.quietstack.voicetrade.domain.model.PreviewKind
 import com.quietstack.voicetrade.domain.model.PreviewState
 import com.quietstack.voicetrade.domain.model.Quote
-import com.quietstack.voicetrade.domain.model.RiskLimits
 import com.quietstack.voicetrade.domain.model.SessionInfo
 import com.quietstack.voicetrade.domain.model.Side
 import java.math.BigDecimal
@@ -145,24 +142,6 @@ fun OrderDto.toDomain() = Order(
     limitPrice = limitPrice,
     status = status.toDomain(),
     updatedAt = parseInstant(updatedAt),
-)
-
-fun RiskLimitsDto.toDomain() = RiskLimits(
-    maxOrderValue = maxOrderValue,
-    maxQuantity = maxQty,
-    maxOrdersPerDay = maxOrdersPerDay,
-    killSwitch = killSwitch,
-    serverMaxOrderValue = serverMax?.maxOrderValue,
-    serverMaxQuantity = serverMax?.maxQty,
-    serverMaxOrdersPerDay = serverMax?.maxOrdersPerDay,
-)
-
-fun RiskLimits.toDto() = RiskLimitsDto(
-    maxOrderValue = maxOrderValue,
-    maxQty = maxQuantity,
-    maxOrdersPerDay = maxOrdersPerDay,
-    killSwitch = killSwitch,
-    serverMax = ServerMaxDto(serverMaxOrderValue, serverMaxQuantity, serverMaxOrdersPerDay),
 )
 
 fun SessionDto.toDomain() = SessionInfo(

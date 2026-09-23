@@ -109,8 +109,8 @@ fun MicOrb(
                 }
                 OrbState.SPEAKING -> for (i in 0..2) {
                     val phase = (wave + i / 3f) % 1f
-                    val r = core + (max - core) * (phase * (0.5f + smoothLevel))
-                    drawCircle(color.copy(alpha = (1f - phase) * 0.35f), radius = r.coerceAtMost(max), center = c)
+                    val r = (core + (max - core) * (0.5f + phase * (0.5f + smoothLevel))).coerceAtMost(max)
+                    drawCircle(color.copy(alpha = (1f - phase) * 0.5f), radius = r, center = c, style = Stroke(2.dp.toPx()))
                 }
                 OrbState.THINKING -> rotate(spin, c) {
                     drawArc(
@@ -139,12 +139,23 @@ fun MicOrb(
                 OrbState.ERROR -> drawCircle(color.copy(alpha = 0.2f), radius = max * 0.85f, center = c)
                 OrbState.IDLE -> drawCircle(color.copy(alpha = 0.12f), radius = max * 0.8f * breathe, center = c)
             }
-            drawCircle(color, radius = core * (if (state == OrbState.IDLE) 1f else breathe), center = c)
+            val r = core * (if (state == OrbState.IDLE) 1f else breathe)
+            // A soft colour glow behind a glossy sphere, not a flat disc: a bright highlight near the
+            // top-left, same as a light source hitting a ball.
+            drawCircle(brush = Brush.radialGradient(listOf(color.copy(alpha = 0.55f), Color.Transparent), center = c, radius = r * 1.7f), radius = r * 1.7f, center = c)
+            drawCircle(color, radius = r, center = c)
+            drawCircle(
+                brush = Brush.radialGradient(
+                    listOf(Color.White.copy(alpha = 0.55f), Color.Transparent),
+                    center = Offset(c.x - r * 0.36f, c.y - r * 0.48f), radius = r * 0.9f,
+                ),
+                radius = r, center = c,
+            )
         }
         Icon(
             imageVector = if (muted) Icons.Filled.MicOff else Icons.Filled.Mic,
             contentDescription = null,
-            tint = Color.White,
+            tint = MaterialTheme.colorScheme.background,
             modifier = Modifier.size(size * 0.24f),
         )
     }

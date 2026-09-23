@@ -17,9 +17,7 @@ import com.quietstack.voicetrade.domain.usecase.ExpirePreviewUseCase
 import com.quietstack.voicetrade.domain.usecase.ObserveAgentStateUseCase
 import com.quietstack.voicetrade.domain.usecase.ObserveConversationUseCase
 import com.quietstack.voicetrade.domain.usecase.ObserveSessionStatusUseCase
-import com.quietstack.voicetrade.domain.usecase.ObserveSettingsUseCase
 import com.quietstack.voicetrade.domain.usecase.RejectOrderUseCase
-import com.quietstack.voicetrade.domain.usecase.RiskLimitsUseCase
 import com.quietstack.voicetrade.domain.usecase.SendTextMessageUseCase
 import com.quietstack.voicetrade.domain.usecase.ResumeAnswerUseCase
 import com.quietstack.voicetrade.domain.usecase.TogglePauseUseCase
@@ -72,7 +70,6 @@ data class VoiceSessionUiState(
     val activePreview: OrderPreview? = null,
     val previewSecondsLeft: Int = 0,
     val isConfirming: Boolean = false,
-    val killSwitchOn: Boolean = false,
     val textOnly: Boolean = false,
     val micDenied: Boolean = false,
     val keyboardOpen: Boolean = false,
@@ -115,8 +112,6 @@ class VoiceSessionViewModel @Inject constructor(
     private val rejectOrder: RejectOrderUseCase,
     private val expirePreview: ExpirePreviewUseCase,
     private val sendText: SendTextMessageUseCase,
-    private val settings: ObserveSettingsUseCase,
-    private val riskLimits: RiskLimitsUseCase,
     private val watchlist: UpdateWatchlistUseCase,
     private val observeHistory: com.quietstack.voicetrade.domain.usecase.ObserveHistoryUseCase,
     private val clock: Clock,
@@ -170,7 +165,6 @@ class VoiceSessionViewModel @Inject constructor(
         sessionStatus.isMuted.onEach { m -> _state.update { it.copy(isMuted = m) } }.launchIn(viewModelScope)
         sessionStatus.isPaused.onEach { p -> _state.update { it.copy(isPaused = p) } }.launchIn(viewModelScope)
         sessionStatus.canResume.onEach { c -> _state.update { it.copy(canResume = c) } }.launchIn(viewModelScope)
-        settings.killSwitch.onEach { k -> _state.update { it.copy(killSwitchOn = k) } }.launchIn(viewModelScope)
         sessionStatus.isLive.onEach { live ->
             if (live) wasLive = true
             if (wasLive && !live) leave()
@@ -185,9 +179,11 @@ class VoiceSessionViewModel @Inject constructor(
                 _state.update { it.copy(connection = Connection.Idle) }
                 start(lastMicGranted, null, lastResumeSessionId)
             }
-            VoiceSessionEvent.End -> viewModelScope.launch(NonCancellable) {
-                endSession()
+            // Leave right away: don't make Back/End wait on a slow or still-connecting session. Its teardown
+            // (which shares a lock with start()) runs after, in the background, once that lock is free.
+            VoiceSessionEvent.End -> {
                 leave()
+                viewModelScope.launch(NonCancellable) { endSession() }
             }
             VoiceSessionEvent.ToggleMute -> viewModelScope.launch { toggleMute() }
             VoiceSessionEvent.TogglePause -> viewModelScope.launch { togglePause() }
@@ -216,7 +212,6 @@ class VoiceSessionViewModel @Inject constructor(
         lastResumeSessionId = resumeSessionId
         _state.update { it.copy(connection = Connection.Connecting, textOnly = !micGranted, micDenied = !micGranted) }
         viewModelScope.launch {
-            launch { riskLimits.load() }  // needed later, not before connecting
             val resumeFrom = resumeSessionId?.let { observeHistory.messages(it).first() }.orEmpty()
             startSession(micGranted, resumeFrom)
                 .onSuccess {
@@ -234,8 +229,7 @@ class VoiceSessionViewModel @Inject constructor(
         val preview = _state.value.activePreview?.takeIf { it.previewId == previewId } ?: return
         if (_state.value.isConfirming) return
         viewModelScope.launch {
-            val biometricOn = settings.app.first().biometricOn
-            if (preview.kind == PreviewKind.PLACE && BiometricPolicy.requiresAuth(preview.estimatedValue, biometricOn)) {
+            if (preview.kind == PreviewKind.PLACE && BiometricPolicy.requiresAuth(preview.estimatedValue)) {
                 _effects.send(VoiceSessionEffect.RequestBiometric(previewId))
             } else {
                 confirm(previewId)

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,7 +21,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -29,7 +32,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -101,12 +106,12 @@ fun pnlColor(value: BigDecimal): Color = when {
 }
 
 @Composable
-private fun CardFrame(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+private fun CardFrame(modifier: Modifier = Modifier, borderColor: Color? = null, content: @Composable () -> Unit) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        border = BorderStroke(1.dp, borderColor ?: MaterialTheme.colorScheme.outline.copy(alpha = 0.14f)),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { content() }
     }
@@ -242,7 +247,10 @@ fun OrderPreviewCard(
     )
     val active = state == PreviewState.ACTIVE
 
-    CardFrame(modifier.semantics(mergeDescendants = false) { contentDescription = summary }) {
+    CardFrame(
+        modifier.semantics(mergeDescendants = false) { contentDescription = summary },
+        borderColor = if (active) MaterialTheme.extra.orbAwaiting.copy(alpha = 0.4f) else null,
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             StatusChip(sideWord, sideColor)
             PaperBadge()
@@ -327,12 +335,32 @@ fun OrderStatusCard(order: Order, modifier: Modifier = Modifier, onCancel: (Orde
         Text("$side ${order.quantity} × ${i.name}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         when (val s = order.status) {
             is OrderStatus.Filled -> Text(stringResource(R.string.filled_at, MoneyFormatter.format(s.avgPrice, i.currency)), fontWeight = FontWeight.SemiBold)
-            is OrderStatus.PartiallyFilled -> Text(stringResource(R.string.filled_at, MoneyFormatter.format(s.avgPrice, i.currency)))
+            is OrderStatus.PartiallyFilled -> {
+                Text(stringResource(R.string.filled_at, MoneyFormatter.format(s.avgPrice, i.currency)))
+                val fraction = if (order.quantity > 0) (s.filled.toFloat() / order.quantity.toFloat()).coerceIn(0f, 1f) else 0f
+                LinearProgressIndicator(
+                    progress = { fraction }, modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
+                    color = extra.orbListening, trackColor = MaterialTheme.colorScheme.surfaceContainerHigh, strokeCap = StrokeCap.Round,
+                )
+            }
             is OrderStatus.Rejected -> Text(s.reason, color = extra.loss)
             else -> Unit
         }
-        Text(stringResource(R.string.order_id, order.orderId), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (!order.status.isTerminal) TextButton(onClick = { onCancel(order) }) { Text(stringResource(R.string.cancel_order)) }
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(R.string.order_id, order.orderId), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f),
+            )
+            if (!order.status.isTerminal) {
+                OutlinedButton(
+                    onClick = { onCancel(order) },
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = extra.loss),
+                    border = BorderStroke(1.dp, extra.loss.copy(alpha = 0.45f)),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                ) { Text(stringResource(R.string.cancel_order), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold) }
+            }
+        }
     }
 }
 

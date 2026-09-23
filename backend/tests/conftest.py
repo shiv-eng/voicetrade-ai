@@ -67,7 +67,8 @@ def fresh_db() -> Database:
     db = Database(url)
     if db.is_pg:
         db.execute(
-            "TRUNCATE users, wallets, instruments, positions, orders, previews, watchlist, sessions, risk_settings, audit_log, alerts RESTART IDENTITY"
+            "TRUNCATE users, wallets, instruments, positions, orders, previews, watchlist, sessions, audit_log, alerts, "
+            "device_tokens RESTART IDENTITY"
         )
     return db
 

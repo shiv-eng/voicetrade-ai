@@ -1,11 +1,14 @@
 """The token builder must produce something Agora can verify: decode it and re-check the signature."""
 from __future__ import annotations
 
+import asyncio
 import base64
 import hmac
 import struct
 import zlib
 from hashlib import sha256
+
+import pytest
 
 from app.agora.client import AgoraClient
 from app.agora.tokens import build_rtc_token
@@ -75,7 +78,59 @@ def test_no_speech_key_means_no_voice_agent():
         AgoraClient(s).agent_body("s1", "vt-s1", "tok", 2001, "sekret", "Hi", "female", 1.0)
 
 
-def test_prompt_asks_for_devanagari_hindi_only_in_hindi_mode():
+def test_prompt_is_bilingual_whenever_speech_supports_it_not_just_the_users_default():
     from app.llm.prompts import build_system_prompt
-    assert "Devanagari" in build_system_prompt(False, None, "w", language="hinglish")
-    assert "Devanagari" not in build_system_prompt(False, None, "w", language="en")
+    # Sarvam configured (bilingual=True): Devanagari rules apply no matter which language the user picked at onboarding.
+    assert "Devanagari" in build_system_prompt(None, "w", bilingual=True, session_language="en")
+    assert "Devanagari" in build_system_prompt(None, "w", bilingual=True, session_language="hinglish")
+    # No Sarvam key at all (bilingual=False): English only, a real technical limit, not a preference.
+    assert "Devanagari" not in build_system_prompt(None, "w", bilingual=False, session_language="hinglish")
+
+
+def test_a_hindi_default_session_answering_hindi_still_switches_to_english_when_spoken():
+    from app.llm.prompts import build_system_prompt
+    p = build_system_prompt(None, "w", bilingual=True, session_language="hinglish", user_text="how is Reliance doing")
+    assert "the user spoke English, so answer ONLY in English" in p
+
+
+def test_an_english_default_session_still_switches_to_hindi_when_spoken():
+    """The exact bug reported: Settings says English, user starts speaking Hindi mid-conversation."""
+    from app.llm.prompts import build_system_prompt
+    p = build_system_prompt(None, "w", bilingual=True, session_language="en", user_text="क्या आप हिंदी में बात कर सकते हैं?")
+    assert "the user spoke Hindi, so answer in Hindi" in p
+
+
+@pytest.mark.asyncio
+async def test_a_slow_reply_is_filled_with_repeated_varied_fillers_not_dead_air():
+    """A multi-step lookup can stay silent long enough to need more than one 'hmm' — each one different,
+    and capped so a genuinely stuck call never turns into a wall of them."""
+    import app.llm.orchestrator as orch_mod
+    from app.sessions import Session
+    from app.state import build_services
+    from conftest import FakeMarket, fresh_db
+
+    class NeverSpeaks:
+        async def stream(self, messages, tools):
+            await asyncio.sleep(10)
+            yield orch_mod.ChatEvent(text="never gets here")
+
+    settings = Settings(db_path=":memory:", jwt_secret="s" * 32)
+    svc = build_services(settings, FakeMarket(), NeverSpeaks(), db=fresh_db())
+    user = svc.ledger.create_user("test")
+    session = Session(id="s1", user_id=user, channel="c1", secret_hash="h")
+
+    orig_ack, orig_repeat, orig_max = orch_mod.ACK_AFTER_S, orch_mod.REPEAT_ACK_AFTER_S, orch_mod.MAX_ACKS
+    orch_mod.ACK_AFTER_S, orch_mod.REPEAT_ACK_AFTER_S, orch_mod.MAX_ACKS = 0.01, 0.02, 3
+    fillers = []
+    gen = svc.orchestrator.reply(session, [], "how is reliance doing")
+    try:
+        async for piece in gen:
+            fillers.append(piece)
+            if len(fillers) == orch_mod.MAX_ACKS:
+                break
+    finally:
+        await gen.aclose()
+        orch_mod.ACK_AFTER_S, orch_mod.REPEAT_ACK_AFTER_S, orch_mod.MAX_ACKS = orig_ack, orig_repeat, orig_max
+
+    assert len(fillers) == 3
+    assert all(a != b for a, b in zip(fillers, fillers[1:]))  # never the same filler twice in a row

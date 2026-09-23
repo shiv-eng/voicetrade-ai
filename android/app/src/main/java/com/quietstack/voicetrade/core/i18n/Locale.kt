@@ -74,4 +74,5 @@ val HiStrings: Map<String, String> = mapOf(
     "A notification at 8:30 am with Nifty, Sensex, your holdings and IPOs today. Tap it to hear Mira read it." to
         "सुबह 8:30 बजे निफ्टी, सेंसेक्स, आपकी होल्डिंग्स और आज के आईपीओ की नोटिफ़िकेशन। टैप करके मीरा से सुनें।",
     "Above " to "ऊपर ", "Below " to "नीचे ",
+    "Markets" to "बाज़ार", "Alert" to "अलर्ट", "Ask Mira" to "मीरा से पूछें",
 )

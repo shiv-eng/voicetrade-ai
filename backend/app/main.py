@@ -25,9 +25,8 @@ from .dto import order_dto, quote_dto
 from .llm.orchestrator import ChatClient
 from .market.base import MarketData, MarketDataError
 from .market.yahoo import YahooMarketData
-from .risk import RiskBlock
 from .sessions import Session
-from .speech import SpeechBuffer, speak_money
+from .speech import SpeechBuffer, show_money, speak_money
 from .state import Services, build_services
 from .trading import TradeError
 
@@ -40,7 +39,7 @@ class ApiError(Exception):
 
 
 _TRADE_STATUS = {
-    "PREVIEW_EXPIRED": 409, "PRICE_DRIFT": 409, "KILL_SWITCH": 423, "INSUFFICIENT_FUNDS": 409, "INSUFFICIENT_SHARES": 409,
+    "PREVIEW_EXPIRED": 409, "PRICE_DRIFT": 409, "INSUFFICIENT_FUNDS": 409, "INSUFFICIENT_SHARES": 409,
     "MARKET_DATA_UNAVAILABLE": 503, "INSTRUMENT_NOT_FOUND": 404, "ORDER_NOT_FOUND": 404, "ORDER_NOT_WORKING": 409,
 }
 
@@ -250,6 +249,14 @@ def create_app(
         svc.alerts.ack(user, [int(i) for i in body.get("ids", [])])
         return {"ok": True}
 
+    @app.put("/devices/token")
+    async def register_device(body: dict, user: str = Depends(current_user)):
+        token = str(body.get("token") or "")
+        if not token:
+            raise ApiError(400, "BAD_TOKEN", "Missing FCM token.")
+        svc.devices.register(user, token)
+        return {"ok": True}
+
     @app.get("/market/overview")
     async def market_overview(user: str = Depends(current_user)):
         return await svc.insights.overview()
@@ -314,35 +321,6 @@ def create_app(
     async def watchlist_move(conid: int, up: bool, user: str = Depends(current_user)):
         svc.portfolio.watchlist_move(user, conid, up)
         return {"ok": True}
-
-    # ---- settings --------------------------------------------------------------------------------
-
-    def limits_dto(user: str) -> dict:
-        lim = svc.risk.limits(user)
-        return {"maxOrderValue": str(lim.max_order_value_inr), "maxQty": lim.max_qty, "maxOrdersPerDay": lim.max_orders_per_day,
-                "killSwitch": lim.kill_switch,
-                "serverMax": {"maxOrderValue": str(settings.server_max_order_value_inr), "maxQty": settings.server_max_qty,
-                              "maxOrdersPerDay": settings.server_max_orders_per_day}}
-
-    @app.get("/settings/risk")
-    async def get_risk(user: str = Depends(current_user)):
-        return limits_dto(user)
-
-    @app.put("/settings/risk")
-    async def put_risk(body: dict, user: str = Depends(current_user)):
-        try:
-            svc.risk.update_limits(user, Decimal(str(body["maxOrderValue"])), int(body["maxQty"]), int(body["maxOrdersPerDay"]))
-        except (KeyError, ValueError, InvalidOperation):
-            raise ApiError(400, "BAD_REQUEST", "Those limits aren't valid numbers.") from None
-        except RiskBlock as b:
-            raise ApiError(409, "RISK_BLOCKED", b.reason) from b
-        return limits_dto(user)
-
-    @app.put("/settings/kill-switch")
-    async def put_kill(body: dict, user: str = Depends(current_user)):
-        on = bool(body.get("on"))
-        svc.risk.set_kill_switch(user, on)
-        return {"on": on}
 
     # ---- previews (tap to confirm / cancel) ------------------------------------------------------
 
@@ -761,8 +739,25 @@ async def _limit_order_poller(svc: Services) -> None:
                 cur = alert["currency"]
                 await announce(svc, alert["userId"], f"Price alert: {alert['name']} is now {speak_money(Decimal(alert['triggerPrice']), cur)}, "
                                                      f"which is {alert['direction']} your level of {speak_money(Decimal(alert['target']), cur)}.")
+                await _push_alert(svc, alert, cur)
         except Exception:
             log.exception("alert check failed")
+
+
+async def _push_alert(svc: Services, alert: dict, currency: str) -> None:
+    """A voice session (if one's open) already spoke this via `announce`; a push is for when the phone
+    isn't in a session — otherwise the user only finds out up to 15 minutes later, from the poll."""
+    tokens = svc.devices.tokens_for(alert["userId"])
+    if not tokens:
+        return
+    body = (f"{alert['name']} is now {show_money(float(alert['triggerPrice']), currency)}, "
+            f"{alert['direction']} your level of {show_money(float(alert['target']), currency)}.")
+    delivered = False
+    for token in tokens:
+        if await svc.push.send(token, "Price alert", body, {"type": "alert", "alertId": str(alert["id"])}):
+            delivered = True
+    if delivered:
+        svc.alerts.ack(alert["userId"], [alert["id"]])
 
 
 def get_app() -> FastAPI:

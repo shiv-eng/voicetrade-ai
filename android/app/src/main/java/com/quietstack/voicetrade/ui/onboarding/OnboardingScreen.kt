@@ -6,8 +6,11 @@ import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,12 +23,18 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -49,11 +58,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.quietstack.voicetrade.BuildConfig
 import com.quietstack.voicetrade.R
+import com.quietstack.voicetrade.core.designsystem.MicOrb
+import com.quietstack.voicetrade.core.designsystem.OrbState
 import com.quietstack.voicetrade.core.designsystem.PaperBadge
+import com.quietstack.voicetrade.core.designsystem.extra
 import com.quietstack.voicetrade.ui.common.GoogleSignIn
 import com.quietstack.voicetrade.ui.common.InlineError
 import com.quietstack.voicetrade.ui.common.messageText
@@ -177,20 +190,50 @@ private fun IntroPage(icon: ImageVector, title: Int, body: Int, disclaimer: Bool
 @Composable
 private fun SignInPage(state: OnboardingUiState, context: android.content.Context) {
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Icon(
-            Icons.Filled.VerifiedUser,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(112.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape).padding(28.dp),
-        )
-        Text(stringResource(R.string.signin_title), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-        Text(stringResource(R.string.signin_body), style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Box(
+            Modifier.size(72.dp).background(
+                Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary.copy(alpha = 0.22f), MaterialTheme.colorScheme.secondary.copy(alpha = 0.22f))),
+                RoundedCornerShape(22.dp),
+            ).border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f), RoundedCornerShape(22.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Icons.Filled.VerifiedUser, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(36.dp))
+        }
+        Text(stringResource(R.string.signin_title), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center, letterSpacing = (-0.03).em)
+        Text(stringResource(R.string.signin_body), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Surface(
+            Modifier.fillMaxWidth().padding(top = 8.dp),
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.14f)),
+        ) {
+            Column {
+                BenefitRow(Icons.Filled.AccountBalanceWallet, MaterialTheme.colorScheme.primary, "₹10,00,000 + $10,000", stringResource(R.string.signin_benefit_wallet_body))
+                androidx.compose.material3.HorizontalDivider(Modifier.padding(start = 72.dp), color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
+                BenefitRow(Icons.Filled.RecordVoiceOver, MaterialTheme.colorScheme.secondary, stringResource(R.string.signin_benefit_orders), stringResource(R.string.signin_benefit_orders_body))
+                androidx.compose.material3.HorizontalDivider(Modifier.padding(start = 72.dp), color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
+                BenefitRow(Icons.Filled.Fingerprint, MaterialTheme.extra.orbAwaiting, stringResource(R.string.biometric), stringResource(R.string.signin_benefit_biometric_body))
+            }
+        }
         if (state.micPermission == false) {
             Text(stringResource(R.string.mic_denied_note), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         state.error?.let { InlineError(messageText(context, it), null) }
         if (state.googleNotConfigured) InlineError(stringResource(R.string.google_not_configured), null)
         state.googleMessage?.let { InlineError(stringResource(R.string.google_failed, it), null) }
+    }
+}
+
+@Composable
+private fun BenefitRow(icon: ImageVector, tint: Color, title: String, body: String) {
+    Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        Box(Modifier.size(40.dp).background(tint.copy(alpha = 0.12f), RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
+            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+            Text(body, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 
@@ -215,28 +258,68 @@ private fun LanguageChoice(onPick: (String) -> Unit) {
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             Modifier.fillMaxSize().background(
-                Brush.verticalGradient(listOf(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f), MaterialTheme.colorScheme.background)),
-            ).statusBarsPadding().navigationBarsPadding().padding(28.dp),
+                Brush.radialGradient(
+                    listOf(MaterialTheme.colorScheme.primary.copy(alpha = 0.20f), Color.Transparent),
+                    center = androidx.compose.ui.geometry.Offset(0f, 0f), radius = 1400f,
+                ),
+            ).statusBarsPadding().navigationBarsPadding().padding(horizontal = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
         ) {
-            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(28.dp))
-            Text("अपनी भाषा चुनें", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
-            Text("Choose your language", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.height(32.dp))
-            androidx.compose.material3.Button(onClick = { onPick("hi") }, modifier = Modifier.fillMaxWidth().height(60.dp)) {
-                Text("हिन्दी", style = MaterialTheme.typography.titleLarge)
-            }
-            Spacer(Modifier.height(14.dp))
-            androidx.compose.material3.OutlinedButton(onClick = { onPick("en") }, modifier = Modifier.fillMaxWidth().height(60.dp)) {
-                Text("English", style = MaterialTheme.typography.titleLarge)
-            }
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.weight(1f))
+            MicOrb(OrbState.IDLE, level = 0f, contentDescription = stringResource(R.string.app_name), size = 170.dp)
+            Spacer(Modifier.height(18.dp))
             Text(
-                "मीरा हिन्दी और English दोनों में बात करती है  ·  Mira speaks both Hindi and English",
-                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                "Talk to the market.", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.ExtraBold,
+                textAlign = TextAlign.Center, letterSpacing = (-0.03).em,
+            )
+            Spacer(Modifier.height(10.dp))
+            Text(
+                stringResource(R.string.onb1_body), style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.weight(1f))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.lang_choose_title), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.size(4.dp).background(MaterialTheme.colorScheme.onSurfaceVariant, CircleShape))
+                Text(stringResource(R.string.lang_choose_subtitle), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Spacer(Modifier.height(12.dp))
+            LanguagePill(stringResource(R.string.lang_hindi_only), "Hindi", filled = true, onClick = { onPick("hi") })
+            Spacer(Modifier.height(12.dp))
+            LanguagePill(stringResource(R.string.lang_english_only), "English", filled = false, onClick = { onPick("en") })
+            Spacer(Modifier.height(16.dp))
+            Text(
+                "मीरा हिन्दी और English दोनों में बात करती है  ·  you can change this later",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(28.dp))
+        }
+    }
+}
+
+@Composable
+private fun LanguagePill(label: String, caption: String, filled: Boolean, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().height(60.dp),
+        shape = RoundedCornerShape(18.dp),
+        color = if (filled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer,
+        border = if (filled) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.22f)),
+    ) {
+        Row(Modifier.padding(horizontal = 22.dp).fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                label, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold,
+                color = if (filled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f),
+            )
+            Text(
+                caption, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold,
+                color = if (filled) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.width(10.dp))
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null,
+                tint = if (filled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

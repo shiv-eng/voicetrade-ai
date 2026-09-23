@@ -15,7 +15,6 @@ import com.quietstack.voicetrade.domain.model.Pnl
 import com.quietstack.voicetrade.domain.model.Position
 import com.quietstack.voicetrade.domain.model.PreviewState
 import com.quietstack.voicetrade.domain.model.Quote
-import com.quietstack.voicetrade.domain.model.RiskLimits
 import com.quietstack.voicetrade.domain.model.SessionSummary
 import com.quietstack.voicetrade.domain.model.UserProfile
 import com.quietstack.voicetrade.domain.model.WatchRow
@@ -25,12 +24,8 @@ import kotlinx.coroutines.flow.StateFlow
 interface SettingsRepository {
     val settings: Flow<AppSettings>
     val connection: Flow<ConnectionConfig>
-    val killSwitch: StateFlow<Boolean>
 
     suspend fun update(transform: (AppSettings) -> AppSettings)
-    suspend fun riskLimits(): Result<RiskLimits>
-    suspend fun updateRiskLimits(limits: RiskLimits): Result<RiskLimits>
-    suspend fun setKillSwitch(on: Boolean): Result<Boolean>
 }
 
 interface AuthRepository {
@@ -143,4 +138,9 @@ interface AlertsRepository {
 interface SessionServiceController {
     fun start()
     fun stop()
+}
+
+/** Tells the backend where to push this phone's price alerts, so it doesn't have to wait for the poll. */
+interface PushRepository {
+    suspend fun registerToken(token: String): Result<Unit>
 }

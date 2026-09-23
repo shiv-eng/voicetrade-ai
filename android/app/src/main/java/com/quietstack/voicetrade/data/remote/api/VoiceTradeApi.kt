@@ -2,6 +2,7 @@ package com.quietstack.voicetrade.data.remote.api
 
 import com.quietstack.voicetrade.data.remote.dto.CardDto
 import com.quietstack.voicetrade.data.remote.dto.AckRequest
+import com.quietstack.voicetrade.data.remote.dto.DeviceTokenRequest
 import com.quietstack.voicetrade.data.remote.dto.AddAlertResponse
 import com.quietstack.voicetrade.data.remote.dto.AddAlertRequest
 import com.quietstack.voicetrade.data.remote.dto.AlertDto
@@ -12,7 +13,6 @@ import com.quietstack.voicetrade.data.remote.dto.AccountSummaryDto
 import com.quietstack.voicetrade.data.remote.dto.BrokerStatusDto
 import com.quietstack.voicetrade.data.remote.dto.ConfirmResponseDto
 import com.quietstack.voicetrade.data.remote.dto.InstrumentDto
-import com.quietstack.voicetrade.data.remote.dto.KillSwitchDto
 import com.quietstack.voicetrade.data.remote.dto.OrderDto
 import com.quietstack.voicetrade.data.remote.dto.OrderPreviewDto
 import com.quietstack.voicetrade.data.remote.dto.AuthResponse
@@ -20,7 +20,6 @@ import com.quietstack.voicetrade.data.remote.dto.GoogleLoginRequest
 import com.quietstack.voicetrade.data.remote.dto.PnlDto
 import com.quietstack.voicetrade.data.remote.dto.PositionDto
 import com.quietstack.voicetrade.data.remote.dto.QuoteDto
-import com.quietstack.voicetrade.data.remote.dto.RiskLimitsDto
 import com.quietstack.voicetrade.data.remote.dto.SessionDto
 import com.quietstack.voicetrade.data.remote.dto.StartSessionRequest
 import com.quietstack.voicetrade.data.remote.dto.TextRequest
@@ -73,13 +72,11 @@ interface VoiceTradeApi {
     @DELETE("alerts/{id}") suspend fun cancelAlert(@Path("id") id: Long)
     @GET("alerts/pending") suspend fun pendingAlerts(): List<AlertDto>
     @POST("alerts/ack") suspend fun ackAlerts(@Body body: AckRequest)
+    @PUT("devices/token") suspend fun registerDevice(@Body body: DeviceTokenRequest)
 
     @GET("watchlist") suspend fun watchlist(): List<WatchRowDto>
     @PUT("watchlist/{conid}") suspend fun watchlistAdd(@Path("conid") conid: Long)
     @DELETE("watchlist/{conid}") suspend fun watchlistRemove(@Path("conid") conid: Long)
     @POST("watchlist/{conid}/move") suspend fun watchlistMove(@Path("conid") conid: Long, @Query("up") up: Boolean)
 
-    @GET("settings/risk") suspend fun riskLimits(): RiskLimitsDto
-    @PUT("settings/risk") suspend fun updateRisk(@Body body: RiskLimitsDto): RiskLimitsDto
-    @PUT("settings/kill-switch") suspend fun killSwitch(@Body body: KillSwitchDto): KillSwitchDto
 }

@@ -19,7 +19,6 @@ sealed class AppError(
     class RiskBlocked(detail: String?) : AppError(R.string.err_risk_blocked, detail = detail, retryable = false)
     class PreviewExpired : AppError(R.string.err_preview_expired, retryable = false)
     class PriceDrift : AppError(R.string.err_price_drift, retryable = false)
-    class KillSwitch : AppError(R.string.err_kill_switch, retryable = false)
     class MarketDataUnavailable : AppError(R.string.err_market_data)
     class BadPairingCode : AppError(R.string.err_bad_pairing, retryable = false)
     class Unknown(detail: String? = null, cause: Throwable? = null) :

@@ -16,14 +16,18 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
@@ -44,12 +48,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -145,7 +151,10 @@ fun HomeScreen(
 
                 item { VoiceCard(onTap = { startTapped(null) }, onPick = { startTapped(it) }) }
 
-                if (state.market?.indices?.isNotEmpty() == true) item { IndexTiles(state.market) }
+                if (state.market?.indices?.isNotEmpty() == true) {
+                    item { SectionHeader(tr("Markets")) }
+                    item { IndexTiles(state.market) }
+                }
 
                 state.account?.let { acc ->
                     item { BalanceCard(acc.wallets, state.pnl?.items?.associate { it.currency to it.daily }.orEmpty(), onOpenPortfolio) }
@@ -279,8 +288,13 @@ private fun VoiceCard(onTap: () -> Unit, onPick: (String) -> Unit) {
             stringResource(R.string.hero_subtitle), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 28.dp, vertical = 4.dp),
         )
+        Text(
+            stringResource(R.string.try_saying).uppercase(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.ExtraBold,
+            letterSpacing = 0.1.em, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.align(Alignment.Start).padding(start = 18.dp, top = 14.dp),
+        )
         LazyRow(
-            Modifier.padding(top = 14.dp),
+            Modifier.padding(top = 8.dp),
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -297,49 +311,93 @@ private fun VoiceCard(onTap: () -> Unit, onPick: (String) -> Unit) {
     }
 }
 
-/** Cash you can spend, the total wallet is worth, and today's move as a percentage — one wallet at a time,
- * stacked, so nothing is cramped. Tap for the full portfolio (holdings, breakdown). */
+/** The teal hero card: total value first, cash and invested underneath, a live day-change pill, and an
+ * INR/USD switch for people with both wallets. Tap the arrow for the full portfolio breakdown. */
 @Composable
 private fun BalanceCard(wallets: List<Wallet>, dayByCurrency: Map<String, BigDecimal>, onOpenPortfolio: () -> Unit) {
-    Panel(onClick = onOpenPortfolio) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    stringResource(R.string.balance_title), style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f),
-                )
-                PaperBadge()
-            }
-            wallets.forEachIndexed { i, w ->
-                if (i > 0) Hairline()
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    if (wallets.isEmpty()) return
+    var selected by remember { mutableStateOf(wallets.first().currency) }
+    val w = wallets.firstOrNull { it.currency == selected } ?: wallets.first()
+    Surface(
+        onClick = onOpenPortfolio,
+        shape = RoundedCornerShape(28.dp),
+        color = Color.Transparent,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Box(
+            Modifier.background(Brush.linearGradient(listOf(Color(0xFF0F766E), Color(0xFF134E4A)))),
+        ) {
+            Box(
+                Modifier.align(Alignment.TopEnd).offset(x = 70.dp, y = (-90).dp).size(240.dp)
+                    .background(Brush.radialGradient(listOf(Color.White.copy(alpha = 0.14f), Color.Transparent)), CircleShape),
+            )
+            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        stringResource(if (w.currency == "INR") R.string.wallet_india else R.string.wallet_us),
-                        style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        stringResource(R.string.balance_title) + " · " + stringResource(if (w.currency == "INR") R.string.wallet_india else R.string.wallet_us),
+                        style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = Color.White.copy(alpha = 0.78f),
+                        modifier = Modifier.weight(1f),
                     )
-                    Row(Modifier.fillMaxWidth()) {
-                        Stat(stringResource(R.string.cash), MoneyFormatter.format(w.cash, w.currency, 0), Modifier.weight(1f))
-                        Stat(
-                            stringResource(R.string.total_value), MoneyFormatter.format(w.netLiquidation, w.currency, 0),
-                            Modifier.weight(1f), align = TextAlign.End,
-                        )
+                    if (wallets.size > 1) {
+                        Row(
+                            Modifier.background(Color.Black.copy(alpha = 0.28f), RoundedCornerShape(50)).padding(3.dp),
+                        ) {
+                            wallets.forEach { ww ->
+                                val on = ww.currency == selected
+                                Text(
+                                    ww.currency, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.ExtraBold,
+                                    color = if (on) Color(0xFF042F2E) else Color.White.copy(alpha = 0.78f),
+                                    modifier = Modifier
+                                        .background(if (on) Color.White else Color.Transparent, RoundedCornerShape(50))
+                                        .clickable { selected = ww.currency }
+                                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                                )
+                            }
+                        }
                     }
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(stringResource(R.string.total_value), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f))
+                    Text(
+                        MoneyFormatter.format(w.netLiquidation, w.currency, 0), style = MaterialTheme.typography.headlineLarge.merge(TabularNumbers),
+                        fontWeight = FontWeight.ExtraBold, color = Color.White, letterSpacing = (-0.03).em,
+                    )
                     val day = dayByCurrency[w.currency]
                     if (day != null) {
                         val base = w.netLiquidation.subtract(day)
                         val pct = if (base.signum() > 0) day.multiply(BigDecimal(100)).divide(base, 2, RoundingMode.HALF_UP) else BigDecimal.ZERO
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            val up = day.signum() >= 0
                             Text(
-                                stringResource(R.string.today), style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f),
+                                (if (up) "▲ " else "▼ ") + MoneyFormatter.formatPercent(pct).trimStart('+', '-'),
+                                style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold,
+                                color = if (up) Color(0xFFBBF7D0) else Color(0xFFFFD9D9),
+                                modifier = Modifier.background((if (up) Color(0xFF4ADE80) else Color(0xFFF87171)).copy(alpha = 0.2f), RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 3.dp),
                             )
                             Text(
-                                MoneyFormatter.formatSigned(day, w.currency, 0), style = MaterialTheme.typography.bodyMedium.merge(TabularNumbers),
-                                fontWeight = FontWeight.SemiBold, color = pnlColor(day),
+                                MoneyFormatter.formatSigned(day, w.currency, 0) + " " + stringResource(R.string.today),
+                                style = MaterialTheme.typography.bodySmall.merge(TabularNumbers), fontWeight = FontWeight.SemiBold, color = Color.White.copy(alpha = 0.85f),
                             )
-                            Box(Modifier.padding(start = 8.dp)) { StatusChip(MoneyFormatter.formatPercent(pct), pnlColor(day)) }
                         }
                     }
+                }
+                Row(
+                    Modifier.fillMaxWidth().background(Color.Black.copy(alpha = 0.22f), RoundedCornerShape(18.dp)).padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(stringResource(R.string.cash), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = Color.White.copy(alpha = 0.7f))
+                        Text(MoneyFormatter.format(w.cash, w.currency, 0), style = MaterialTheme.typography.bodyMedium.merge(TabularNumbers), fontWeight = FontWeight.ExtraBold, color = Color.White)
+                    }
+                    Box(Modifier.width(1.dp).height(28.dp).background(Color.White.copy(alpha = 0.14f)))
+                    Column(Modifier.weight(1f).padding(start = 14.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(stringResource(R.string.invested), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = Color.White.copy(alpha = 0.7f))
+                        Text(MoneyFormatter.format(w.positionsValue, w.currency, 0), style = MaterialTheme.typography.bodyMedium.merge(TabularNumbers), fontWeight = FontWeight.ExtraBold, color = Color.White)
+                    }
+                    Box(
+                        Modifier.size(34.dp).background(Color.White.copy(alpha = 0.14f), RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center,
+                    ) { Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp)) }
                 }
             }
         }

@@ -43,6 +43,10 @@
     <string name="disclaimer">VoiceTrade AI प्रैक्टिस अकाउंट पर एक डेमो है। यह निवेश की सलाह नहीं देता। ट्रेडिंग में जोखिम होता है।</string>
     <string name="signin_title">अपना प्रैक्टिस अकाउंट बनाएँ</string>
     <string name="signin_body">अपने प्रैक्टिस के पैसे, होल्डिंग्स और वॉचलिस्ट को सुरक्षित रखने के लिए Google से साइन इन करें, फ़ोन बदलने पर भी।</string>
+    <string name="signin_benefit_wallet_body">प्रैक्टिस के पैसे। भाव असली और लाइव हैं।</string>
+    <string name="signin_benefit_orders">हर ऑर्डर दोहराया जाता है</string>
+    <string name="signin_benefit_orders_body">आपकी पुष्टि के बिना कुछ नहीं लगता।</string>
+    <string name="signin_benefit_biometric_body">एक तय सुरक्षा सीमा, हमेशा चालू।</string>
     <string name="continue_with_google">Google से जारी रखें</string>
     <string name="continue_as_guest">गेस्ट के रूप में जारी रखें (सिर्फ़ डिबग बिल्ड)</string>
     <string name="google_not_configured">इस बिल्ड में Google साइन-इन अभी सेट नहीं है। सर्वर के मालिक को Google क्लाइंट आईडी जोड़नी होगी।</string>
@@ -144,7 +148,6 @@
     <string name="end">खत्म करें</string>
     <string name="type_message">संदेश टाइप करें</string>
     <string name="send">भेजें</string>
-    <string name="kill_switch_on">ट्रेडिंग बंद</string>
     <string name="quote_speech">%1$s, %2$s, आज %3$s</string>
 
     <!-- Order cards -->
@@ -187,11 +190,12 @@
     <string name="move_down">नीचे करें</string>
     <string name="history_empty">अभी तक कोई पुराना सेशन नहीं है।</string>
     <string name="history_detail">सेशन</string>
+    <string name="history_resume_hint">किसी भी सेशन को खोलकर सुनें या मीरा से बातचीत जारी रखें।</string>
     <string name="history_continue">जारी रखें</string>
 
     <!-- Settings -->
     <string name="settings_voice">आवाज़</string>
-    <string name="settings_safety">सुरक्षा और सीमाएँ</string>
+    <string name="settings_safety">सूचनाएं</string>
     <string name="settings_appearance">दिखावट</string>
     <string name="settings_data">डेटा और कनेक्शन</string>
     <string name="about">जानकारी</string>
@@ -200,21 +204,10 @@
     <string name="voice_female">महिला आवाज़</string>
     <string name="voice_male">पुरुष आवाज़</string>
     <string name="speech_speed">बोलने की गति: %1$sx</string>
-    <string name="kill_switch">किल स्विच</string>
-    <string name="kill_switch_desc">सभी ऑर्डर तुरंत बंद कर देता है। भाव और पोर्टफोलियो देखे जा सकते हैं।</string>
     <string name="biometric">बड़े ऑर्डर के लिए बायोमेट्रिक जाँच</string>
-    <string name="biometric_desc">बड़े ऑर्डर की पुष्टि से पहले फ़िंगरप्रिंट या चेहरा माँगें।</string>
-    <string name="risk_limits">जोखिम सीमाएँ</string>
-    <string name="risk_unavailable">सीमाएँ अभी उपलब्ध नहीं हैं।</string>
-    <string name="risk_invalid">सर्वर की अधिकतम सीमा के भीतर सकारात्मक संख्याएँ डालें।</string>
-    <string name="max_order_value">प्रति ऑर्डर अधिकतम मूल्य</string>
-    <string name="max_quantity">प्रति ऑर्डर अधिकतम शेयर</string>
-    <string name="max_orders_day">प्रति दिन अधिकतम ऑर्डर</string>
     <string name="theme_system">सिस्टम</string>
     <string name="theme_light">लाइट</string>
     <string name="theme_dark">डार्क</string>
-    <string name="large_text">बड़े अक्षर</string>
-    <string name="large_text_desc">पूरे ऐप में बड़े अक्षर।</string>
     <string name="delete_history">सेशन इतिहास हटाएँ</string>
     <string name="delete_history_confirm">इससे इस फ़ोन से सभी सहेजे गए ट्रांसक्रिप्ट हट जाएँगे।</string>
     <string name="unlink_device">साइन आउट</string>
@@ -237,7 +230,6 @@
     <string name="err_risk_blocked">यह ऑर्डर आपकी जोखिम सीमा से ऊपर है। सेटिंग्स में सीमा बदलें या छोटा ऑर्डर आज़माएँ।</string>
     <string name="err_preview_expired">वह प्रिव्यू समाप्त हो गया, इसलिए कुछ भी नहीं लगा। मीरा से ऑर्डर दोबारा बनवाएँ।</string>
     <string name="err_price_drift">प्रिव्यू के बाद भाव बहुत बदल गया, इसलिए कुछ भी नहीं लगा। नया प्रिव्यू माँगें।</string>
-    <string name="err_kill_switch">ट्रेडिंग बंद है। ऑर्डर लगाने के लिए सेटिंग्स में किल स्विच बंद करें।</string>
     <string name="err_unknown">कुछ गड़बड़ हो गई।</string>
     <string name="err_market_data">अभी लाइव भाव नहीं मिल पाए। कृपया थोड़ी देर में फिर कोशिश करें।</string>
     <string name="err_bad_pairing">वह पेयरिंग कोड सही नहीं है।</string>
@@ -245,7 +237,7 @@
     <!-- New screens -->
     <string name="lang_choose_title">अपनी भाषा चुनें</string>
     <string name="lang_choose_subtitle">Choose your language</string>
-    <string name="app_language">भाषा (स्क्रीन और आवाज़)</string>
+    <string name="app_language">भाषा</string>
     <string name="lang_english_only">English</string>
     <string name="lang_hindi_only">हिन्दी</string>
 </resources>
