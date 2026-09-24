@@ -12,7 +12,7 @@ from .ledger import Ledger
 import logging
 
 from .llm.basic import BasicChat
-from .llm.orchestrator import ChatClient, OpenAIChat, Orchestrator
+from .llm.orchestrator import ChatClient, OpenAIChat, Orchestrator, RoutedChat
 from .llm.tools import ToolBox
 from .market.base import MarketData
 from .market.research import Research
@@ -24,6 +24,8 @@ from .push import PushClient
 from .risk import RiskEngine
 from .sessions import SessionRegistry
 from .trading import TradingService
+
+_SARVAM_LLM_BASE_URL = "https://api.sarvam.ai/v1"
 
 
 @dataclass
@@ -62,7 +64,16 @@ def build_services(settings: Settings, market: MarketData, chat: ChatClient | No
     tools = ToolBox(db, instruments, market, ledger, trading, portfolio, hub, research, alerts, insights)
     if chat is None:
         if settings.llm_api_key:
-            chat = OpenAIChat(settings)
+            english: ChatClient = OpenAIChat(settings.llm_base_url, settings.llm_api_key, settings.llm_model,
+                                              settings.llm_timeout_s, settings.llm_patience)
+            # Sarvam's own model for Hindi/Hinglish turns (tuned for Indian languages); English keeps using
+            # whichever model LLM_* points at. Reuses SARVAM_API_KEY — no separate credential to configure.
+            if settings.sarvam_api_key:
+                hindi: ChatClient = OpenAIChat(_SARVAM_LLM_BASE_URL, settings.sarvam_api_key, settings.sarvam_llm_model,
+                                                settings.llm_timeout_s, 1.0)
+                chat = RoutedChat(english, hindi)
+            else:
+                chat = english
         else:
             logging.getLogger("voicetrade").warning("LLM_API_KEY not set: using the basic keyless command parser.")
             chat = BasicChat()

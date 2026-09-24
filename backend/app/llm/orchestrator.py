@@ -137,20 +137,19 @@ class OpenAIChat:
     One model. If a call has not started answering after a few seconds, the same request is sent once more and the first
     answer wins, so a rare stall never becomes dead air."""
 
-    def __init__(self, s: Settings) -> None:
+    def __init__(self, base_url: str, api_key: str, model: str, timeout_s: float, patience: float) -> None:
         from openai import AsyncOpenAI
 
-        def backend(base_url: str, key: str, model: str):
-            # Gemini 3 "thinks" by default, which adds seconds of silence on a voice call.
-            extra: dict = {}
-            if "generativelanguage.googleapis.com" in base_url or "gpt-oss" in model:
-                extra["reasoning_effort"] = "low"
-            elif model.startswith(("gpt-5", "o1", "o3", "o4")):
-                extra["reasoning_effort"] = "minimal" if model.startswith("gpt-5") else "low"  # thinking time is dead air on a call
-            return (AsyncOpenAI(base_url=base_url, api_key=key or "missing", timeout=s.llm_timeout_s, max_retries=0), model, extra)
+        # Gemini 3 "thinks" by default, which adds seconds of silence on a voice call.
+        extra: dict = {}
+        if "generativelanguage.googleapis.com" in base_url or "gpt-oss" in model:
+            extra["reasoning_effort"] = "low"
+        elif model.startswith(("gpt-5", "o1", "o3", "o4")):
+            extra["reasoning_effort"] = "minimal" if model.startswith("gpt-5") else "low"  # thinking time is dead air on a call
 
-        self._backends = [backend(s.llm_base_url, s.llm_api_key, s.llm_model)]  # exactly one model
-        self._patience = s.llm_patience
+        client = AsyncOpenAI(base_url=base_url, api_key=api_key or "missing", timeout=timeout_s, max_retries=0)
+        self._backends = [(client, model, extra)]  # exactly one model
+        self._patience = patience
 
     async def stream(self, messages: list[dict], tools: list[dict]) -> AsyncIterator[ChatEvent]:
         async for ev in _hedged(lambda n: self._stream_once(messages, tools, n), HEDGE_AFTER_S * self._patience):
@@ -191,6 +190,22 @@ class OpenAIChat:
                     slot["args"] += tc.function.arguments
         if calls:
             yield ChatEvent(tool_calls=[ToolCall(calls[k]["id"] or f"call_{i}", calls[k]["name"], calls[k]["args"], calls[k]["extra"]) for i, k in enumerate(order)])
+
+
+class RoutedChat:
+    """Two models, picked per turn by which language was just spoken (see [speech_language] in speech.py,
+    set once per turn by `reply()` before this ever runs): Sarvam's own model for Hindi/Hinglish, since it's
+    tuned for Indian languages, and a separate fast model for English. Both need real tool-calling — this is
+    an agent either way, not a chat toy — so the choice is purely about which one writes the better turn."""
+
+    def __init__(self, english: ChatClient, hindi: ChatClient | None) -> None:
+        self._english = english
+        self._hindi = hindi
+
+    def stream(self, messages: list[dict], tools: list[dict]) -> AsyncIterator[ChatEvent]:
+        from ..speech import speech_language
+        chat = self._hindi if (self._hindi is not None and speech_language.get() == "hi") else self._english
+        return chat.stream(messages, tools)
 
 
 class Orchestrator:

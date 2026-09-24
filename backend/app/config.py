@@ -56,6 +56,9 @@ class Settings:
     sarvam_speaker_male: str = field(default_factory=lambda: _env("SARVAM_SPEAKER_MALE", "shubh"))
     sarvam_pace: float = field(default_factory=lambda: float(_env("SARVAM_PACE", "1.15")))
     sarvam_tts_model: str = field(default_factory=lambda: _env("SARVAM_TTS_MODEL", "bulbul:v3"))
+    # Sarvam's own chat model, tuned for Indian languages and agentic tool-calling. Used for Hindi/Hinglish
+    # turns only (see RoutedChat); reuses SARVAM_API_KEY, no separate key needed.
+    sarvam_llm_model: str = field(default_factory=lambda: _env("SARVAM_LLM_MODEL", "sarvam-105b"))
     # Agora turn detection override, as JSON. Default: end the user's turn after a short pause (lower = snappier).
     agora_turn_detection_json: dict | None = field(default_factory=lambda: _json_env("AGORA_TURN_DETECTION_JSON"))
     # How long the user must be speaking before Mira stops talking. Short noises and coughs — or a thumb

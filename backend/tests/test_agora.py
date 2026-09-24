@@ -100,6 +100,44 @@ def test_an_english_default_session_still_switches_to_hindi_when_spoken():
     assert "the user spoke Hindi, so answer in Hindi" in p
 
 
+class _NamedFakeChat:
+    """Records that it was the one asked to stream, without making a real call."""
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+    async def stream(self, messages, tools):
+        from app.llm.orchestrator import ChatEvent
+        yield ChatEvent(text=self.name)
+
+
+@pytest.mark.asyncio
+async def test_routed_chat_picks_the_model_by_the_language_just_spoken():
+    from app.llm.orchestrator import RoutedChat
+    from app.speech import speech_language
+
+    routed = RoutedChat(english=_NamedFakeChat("en"), hindi=_NamedFakeChat("hi"))
+
+    speech_language.set("en")
+    pieces = [ev.text async for ev in routed.stream([], [])]
+    assert pieces == ["en"]
+
+    speech_language.set("hi")
+    pieces = [ev.text async for ev in routed.stream([], [])]
+    assert pieces == ["hi"]
+
+
+@pytest.mark.asyncio
+async def test_routed_chat_falls_back_to_english_when_no_hindi_model_is_configured():
+    from app.llm.orchestrator import RoutedChat
+    from app.speech import speech_language
+
+    routed = RoutedChat(english=_NamedFakeChat("en"), hindi=None)
+    speech_language.set("hi")  # even mid-Hindi-turn, there's nothing else to route to
+    pieces = [ev.text async for ev in routed.stream([], [])]
+    assert pieces == ["en"]
+
+
 @pytest.mark.asyncio
 async def test_a_slow_reply_is_filled_with_repeated_varied_fillers_not_dead_air():
     """A multi-step lookup can stay silent long enough to need more than one 'hmm' — each one different,
