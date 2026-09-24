@@ -63,7 +63,7 @@ class AgoraClient:
                 "turn_detection": s.agora_turn_detection_json or {
                     "config": {
                         "start_of_speech": {"mode": "vad", "vad_config": {
-                            "interrupt_duration_ms": s.interrupt_ms, "speaking_interrupt_duration_ms": s.interrupt_ms, "prefix_padding_ms": 600}},
+                            "interrupt_duration_ms": s.interrupt_ms, "speaking_interrupt_duration_ms": s.speaking_interrupt_ms, "prefix_padding_ms": 600}},
                         "end_of_speech": {"mode": "vad", "vad_config": {"silence_duration_ms": s.end_of_speech_ms}},
                     },
                 },

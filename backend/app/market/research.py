@@ -166,6 +166,7 @@ class Research:
         self._crumb: str | None = None
         self._nse_ready = 0.0
         self._bg_tasks: set[asyncio.Task] = set()  # keeps fire-and-forget warm-up tasks from being GC'd mid-flight
+        self._warming: set[str] = set()  # detail keys being fetched right now, so a repeat request doesn't fetch them twice
 
     async def aclose(self) -> None:
         for t in self._bg_tasks:
@@ -385,7 +386,10 @@ class Research:
         if (hit := self._cached(key, 60)) is not None:
             return hit
         try:
-            return self._store(key, await (self._ipos_us() if market == "US" else self._ipos_in()))
+            data = await (self._ipos_us() if market == "US" else self._ipos_in())
+            # A list whose lot sizes haven't loaded yet is served but not kept, so the very next request rebuilds
+            # it from the details that finished meanwhile instead of repeating this blank version for a minute.
+            return self._store(key, data) if self._ipo_details_ready(data) else data
         except ResearchError:
             raise
         except Exception as e:
@@ -430,13 +434,22 @@ class Research:
             except Exception:
                 return None
 
+    @staticmethod
+    def _detail_key(item: dict[str, Any]) -> str:
+        return f"ipod:{item['symbol']}:{'SME' if item['type'] == 'SME' else 'EQ'}"
+
+    def _ipo_details_ready(self, data: dict[str, Any]) -> bool:
+        """True once every IPO on an India list has had its detail fetched (US lists have none to fetch)."""
+        return data["market"] == "US" or all(
+            self._cached(self._detail_key(i), 300) is not None for i in data["open_now"] + data["coming_soon"])
+
     def _enrich_from_cache(self, items: list[dict[str, Any]]) -> None:
         """Lot size, minimum investment and overall subscription for the IPOs on the list — but only ever
         from cache, so building the list is never held hostage to NSE's per-item detail endpoint being
         slow (it was: up to 14 items behind a 4-wide semaphore routinely blew past any reasonable budget,
         making the whole list wait on it). See _warm_enrich for how that cache actually gets filled."""
         for item in items:
-            hit = self._cached(f"ipod:{item['symbol']}:{'SME' if item['type'] == 'SME' else 'EQ'}", 300)
+            hit = self._cached(self._detail_key(item), 300)
             if hit:
                 item.update(lot_size=hit["lot_size"], min_investment=hit["min_investment"], price_low=hit["price_low"],
                             price_high=hit["price_high"], overall_times=hit["subscription"]["overall"])
@@ -446,13 +459,17 @@ class Research:
         cached yet, so the NEXT list request (this user reopening the screen, or anyone else) finds more of
         them already warm. Never raises — a failed fetch here just means that item stays unenriched."""
         sem = asyncio.Semaphore(4)
-        await asyncio.gather(*(self._brief(sem, i["symbol"], "SME" if i["type"] == "SME" else "EQ") for i in items),
-                             return_exceptions=True)
+        try:
+            await asyncio.gather(*(self._brief(sem, i["symbol"], "SME" if i["type"] == "SME" else "EQ") for i in items),
+                                 return_exceptions=True)
+        finally:
+            self._warming.difference_update(self._detail_key(i) for i in items)
 
     def _enrich_in_background(self, items: list[dict[str, Any]]) -> asyncio.Task | None:
-        missing = [i for i in items if i.get("lot_size") is None]
+        missing = [i for i in items if i.get("lot_size") is None and self._detail_key(i) not in self._warming]
         if not missing:
             return None
+        self._warming.update(self._detail_key(i) for i in missing)
         task = asyncio.ensure_future(self._warm_enrich(missing))
         self._bg_tasks.add(task)
         task.add_done_callback(self._bg_tasks.discard)

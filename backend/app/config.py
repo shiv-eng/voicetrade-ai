@@ -61,11 +61,14 @@ class Settings:
     sarvam_llm_model: str = field(default_factory=lambda: _env("SARVAM_LLM_MODEL", "sarvam-105b"))
     # Agora turn detection override, as JSON. Default: end the user's turn after a short pause (lower = snappier).
     agora_turn_detection_json: dict | None = field(default_factory=lambda: _json_env("AGORA_TURN_DETECTION_JSON"))
-    # How long the user must be speaking before Mira stops talking. Short noises and coughs — or a thumb
-    # brushing the mic while scrolling the transcript — should not cut her off, so this sits well above a
-    # brief incidental sound and only fires on speech that keeps going.
-    interrupt_ms: int = field(default_factory=lambda: int(_env("INTERRUPT_MS", "1200")))
-    end_of_speech_ms: int = field(default_factory=lambda: int(_env("END_OF_SPEECH_MS", "400")))
+    # How long the user must be speaking before Mira registers it while she is quiet. Kept short: a one-word
+    # command ("IPOs", "balance") lasts well under a second and must not be ignored.
+    interrupt_ms: int = field(default_factory=lambda: int(_env("INTERRUPT_MS", "200")))
+    # The same, but while Mira is talking. Above a cough or a tap, yet short enough that a spoken "stop"
+    # (about half a second) still cuts her off; at 1.2s a bare "stop" never registered.
+    speaking_interrupt_ms: int = field(default_factory=lambda: int(_env("SPEAKING_INTERRUPT_MS", "500")))
+    # Silence that ends the user's turn. Agora's guidance is ~640ms: shorter chops a sentence at a natural pause.
+    end_of_speech_ms: int = field(default_factory=lambda: int(_env("END_OF_SPEECH_MS", "640")))
     asr_language: str = field(default_factory=lambda: _env("ASR_LANGUAGE", "multi"))
     tts_voice_female: str = field(default_factory=lambda: _env("TTS_VOICE_FEMALE", "coral"))
     tts_voice_male: str = field(default_factory=lambda: _env("TTS_VOICE_MALE", "onyx"))
