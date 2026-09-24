@@ -77,6 +77,17 @@ def create_app(
     app = FastAPI(title="VoiceTrade AI", lifespan=lifespan)
     app.state.svc = svc
 
+    @app.middleware("http")
+    async def log_slow_requests(request: Request, call_next):
+        """'The app feels slow' is unactionable without a number. This turns the next report into one: any
+        request past a second shows up in the logs with its actual duration, not a guess."""
+        t0 = time.monotonic()
+        response = await call_next(request)
+        elapsed = time.monotonic() - t0
+        if elapsed > 1.0:
+            log.warning("slow request: %s %s took %.2fs", request.method, request.url.path, elapsed)
+        return response
+
     @app.exception_handler(ApiError)
     async def api_error(_: Request, e: ApiError):
         return JSONResponse({"code": e.code, "message": e.message}, status_code=e.status)

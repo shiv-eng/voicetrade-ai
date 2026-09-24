@@ -31,7 +31,8 @@ EXCHANGES: dict[str, tuple[str, str]] = {
     "PCX": ("NYSE Arca", "USD"),
 }
 _TRADABLE_TYPES = {"EQUITY", "ETF"}
-_QUOTE_TTL_S = 5.0
+_QUOTE_TTL_S = 8.0  # a stock's price does not need sub-5s freshness in a paper-trading app; a wider window means
+# navigating between screens (home -> portfolio -> watchlist) is far more likely to hit a warm cache
 _SEARCH_TTL_S = 24 * 3600
 
 
