@@ -165,8 +165,11 @@ class Research:
         self._cache: dict[str, tuple[float, Any]] = {}
         self._crumb: str | None = None
         self._nse_ready = 0.0
+        self._bg_tasks: set[asyncio.Task] = set()  # keeps fire-and-forget warm-up tasks from being GC'd mid-flight
 
     async def aclose(self) -> None:
+        for t in self._bg_tasks:
+            t.cancel()
         for c in (self._yahoo, self._nse, self._nasdaq):
             await c.aclose()
 
@@ -376,7 +379,10 @@ class Research:
     async def ipos(self, market: str = "IN") -> dict[str, Any]:
         market = "US" if market.upper() == "US" else "IN"
         key = f"ipo:{market}"
-        if (hit := self._cached(key, 600)) is not None:
+        # Short-lived on purpose: the first request of the day builds the list before its per-item lot-size
+        # cache is warm (see _enrich_from_cache/_warm_enrich), so a long TTL here would freeze that half-full
+        # snapshot for as long as a normal cache entry lives, well past when the background warm-up finishes.
+        if (hit := self._cached(key, 60)) is not None:
             return hit
         try:
             return self._store(key, await (self._ipos_us() if market == "US" else self._ipos_in()))
@@ -424,14 +430,29 @@ class Research:
             except Exception:
                 return None
 
-    async def _enrich(self, items: list[dict[str, Any]]) -> None:
-        """Lot size, minimum investment and overall subscription for the IPOs on the list (best effort, parallel)."""
+    def _enrich_from_cache(self, items: list[dict[str, Any]]) -> None:
+        """Lot size, minimum investment and overall subscription for the IPOs on the list — but only ever
+        from cache, so building the list is never held hostage to NSE's per-item detail endpoint being
+        slow (it was: up to 14 items behind a 4-wide semaphore routinely blew past any reasonable budget,
+        making the whole list wait on it). See _warm_enrich for how that cache actually gets filled."""
+        for item in items:
+            hit = self._cached(f"ipod:{item['symbol']}:{'SME' if item['type'] == 'SME' else 'EQ'}", 300)
+            if hit:
+                item.update(lot_size=hit["lot_size"], min_investment=hit["min_investment"], price_low=hit["price_low"],
+                            price_high=hit["price_high"], overall_times=hit["subscription"]["overall"])
+
+    async def _warm_enrich(self, items: list[dict[str, Any]]) -> None:
+        """Fire-and-forget, off the request path: fetches per-item detail for whichever of these aren't
+        cached yet, so the NEXT list request (this user reopening the screen, or anyone else) finds more of
+        them already warm. Never raises — a failed fetch here just means that item stays unenriched."""
         sem = asyncio.Semaphore(4)
-        details = await asyncio.gather(*(self._brief(sem, i["symbol"], "SME" if i["type"] == "SME" else "EQ") for i in items))
-        for item, d in zip(items, details):
-            if d:
-                item.update(lot_size=d["lot_size"], min_investment=d["min_investment"], price_low=d["price_low"],
-                            price_high=d["price_high"], overall_times=d["subscription"]["overall"])
+        await asyncio.gather(*(self._brief(sem, i["symbol"], "SME" if i["type"] == "SME" else "EQ") for i in items),
+                             return_exceptions=True)
+
+    def _enrich_in_background(self, items: list[dict[str, Any]]) -> None:
+        task = asyncio.ensure_future(self._warm_enrich(items))
+        self._bg_tasks.add(task)
+        task.add_done_callback(self._bg_tasks.discard)
 
     async def _ipos_in(self) -> dict[str, Any]:
         current, upcoming, past = await asyncio.gather(
@@ -465,10 +486,8 @@ class Research:
         } for p in past if (c := _day(p.get("ipoEndDate"))) and today - timedelta(days=7) <= c < today and (p.get("listingDate") or "-") == "-"]
         by_type = lambda rows: sorted(rows, key=lambda r: r["type"] != "mainboard")  # noqa: E731
         open_now, coming = by_type(open_now)[:8], by_type(coming)[:6]
-        try:
-            await asyncio.wait_for(self._enrich(open_now + coming), timeout=8.0)  # lot sizes are nice to have, not worth a long wait
-        except asyncio.TimeoutError:
-            log.warning("IPO detail enrichment timed out; showing the list without lot sizes")
+        self._enrich_from_cache(open_now + coming)
+        self._enrich_in_background(open_now + coming)
         return {"market": "IN", "as_of": today.isoformat(), "open_now": open_now, "coming_soon": coming,
                 "closed_awaiting_listing": by_type(closed_wait)[:6], "recently_listed": by_type(recent)[:8]}
 
