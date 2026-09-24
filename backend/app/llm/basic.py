@@ -54,8 +54,11 @@ def _tool_results(messages: list[dict]) -> list[tuple[str, dict]]:
 
 
 def _company(text: str) -> str:
+    # "what's"/"Reliance's": the apostrophe breaks \b word matching, so the stopword regex sees "what" and a
+    # stray "s" as two separate words and only removes the first, leaving a lone "s" stuck to the company name.
+    text = re.sub(r"'s\b", "", text, flags=re.I)
     cleaned = _NUM.sub(" ", _STOPWORDS.sub(" ", text))
-    return re.sub(r"[^\w&\s]", " ", cleaned).strip()
+    return re.sub(r"\s+", " ", re.sub(r"[^\w&\s]", " ", cleaned)).strip()
 
 
 def _call(name: str, **args: Any) -> ChatEvent:

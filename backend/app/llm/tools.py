@@ -31,6 +31,7 @@ class ToolContext:
     session_id: str
     last_user_text: str
     created_previews: set[str] = field(default_factory=set)  # previews made in THIS turn can't be confirmed in it
+    cache: dict[tuple[str, str], str] = field(default_factory=dict)  # read-only tool results, reused within THIS turn
 
 
 def _fn(name: str, description: str, properties: dict[str, Any], required: list[str] | None = None) -> dict[str, Any]:
@@ -118,6 +119,13 @@ def _clear_winner(query: str, found: list) -> bool:
 
 _REMEMBER = {"get_ipo_details", "ipo_application", "get_company_overview", "get_quote", "get_ipos", "get_positions", "get_account_summary"}
 
+# Pure reads only (no side effects), safe to answer from cache if the model calls the same one twice in one
+# turn — a prefetch shortcut and the model's own reasoning asking for the same thing is common, and a free
+# or fast/lower-effort model re-verifying data it already has is common too. Saves a real network/DB round
+# trip each time, not just a duplicate card (see ToolBox._card for that half of the same problem).
+_CACHEABLE = {"get_quote", "get_positions", "get_account_summary", "get_pnl", "get_watchlist", "get_orders",
+              "get_company_overview", "get_ipos", "get_ipo_details"}
+
 _REPRESENTATIVE = {"NSE": "RELIANCE.NS", "BSE": "RELIANCE.BO", "NASDAQ": "AAPL", "NYSE": "KO"}
 
 
@@ -152,11 +160,16 @@ class ToolBox:
         return SCHEMAS
 
     async def call(self, name: str, raw_args: str, ctx: ToolContext) -> str:
-        started = time.monotonic()
         try:
             args = json.loads(raw_args or "{}")
         except json.JSONDecodeError:
             args = {}
+        # A prefetch shortcut and the model's own reasoning can both ask for the same read within one turn;
+        # answer the repeat from cache instead of a second network/DB round trip (and a second audit-log row).
+        cache_key = (name, json.dumps(args, sort_keys=True)) if name in _CACHEABLE else None
+        if cache_key is not None and cache_key in ctx.cache:
+            return ctx.cache[cache_key]
+        started = time.monotonic()
         handler = self._handlers.get(name)
         if handler is None:
             result: dict = {"error": "UNKNOWN_TOOL"}
@@ -177,7 +190,10 @@ class ToolBox:
             (ctx.user_id, ctx.session_id, name, json.dumps(args)[:2000], json.dumps(result, default=str)[:4000], latency,
              datetime.now(timezone.utc).isoformat()),
         )
-        return json.dumps(result, default=str)
+        out = json.dumps(result, default=str)
+        if cache_key is not None and "error" not in result:
+            ctx.cache[cache_key] = out
+        return out
 
     def _card(self, ctx: ToolContext, card: dict) -> None:
         # The speed shortcut and the model can both fetch the same thing: show the card once. This applies to

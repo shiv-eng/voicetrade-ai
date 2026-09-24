@@ -17,7 +17,7 @@ def plan(text: str, has_preview: bool) -> list[tuple[str, dict]]:
         return []  # a number means a sum or a trade: let the model decide what to look up
     if _MUTATING.search(low) or _BUY.search(low) or _SELL.search(low):
         return []
-    if re.search(r"\b(chart|graph|ipo|ipos|news|headlines?|listing|listings|lot|lots|apply|allot|allotment|alert|alerts|calculate|briefing)\b|चार्ट|ग्राफ|आईपीओ|खबर|समाचार|न्यूज़", low):
+    if re.search(r"\b(chart|graph|ipo|ipos|news|headlines?|listing|listings|lot|lots|apply|allot|allotment|alert|alerts|calculate)\b|चार्ट|ग्राफ|आईपीओ|खबर|समाचार|न्यूज़", low):
         return []  # these have their own tools; the model picks the right one
     if has_preview and (_YES.search(low) or _NO.search(low)):
         return []
@@ -35,6 +35,9 @@ def plan(text: str, has_preview: bool) -> list[tuple[str, dict]]:
         out.append(("get_orders", {"status": "open"}))
     if "watchlist" in low or "वॉचलिस्ट" in low or "वाचलिस्ट" in low:
         out.append(("get_watchlist", {}))
+    if re.search(r"\b(brief me|briefing|morning update|market wrap|market update|how'?s the market|market today)\b", low) \
+            or re.search(r"ब्रीफिंग|मार्केट.*(कैसा|अपडेट)", low):
+        out.append(("get_market_briefing", {}))
     if not out and _STOCK_INTENT.search(low):
         company = _company(text)
         if company and 2 <= len(company) <= 40:

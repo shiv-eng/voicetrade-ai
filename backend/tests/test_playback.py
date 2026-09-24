@@ -1,7 +1,6 @@
 """Pause, resume and 'say it again' after Mira is cut off."""
 from __future__ import annotations
 
-import asyncio
 
 import pytest
 from test_api import make, pair, say, start_voice_session, turn, user_of
