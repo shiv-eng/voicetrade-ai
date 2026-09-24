@@ -14,7 +14,6 @@ import com.quietstack.voicetrade.domain.model.OrderPreview
 import com.quietstack.voicetrade.domain.model.Pnl
 import com.quietstack.voicetrade.domain.model.Position
 import com.quietstack.voicetrade.domain.model.PreviewState
-import com.quietstack.voicetrade.domain.model.Quote
 import com.quietstack.voicetrade.domain.model.SessionSummary
 import com.quietstack.voicetrade.domain.model.UserProfile
 import com.quietstack.voicetrade.domain.model.WatchRow
@@ -36,9 +35,7 @@ interface AuthRepository {
 }
 
 interface MarketRepository {
-    suspend fun brokerStatus(): Result<BrokerStatus>
     suspend fun search(query: String): Result<List<Instrument>>
-    suspend fun quote(conid: Long): Result<Quote>
 }
 
 interface PortfolioRepository {

@@ -10,7 +10,6 @@ import com.quietstack.voicetrade.data.remote.dto.PortfolioHistoryDto
 import com.quietstack.voicetrade.data.remote.dto.BriefingDto
 import com.quietstack.voicetrade.data.remote.dto.MarketOverviewDto
 import com.quietstack.voicetrade.data.remote.dto.AccountSummaryDto
-import com.quietstack.voicetrade.data.remote.dto.BrokerStatusDto
 import com.quietstack.voicetrade.data.remote.dto.ConfirmResponseDto
 import com.quietstack.voicetrade.data.remote.dto.InstrumentDto
 import com.quietstack.voicetrade.data.remote.dto.OrderDto
@@ -19,7 +18,6 @@ import com.quietstack.voicetrade.data.remote.dto.AuthResponse
 import com.quietstack.voicetrade.data.remote.dto.GoogleLoginRequest
 import com.quietstack.voicetrade.data.remote.dto.PnlDto
 import com.quietstack.voicetrade.data.remote.dto.PositionDto
-import com.quietstack.voicetrade.data.remote.dto.QuoteDto
 import com.quietstack.voicetrade.data.remote.dto.SessionDto
 import com.quietstack.voicetrade.data.remote.dto.StartSessionRequest
 import com.quietstack.voicetrade.data.remote.dto.TextRequest
@@ -37,7 +35,6 @@ import retrofit2.http.Query
 interface VoiceTradeApi {
     @POST("auth/google") suspend fun googleLogin(@Body body: GoogleLoginRequest): AuthResponse
     @POST("auth/guest") suspend fun guestLogin(@Body body: Map<String, String>): AuthResponse
-    @GET("broker/status") suspend fun brokerStatus(): BrokerStatusDto
 
     @POST("sessions") suspend fun startSession(@Body body: StartSessionRequest): SessionDto
     @DELETE("sessions/{id}") suspend fun endSession(@Path("id") id: String)
@@ -56,7 +53,6 @@ interface VoiceTradeApi {
     @GET("orders") suspend fun orders(@Query("status") status: String): List<OrderDto>
     @POST("orders/{id}/cancel-preview") suspend fun previewCancel(@Path("id") id: String): OrderPreviewDto
 
-    @GET("quote") suspend fun quote(@Query("conid") conid: Long): QuoteDto
     @GET("search") suspend fun search(@Query("q") query: String): List<InstrumentDto>
     @GET("stocks/{id}/chart") suspend fun chart(@Path("id") id: Long, @Query("period") period: String): CardDto.Chart
     @GET("stocks/{id}/overview") suspend fun overview(@Path("id") id: Long): CardDto.Overview

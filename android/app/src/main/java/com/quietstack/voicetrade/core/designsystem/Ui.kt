@@ -195,6 +195,3 @@ fun Stat(label: String, value: String, modifier: Modifier = Modifier, valueColor
         )
     }
 }
-
-@Composable
-fun VerticalSpace(height: Dp) = androidx.compose.foundation.layout.Spacer(Modifier.height(height))

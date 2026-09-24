@@ -3,7 +3,6 @@ package com.quietstack.voicetrade.domain.usecase
 import com.quietstack.voicetrade.core.common.asAppError
 import com.quietstack.voicetrade.domain.model.AccountSummary
 import com.quietstack.voicetrade.domain.model.AppSettings
-import com.quietstack.voicetrade.domain.model.BrokerStatus
 import com.quietstack.voicetrade.domain.model.ConnectionConfig
 import com.quietstack.voicetrade.domain.model.Instrument
 import com.quietstack.voicetrade.domain.model.Order
@@ -11,7 +10,6 @@ import com.quietstack.voicetrade.domain.model.OrderFilter
 import com.quietstack.voicetrade.domain.model.OrderPreview
 import com.quietstack.voicetrade.domain.model.Pnl
 import com.quietstack.voicetrade.domain.model.Position
-import com.quietstack.voicetrade.domain.model.Quote
 import com.quietstack.voicetrade.domain.model.SessionSummary
 import com.quietstack.voicetrade.domain.model.WatchRow
 import com.quietstack.voicetrade.domain.model.UserProfile
@@ -43,14 +41,6 @@ class GetPortfolioUseCase @Inject constructor(private val portfolio: PortfolioRe
         val p = positions.await().getOrElse { return@coroutineScope Result.failure(it.asAppError()) }
         Result.success(PortfolioSnapshot(a, p, pnl.await().getOrNull()))
     }
-}
-
-class GetBrokerStatusUseCase @Inject constructor(private val market: MarketRepository) {
-    suspend operator fun invoke(): Result<BrokerStatus> = market.brokerStatus()
-}
-
-class GetQuoteUseCase @Inject constructor(private val market: MarketRepository) {
-    suspend operator fun invoke(conid: Long): Result<Quote> = market.quote(conid)
 }
 
 class SearchInstrumentUseCase @Inject constructor(private val market: MarketRepository) {

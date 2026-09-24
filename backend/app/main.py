@@ -155,26 +155,12 @@ def create_app(
     async def health():
         return {"ok": True, "agoraConfigured": settings.agora_configured, "llmConfigured": bool(settings.llm_api_key)}
 
-    @app.get("/broker/status")
-    async def broker_status(user: str = Depends(current_user)):
-        return {"authenticated": True, "accountId": user, "paper": True}
-
     # ---- market and account ----------------------------------------------------------------------
 
     @app.get("/search")
     async def search(q: str, user: str = Depends(current_user)):
         try:
             return [i.to_dto() for i in await svc.instruments.search(q, 8)]
-        except MarketDataError as e:
-            raise ApiError(503, "MARKET_DATA_UNAVAILABLE", str(e)) from e
-
-    @app.get("/quote")
-    async def quote(conid: int, user: str = Depends(current_user)):
-        inst = svc.instruments.by_conid(conid)
-        if not inst:
-            raise ApiError(404, "INSTRUMENT_NOT_FOUND", "Unknown stock.")
-        try:
-            return quote_dto(inst, await market.quote(inst.symbol))
         except MarketDataError as e:
             raise ApiError(503, "MARKET_DATA_UNAVAILABLE", str(e)) from e
 

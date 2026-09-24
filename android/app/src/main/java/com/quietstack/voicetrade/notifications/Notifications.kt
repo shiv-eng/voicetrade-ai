@@ -24,7 +24,6 @@ object Notifications {
     const val EXTRA_OPEN = "launch_open"
 
     fun createChannels(context: Context) {
-        if (Build.VERSION.SDK_INT < 26) return
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.createNotificationChannel(NotificationChannel(CHANNEL_ALERTS, "Price alerts", NotificationManager.IMPORTANCE_HIGH))
         manager.createNotificationChannel(NotificationChannel(CHANNEL_BRIEFING, "Morning briefing", NotificationManager.IMPORTANCE_DEFAULT))

@@ -11,7 +11,6 @@ import com.quietstack.voicetrade.data.remote.dto.DeviceTokenRequest
 import com.quietstack.voicetrade.data.remote.dto.GoogleLoginRequest
 import com.quietstack.voicetrade.domain.model.AccountSummary
 import com.quietstack.voicetrade.domain.model.AppSettings
-import com.quietstack.voicetrade.domain.model.BrokerStatus
 import com.quietstack.voicetrade.domain.model.ConfirmResult
 import com.quietstack.voicetrade.domain.model.ConnectionConfig
 import com.quietstack.voicetrade.domain.model.Instrument
@@ -20,7 +19,6 @@ import com.quietstack.voicetrade.domain.model.OrderFilter
 import com.quietstack.voicetrade.domain.model.OrderPreview
 import com.quietstack.voicetrade.domain.model.Pnl
 import com.quietstack.voicetrade.domain.model.Position
-import com.quietstack.voicetrade.domain.model.Quote
 import com.quietstack.voicetrade.domain.repository.MarketRepository
 import com.quietstack.voicetrade.domain.repository.OrderRepository
 import com.quietstack.voicetrade.domain.repository.PortfolioRepository
@@ -47,11 +45,8 @@ class SettingsRepositoryImpl @Inject constructor(
 
 @Singleton
 class MarketRepositoryImpl @Inject constructor(private val gateway: BackendGateway) : MarketRepository {
-    override suspend fun brokerStatus(): Result<BrokerStatus> = apiCall { gateway.api().brokerStatus().toDomain() }
     override suspend fun search(query: String): Result<List<Instrument>> =
         apiCall { gateway.api().search(query).map { it.toDomain() } }
-
-    override suspend fun quote(conid: Long): Result<Quote> = apiCall { gateway.api().quote(conid).toDomain() }
 }
 
 @Singleton

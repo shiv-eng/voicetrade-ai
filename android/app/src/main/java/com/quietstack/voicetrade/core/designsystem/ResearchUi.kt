@@ -42,7 +42,6 @@ import com.quietstack.voicetrade.domain.model.CompanyOverview
 import com.quietstack.voicetrade.domain.model.Headline
 import com.quietstack.voicetrade.domain.model.Instrument
 import com.quietstack.voicetrade.domain.model.IpoList
-import com.quietstack.voicetrade.domain.model.IpoSection
 import com.quietstack.voicetrade.domain.model.periodLabel
 import java.math.BigDecimal
 import java.time.Instant
@@ -223,36 +222,6 @@ fun OverviewCardView(overview: CompanyOverview, modifier: Modifier = Modifier, o
                 overview.headlines.take(3).forEach { HeadlineRow(it) }
             }
             TextButton(onClick = { onOpen(i) }, modifier = Modifier.align(Alignment.End)) { Text(tr("Full details"), fontWeight = FontWeight.SemiBold) }
-        }
-    }
-}
-
-@Composable
-fun IpoSectionBlock(section: IpoSection, modifier: Modifier = Modifier, maxItems: Int = Int.MAX_VALUE) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(section.title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-        section.items.take(maxItems).forEach { item ->
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(item.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (item.tag.isNotBlank()) {
-                            Text(
-                                item.tag, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,
-                                color = if (item.tag == "SME") MaterialTheme.extra.onPaper else MaterialTheme.colorScheme.onSecondaryContainer,
-                                modifier = Modifier
-                                    .background(if (item.tag == "SME") MaterialTheme.extra.paper else MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(50))
-                                    .padding(horizontal = 8.dp, vertical = 2.dp),
-                            )
-                        }
-                        if (item.detail.isNotBlank()) Text(item.detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    item.price?.let { Text(it, style = MaterialTheme.typography.bodyMedium.merge(TabularNumbers), fontWeight = FontWeight.SemiBold) }
-                    item.extra?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                }
-            }
         }
     }
 }

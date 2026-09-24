@@ -2,25 +2,20 @@
 <resources>
     <string name="app_name">VoiceTrade AI</string>
     <string name="paper_badge">PAPER</string>
-    <string name="demo_badge">DEMO</string>
 
     <!-- Common -->
     <string name="back">Back</string>
     <string name="cancel">Cancel</string>
     <string name="close">Close</string>
-    <string name="save">Save</string>
     <string name="saved">Saved</string>
     <string name="delete">Delete</string>
     <string name="remove">Remove</string>
     <string name="retry">Retry</string>
     <string name="refresh">Refresh</string>
-    <string name="loading">Loading…</string>
     <string name="next">Next</string>
-    <string name="continue_label">Continue</string>
     <string name="error">Error</string>
     <string name="live">Live</string>
     <string name="connecting">Connecting…</string>
-    <string name="delayed">Delayed</string>
     <string name="buy">Buy</string>
     <string name="sell">Sell</string>
     <string name="side_buy">BUY</string>
@@ -51,11 +46,9 @@
     <string name="continue_as_guest">Continue as guest (debug build only)</string>
     <string name="google_not_configured">Google sign-in isn\'t set up in this build yet. The server owner needs to add the Google client ID.</string>
     <string name="google_failed">Google sign-in didn\'t work: %1$s</string>
-    <string name="account_signed_in_as">Signed in as %1$s</string>
     <string name="mic_denied_note">Microphone is off, so you will use text input. You can allow it later in system settings.</string>
 
     <!-- Broker status -->
-    <string name="paper_live_prices">Practice account · live prices</string>
     <string name="banner_offline">You\'re offline. Voice sessions need an internet connection.</string>
 
     <!-- Home / portfolio -->
@@ -71,7 +64,6 @@
     <string name="sugg_cash">How much cash do I have?</string>
     <string name="sugg_watch">What\'s on my watchlist?</string>
     <string name="sugg_buy">Buy 10 Infosys</string>
-    <string name="your_wallets">Your wallets</string>
     <string name="wallet_inr">Rupee wallet</string>
     <string name="wallet_usd">Dollar wallet</string>
     <string name="today_move">Today %1$s</string>
@@ -85,10 +77,6 @@
     <string name="today">today</string>
     <string name="week52">52-week range</string>
     <string name="total_pnl_in">Total P&amp;L (%1$s)</string>
-    <string name="unrealized_in">Unrealised P&amp;L (%1$s)</string>
-    <string name="realized_in">Realised P&amp;L (%1$s)</string>
-    <string name="ltp">Last %1$s</string>
-    <string name="voice_unavailable_banner">Voice isn\'t set up on this server yet, so you can type to Mira below.</string>
     <string name="talk_to_mira">Talk to Mira</string>
     <string name="balance_title">Practice balance</string>
     <string name="wallet_india">Indian stocks</string>
@@ -106,14 +94,8 @@
     <string name="lang_english_only">English</string>
     <string name="lang_hindi_only">हिन्दी</string>
     <string name="tap_to_talk">Tap to talk</string>
-    <string name="net_liquidation">Net liquidation</string>
-    <string name="day_pnl">Today\'s P&amp;L</string>
-    <string name="buying_power">Buying power</string>
     <string name="cash">Cash</string>
-    <string name="account">Account</string>
-    <string name="top_positions">Top positions</string>
     <string name="your_positions">Your positions</string>
-    <string name="total_pnl">Total P&amp;L</string>
     <string name="open_portfolio">Open portfolio</string>
     <string name="more_positions">+%1$d more on the Portfolio screen</string>
     <string name="portfolio">Portfolio</string>
@@ -145,8 +127,6 @@
     <string name="orb_cd">Mira is %1$s. Tap to mute or unmute.</string>
     <string name="session_hint_voice">Just start talking. Try \"How is Reliance doing today?\" or \"What do I own?\"</string>
     <string name="session_hint_text">Type a message below. Try \"How is Reliance doing?\", \"What do I own?\" or \"Buy 10 Infosys\".</string>
-    <string name="mic_off_banner">Microphone is off. You can type instead.</string>
-    <string name="open_settings">Open settings</string>
     <string name="mute">Mute microphone</string>
     <string name="unmute">Unmute microphone</string>
     <string name="keyboard">Type a message</string>
@@ -204,10 +184,6 @@
     <string name="settings_appearance">Appearance</string>
     <string name="settings_data">Data and connection</string>
     <string name="about">About</string>
-    <string name="lang_english">English</string>
-    <string name="lang_hinglish">हिन्दी + English</string>
-    <string name="voice_female">Female voice</string>
-    <string name="voice_male">Male voice</string>
     <string name="speech_speed">Speech speed: %1$sx</string>
     <string name="biometric">Biometric check for large orders</string>
     <string name="theme_system">System</string>
