@@ -8,7 +8,7 @@ data class AppSettings(
     val language: Language = Language.HINGLISH,
     val voice: VoiceGender = VoiceGender.FEMALE,
     val speechRate: Float = 1.0f,
-    val theme: ThemeMode = ThemeMode.SYSTEM,
+    val theme: ThemeMode = ThemeMode.LIGHT,
     val onboardingDone: Boolean = false,
 )
 

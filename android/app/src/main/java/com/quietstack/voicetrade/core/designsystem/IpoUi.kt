@@ -6,9 +6,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -65,19 +68,28 @@ private fun TypeTag(tag: String) {
     )
 }
 
+/** Label above value, both starting at the same edge. The value wraps rather than being cut off. */
 @Composable
-private fun LabelledValue(label: String, value: String?, modifier: Modifier = Modifier, align: TextAlign = TextAlign.Start) {
+private fun LabelledValue(label: String, value: String?, modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        // Fixed at 2 lines so a label that happens to wrap (e.g. "Min. investment") doesn't push its
-        // value down relative to the other columns in the same row, which otherwise looks misaligned.
-        Text(
-            label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = align, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis,
-        )
-        Text(
-            value ?: "—", style = MaterialTheme.typography.titleSmall.merge(TabularNumbers), fontWeight = FontWeight.SemiBold,
-            maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = align,
-        )
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value ?: "—", style = MaterialTheme.typography.titleSmall.merge(TabularNumbers), fontWeight = FontWeight.SemiBold)
+    }
+}
+
+/** Facts in two columns, as many rows as needed, with a thin line between the columns. Two columns hold
+ * "111 shares" and "₹14,985" on a 360dp phone at a larger font size, where three columns cut them off. */
+@Composable
+fun StatGrid(vararg cells: Pair<String, String?>) {
+    val line = MaterialTheme.colorScheme.outlineVariant
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        cells.toList().chunked(2).forEach { pair ->
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+                LabelledValue(pair[0].first, pair[0].second, Modifier.weight(1f))
+                Box(Modifier.padding(horizontal = 12.dp).width(1.dp).fillMaxHeight().background(line))
+                if (pair.size > 1) LabelledValue(pair[1].first, pair[1].second, Modifier.weight(1f)) else Box(Modifier.weight(1f))
+            }
+        }
     }
 }
 
@@ -94,24 +106,17 @@ fun IpoCard(item: IpoItem, modifier: Modifier = Modifier, onClick: (() -> Unit)?
                 StatusBadge(item.status)
             }
             Hairline(Modifier.padding(start = 0.dp))
-            Row(Modifier.fillMaxWidth()) {
-                LabelledValue(tr("Offer date"), item.detail.ifBlank { null }, Modifier.weight(1f))
-                LabelledValue(tr("Offer price"), item.price, Modifier.weight(1f), TextAlign.End)
-            }
-            if (item.lot != null || item.minInvest != null || item.extra != null) {
-                Row(Modifier.fillMaxWidth()) {
-                    if (item.series == "US") {
-                        // US shares trade one at a time — there's no lot size, and "extra" here is the
-                        // total raise, not a subscription multiple, so both need different labels than India.
-                        LabelledValue(tr("Min. investment"), item.minInvest, Modifier.weight(1f))
-                        LabelledValue(tr("Raise size"), item.extra, Modifier.weight(1f), TextAlign.End)
-                    } else {
-                        LabelledValue(tr("Lot size"), item.lot, Modifier.weight(1f))
-                        LabelledValue(tr("Min. investment"), item.minInvest, Modifier.weight(1f), TextAlign.Center)
-                        LabelledValue(tr("Subscribed"), item.extra?.removeSuffix(" subscribed"), Modifier.weight(1f), TextAlign.End)
-                    }
-                }
-            }
+            StatGrid(
+                *listOfNotNull(
+                    tr("Offer date") to item.detail.ifBlank { null },
+                    tr("Offer price") to item.price,
+                    // US shares trade one at a time: no lot size, and "extra" is the total raise, not a subscription multiple.
+                    if (item.series == "US") null else tr("Lot size") to item.lot,
+                    if (item.lot != null || item.minInvest != null || item.extra != null) tr("Min. investment") to item.minInvest else null,
+                    if (item.series == "US") tr("Raise size") to item.extra
+                    else if (item.extra != null) tr("Subscribed") to item.extra.removeSuffix(" subscribed") else null,
+                ).toTypedArray(),
+            )
         }
     }
 }
@@ -187,14 +192,13 @@ fun IpoDetailCardView(detail: IpoDetail, modifier: Modifier = Modifier, onOpen: 
                 }
                 StatusBadge(detail.status)
             }
-            Row(Modifier.fillMaxWidth()) {
-                val band = if (detail.priceLow != null && detail.priceHigh != null) {
-                    if (detail.priceLow == detail.priceHigh) "₹%.0f".format(detail.priceHigh) else "₹%.0f – ₹%.0f".format(detail.priceLow, detail.priceHigh)
-                } else null
-                LabelledValue(tr("Offer price"), band, Modifier.weight(1f))
-                LabelledValue(tr("Lot size"), detail.lotSize?.let { "$it shares" }, Modifier.weight(1f), TextAlign.Center)
-                LabelledValue(tr("Min. investment"), detail.minInvestment?.let { "₹%,d".format(it) }, Modifier.weight(1f), TextAlign.End)
-            }
+            val band = if (detail.priceLow != null && detail.priceHigh != null) {
+                if (detail.priceLow == detail.priceHigh) "₹%.0f".format(detail.priceHigh) else "₹%.0f – ₹%.0f".format(detail.priceLow, detail.priceHigh)
+            } else null
+            StatGrid(
+                tr("Offer price") to band, tr("Lot size") to detail.lotSize?.let { "$it shares" },
+                tr("Min. investment") to detail.minInvestment?.let { "₹%,d".format(it) }
+            )
             IpoTimeline(detail.timeline)
             detail.overallTimes?.let { SubscriptionBars(it, emptyList()) }
             TextButton(onClick = { onOpen(detail) }, modifier = Modifier.align(Alignment.End)) { Text(tr("Full details"), fontWeight = FontWeight.SemiBold) }

@@ -39,7 +39,7 @@ class SettingsDataStore @Inject constructor(@ApplicationContext private val cont
         language = enumOr(this[LANGUAGE], Language.HINGLISH),
         voice = enumOr(this[VOICE], VoiceGender.FEMALE),
         speechRate = this[RATE] ?: 1.0f,
-        theme = enumOr(this[THEME], ThemeMode.SYSTEM),
+        theme = enumOr(this[THEME], ThemeMode.LIGHT),
         onboardingDone = this[ONBOARDED] ?: false,
     )
 
@@ -50,7 +50,7 @@ class SettingsDataStore @Inject constructor(@ApplicationContext private val cont
         val LANGUAGE = stringPreferencesKey("language")
         val VOICE = stringPreferencesKey("voice")
         val RATE = floatPreferencesKey("speech_rate")
-        val THEME = stringPreferencesKey("theme")
+        val THEME = stringPreferencesKey("theme_v2")
         val ONBOARDED = booleanPreferencesKey("onboarded")
     }
 }

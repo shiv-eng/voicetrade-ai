@@ -3,6 +3,7 @@ package com.quietstack.voicetrade.ui.ipo
 import androidx.compose.foundation.clickable
 import com.quietstack.voicetrade.core.i18n.tr
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -20,8 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
@@ -39,7 +38,7 @@ import com.quietstack.voicetrade.core.designsystem.Panel
 import com.quietstack.voicetrade.core.designsystem.SectionHeader
 import com.quietstack.voicetrade.core.designsystem.StatusBadge
 import com.quietstack.voicetrade.core.designsystem.SubscriptionBars
-import com.quietstack.voicetrade.core.designsystem.TabularNumbers
+import com.quietstack.voicetrade.core.designsystem.StatGrid
 import com.quietstack.voicetrade.domain.model.IpoDetail
 import com.quietstack.voicetrade.domain.repository.ResearchRepository
 import com.quietstack.voicetrade.ui.common.InlineError
@@ -109,12 +108,14 @@ fun IpoDetailScreen(onBack: () -> Unit, viewModel: IpoDetailViewModel = hiltView
                 }
                 item {
                     Panel {
-                        Row(Modifier.padding(horizontal = 16.dp, vertical = 18.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Big(tr("Offer price"), if (d.priceLow != null && d.priceHigh != null) {
-                                if (d.priceLow == d.priceHigh) "₹%.0f".format(d.priceHigh) else "₹%.0f – ₹%.0f".format(d.priceLow, d.priceHigh)
-                            } else "—", Modifier.weight(1.3f))
-                            Big(tr("Lot size"), d.lotSize?.let { "$it shares" } ?: "—", Modifier.weight(1f), TextAlign.Center)
-                            Big(tr("Min. investment"), d.minInvestment?.let { "₹%,d".format(it) } ?: "—", Modifier.weight(1f), TextAlign.End)
+                        Box(Modifier.padding(horizontal = 16.dp, vertical = 18.dp)) {
+                            StatGrid(
+                                tr("Offer price") to if (d.priceLow != null && d.priceHigh != null) {
+                                    if (d.priceLow == d.priceHigh) "₹%.0f".format(d.priceHigh) else "₹%.0f – ₹%.0f".format(d.priceLow, d.priceHigh)
+                                } else null,
+                                tr("Lot size") to d.lotSize?.let { "$it shares" },
+                                tr("Min. investment") to d.minInvestment?.let { "₹%,d".format(it) }
+                            )
                         }
                     }
                 }
@@ -174,16 +175,5 @@ fun IpoDetailScreen(onBack: () -> Unit, viewModel: IpoDetailViewModel = hiltView
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun Big(label: String, value: String, modifier: Modifier = Modifier, align: TextAlign = TextAlign.Start) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = align, modifier = Modifier.fillMaxWidth())
-        Text(
-            value, style = MaterialTheme.typography.titleMedium.merge(TabularNumbers), fontWeight = FontWeight.Bold, textAlign = align,
-            maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.fillMaxWidth(),
-        )
     }
 }

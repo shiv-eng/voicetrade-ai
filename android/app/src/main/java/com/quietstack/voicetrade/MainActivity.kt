@@ -2,7 +2,9 @@ package com.quietstack.voicetrade
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -10,6 +12,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.quietstack.voicetrade.core.designsystem.VoiceTradeTheme
+import com.quietstack.voicetrade.core.designsystem.isDark
 import com.quietstack.voicetrade.domain.model.AppSettings
 import com.quietstack.voicetrade.domain.usecase.ObserveSettingsUseCase
 import com.quietstack.voicetrade.ui.navigation.AppNavHost
@@ -53,11 +56,17 @@ class MainActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         readLaunch(intent)
         setContent {
             val app: AppViewModel = hiltViewModel()
             val settings by app.settings.collectAsStateWithLifecycle()
+            // System-bar icons follow the app's own theme, not the phone's: dark icons on the light palette.
+            val dark = settings.theme.isDark()
+            DisposableEffect(dark) {
+                val bar = SystemBarStyle.auto(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT) { dark }
+                enableEdgeToEdge(statusBarStyle = bar, navigationBarStyle = bar)
+                onDispose {}
+            }
             VoiceTradeTheme(themeMode = settings.theme) {
                 AppNavHost(
                     signedIn = app.signedIn.collectAsStateWithLifecycle().value,
