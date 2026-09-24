@@ -449,10 +449,14 @@ class Research:
         await asyncio.gather(*(self._brief(sem, i["symbol"], "SME" if i["type"] == "SME" else "EQ") for i in items),
                              return_exceptions=True)
 
-    def _enrich_in_background(self, items: list[dict[str, Any]]) -> None:
-        task = asyncio.ensure_future(self._warm_enrich(items))
+    def _enrich_in_background(self, items: list[dict[str, Any]]) -> asyncio.Task | None:
+        missing = [i for i in items if i.get("lot_size") is None]
+        if not missing:
+            return None
+        task = asyncio.ensure_future(self._warm_enrich(missing))
         self._bg_tasks.add(task)
         task.add_done_callback(self._bg_tasks.discard)
+        return task
 
     async def _ipos_in(self) -> dict[str, Any]:
         current, upcoming, past = await asyncio.gather(
@@ -487,28 +491,42 @@ class Research:
         by_type = lambda rows: sorted(rows, key=lambda r: r["type"] != "mainboard")  # noqa: E731
         open_now, coming = by_type(open_now)[:8], by_type(coming)[:6]
         self._enrich_from_cache(open_now + coming)
-        self._enrich_in_background(open_now + coming)
+        # Give enrichment a short budget so the FIRST list of the day still comes back with lot size and
+        # minimum investment for most items, instead of only the list AFTER this one being complete.
+        # Whatever doesn't finish in time keeps warming in the background for the next request.
+        task = self._enrich_in_background(open_now + coming)
+        if task is not None:
+            await asyncio.wait({task}, timeout=3.0)
+            self._enrich_from_cache(open_now + coming)
         return {"market": "IN", "as_of": today.isoformat(), "open_now": open_now, "coming_soon": coming,
                 "closed_awaiting_listing": by_type(closed_wait)[:6], "recently_listed": by_type(recent)[:8]}
 
     async def _ipos_us(self) -> dict[str, Any]:
         today = date.today()
-        months = {today.strftime("%Y-%m")}
-        if today.day > 15:
-            months.add((today.replace(day=28) + timedelta(days=5)).strftime("%Y-%m"))
+        months = sorted({today.strftime("%Y-%m")} | (
+            {(today.replace(day=28) + timedelta(days=5)).strftime("%Y-%m")} if today.day > 15 else set()))
+        # Fetched together, not one month after another — this was the whole reason a US list took ~4s.
+        responses = await asyncio.gather(
+            *(self._nasdaq.get("https://api.nasdaq.com/api/ipo/calendar", params={"date": m}) for m in months))
         upcoming: list[dict] = []
         priced: list[dict] = []
-        for m in sorted(months):
-            resp = await self._nasdaq.get("https://api.nasdaq.com/api/ipo/calendar", params={"date": m})
+        for resp in responses:
             resp.raise_for_status()
             data = resp.json().get("data") or {}
             for r in ((data.get("upcoming") or {}).get("upcomingTable") or {}).get("rows") or []:
+                price_text = r.get("proposedSharePrice") or None
+                # US shares have no "lot" — the real minimum buy-in is the price of one share.
+                prices = [float(x.replace(",", "")) for x in _PRICES.findall(price_text or "")]
                 upcoming.append({"name": r.get("companyName"), "symbol": r.get("proposedTickerSymbol"), "exchange": r.get("proposedExchange"),
-                                 "expected": r.get("expectedPriceDate"), "price": r.get("proposedSharePrice") or None,
+                                 "expected": r.get("expectedPriceDate"), "price": price_text,
+                                 "min_investment": min(prices) if prices else None,
                                  "raise": r.get("dollarValueOfSharesOffered") or None})
             for r in (data.get("priced") or {}).get("rows") or []:
                 d = _day(r.get("pricedDate"))
                 if d and d >= today - timedelta(days=14):
+                    price_text = r.get("proposedSharePrice")
+                    prices = [float(x.replace(",", "")) for x in _PRICES.findall(price_text or "")]
                     priced.append({"name": r.get("companyName"), "symbol": r.get("proposedTickerSymbol"), "exchange": r.get("proposedExchange"),
-                                   "priced_on": r.get("pricedDate"), "price": r.get("proposedSharePrice"), "raise": r.get("dollarValueOfSharesOffered")})
+                                   "priced_on": r.get("pricedDate"), "price": price_text,
+                                   "min_investment": min(prices) if prices else None, "raise": r.get("dollarValueOfSharesOffered")})
         return {"market": "US", "as_of": today.isoformat(), "coming_soon": upcoming[:8], "recently_priced": priced[:8]}

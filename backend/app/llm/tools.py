@@ -383,18 +383,43 @@ class ToolBox:
                     "name": i["name"], "symbol": i.get("symbol") or "", "series": "US", "tag": i.get("symbol") or "",
                     "status": "Upcoming" if key == "coming_soon" else "Priced",
                     "detail": i.get("expected") and f"Expected {i['expected']}" or (i.get("priced_on") and f"Priced {i['priced_on']}") or "",
-                    "price": f"${i['price']}" if i.get("price") else None, "extra": i.get("raise"),
+                    "price": f"${i['price']}" if i.get("price") else None,
+                    "minInvest": f"${i['min_investment']:g}" if i.get("min_investment") else None,
+                    "extra": i.get("raise"),
                 } for i in data.get(key, [])]
                 if items:
                     sections.append({"title": title, "items": items})
         return {"kind": "ipos", "market": data["market"], "sections": sections}
 
+    @staticmethod
+    def _ipo_spoken(data: dict) -> dict:
+        """The IPO list for the model with money in spoken form, like every other tool result. Works on copies:
+        `data` is Research's cached dict and the raw numbers must stay intact for the card."""
+        cur = "USD" if data["market"] == "US" else "INR"
+        spoken = lambda n: speak_money(Decimal(str(n)), cur)  # noqa: E731
+        out: dict = {}
+        for key, value in data.items():
+            if not isinstance(value, list):
+                out[key] = value
+                continue
+            rows = []
+            for row in value:
+                row = dict(row)
+                if row.get("min_investment"):
+                    row["min_investment"] = spoken(row["min_investment"])
+                low, high = row.pop("price_low", None), row.pop("price_high", None)
+                if low and high:
+                    row["price_band"] = spoken(high) if low == high else f"{spoken(low)} to {spoken(high)}"
+                rows.append(row)
+            out[key] = rows
+        return out
+
     async def _ipos(self, ctx: ToolContext, a: dict) -> dict:
         data = await self._need_research().ipos(str(a.get("market") or "IN"))
         self._card(ctx, self.ipo_card(data))
-        # the model gets the same facts, compactly
-        return {**data, "note": "Mention the most relevant two or three by name with their dates and price band. "
-                                "Prefer mainboard IPOs over SME. This is information, not a recommendation."}
+        return {**self._ipo_spoken(data),
+                "note": "Mention the most relevant two or three by name with their dates, price band and, where known, lot size and "
+                        "minimum investment. Prefer mainboard IPOs over SME. This is information, not a recommendation."}
 
     async def ipo_detail_card(self, symbol: str, series: str, name: str | None) -> dict:
         """Detail plus headlines, as the app's IPO page and the conversation card both use it."""

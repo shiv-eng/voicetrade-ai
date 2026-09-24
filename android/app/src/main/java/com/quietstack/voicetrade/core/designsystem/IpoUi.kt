@@ -68,7 +68,12 @@ private fun TypeTag(tag: String) {
 @Composable
 private fun LabelledValue(label: String, value: String?, modifier: Modifier = Modifier, align: TextAlign = TextAlign.Start) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = align)
+        // Fixed at 2 lines so a label that happens to wrap (e.g. "Min. investment") doesn't push its
+        // value down relative to the other columns in the same row, which otherwise looks misaligned.
+        Text(
+            label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = align, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis,
+        )
         Text(
             value ?: "—", style = MaterialTheme.typography.titleSmall.merge(TabularNumbers), fontWeight = FontWeight.SemiBold,
             maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = align,
@@ -95,9 +100,16 @@ fun IpoCard(item: IpoItem, modifier: Modifier = Modifier, onClick: (() -> Unit)?
             }
             if (item.lot != null || item.minInvest != null || item.extra != null) {
                 Row(Modifier.fillMaxWidth()) {
-                    LabelledValue(tr("Lot size"), item.lot, Modifier.weight(1f))
-                    LabelledValue(tr("Min. investment"), item.minInvest, Modifier.weight(1f), TextAlign.Center)
-                    LabelledValue(tr("Subscribed"), item.extra?.removeSuffix(" subscribed"), Modifier.weight(1f), TextAlign.End)
+                    if (item.series == "US") {
+                        // US shares trade one at a time — there's no lot size, and "extra" here is the
+                        // total raise, not a subscription multiple, so both need different labels than India.
+                        LabelledValue(tr("Min. investment"), item.minInvest, Modifier.weight(1f))
+                        LabelledValue(tr("Raise size"), item.extra, Modifier.weight(1f), TextAlign.End)
+                    } else {
+                        LabelledValue(tr("Lot size"), item.lot, Modifier.weight(1f))
+                        LabelledValue(tr("Min. investment"), item.minInvest, Modifier.weight(1f), TextAlign.Center)
+                        LabelledValue(tr("Subscribed"), item.extra?.removeSuffix(" subscribed"), Modifier.weight(1f), TextAlign.End)
+                    }
                 }
             }
         }

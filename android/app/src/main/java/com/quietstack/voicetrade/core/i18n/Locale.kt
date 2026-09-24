@@ -50,7 +50,7 @@ val HiStrings: Map<String, String> = mapOf(
     "IPOs · India" to "आईपीओ · भारत", "IPOs · United States" to "आईपीओ · अमेरिका", "See all IPOs" to "सभी आईपीओ देखें",
     "No IPOs to show right now." to "अभी दिखाने के लिए कोई आईपीओ नहीं है।",
     "Offer date" to "ऑफ़र की तारीख़", "Offer price" to "ऑफ़र प्राइस", "Lot size" to "लॉट साइज़", "Min. investment" to "न्यूनतम निवेश",
-    "Subscribed" to "सब्सक्रिप्शन", "expected" to "अनुमानित", "Total subscription" to "कुल सब्सक्रिप्शन",
+    "Subscribed" to "सब्सक्रिप्शन", "Raise size" to "कुल राशि", "expected" to "अनुमानित", "Total subscription" to "कुल सब्सक्रिप्शन",
     "Live" to "लाइव", "Upcoming" to "जल्द आ रहा", "Closed" to "बंद", "Listed" to "लिस्टेड", "Priced" to "प्राइस्ड",
     "Open now" to "अभी खुले", "Coming soon" to "जल्द आ रहे", "Closed, awaiting listing" to "बंद, लिस्टिंग का इंतज़ार",
     "Recently listed" to "हाल में लिस्ट हुए", "Recently priced" to "हाल में प्राइस हुए",
