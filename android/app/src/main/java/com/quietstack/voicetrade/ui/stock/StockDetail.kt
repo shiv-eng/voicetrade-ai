@@ -1,5 +1,7 @@
 package com.quietstack.voicetrade.ui.stock
 
+import com.quietstack.voicetrade.core.designsystem.AppButton
+import com.quietstack.voicetrade.core.designsystem.AppOutlinedButton
 import android.widget.Toast
 import com.quietstack.voicetrade.core.i18n.tr
 import androidx.compose.foundation.BorderStroke
@@ -23,13 +25,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAlert
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -57,19 +56,25 @@ import com.quietstack.voicetrade.core.designsystem.ChangeText
 import com.quietstack.voicetrade.core.designsystem.Hairline
 import com.quietstack.voicetrade.core.designsystem.HeadlineRow
 import com.quietstack.voicetrade.core.designsystem.KeyFigures
-import com.quietstack.voicetrade.core.designsystem.MarketStatePill
+import androidx.compose.ui.res.stringResource
+import com.quietstack.voicetrade.R
 import com.quietstack.voicetrade.core.designsystem.Panel
 import com.quietstack.voicetrade.core.designsystem.PriceChart
 import com.quietstack.voicetrade.core.designsystem.RangeBar
 import com.quietstack.voicetrade.core.designsystem.SectionHeader
 import com.quietstack.voicetrade.core.designsystem.SegmentedTabs
-import com.quietstack.voicetrade.core.designsystem.SymbolAvatar
 import com.quietstack.voicetrade.core.designsystem.TabularNumbers
 import com.quietstack.voicetrade.core.util.MoneyFormatter
 import com.quietstack.voicetrade.domain.model.ChartData
 import com.quietstack.voicetrade.domain.model.ChartPeriods
 import com.quietstack.voicetrade.domain.model.ChartPoint
 import com.quietstack.voicetrade.domain.model.CompanyOverview
+import com.quietstack.voicetrade.domain.model.OrderPreview
+import com.quietstack.voicetrade.domain.model.PreviewState
+import com.quietstack.voicetrade.domain.model.Side
+import com.quietstack.voicetrade.domain.repository.OrderRepository
+import com.quietstack.voicetrade.core.designsystem.OrderPreviewCard
+import com.quietstack.voicetrade.ui.orders.rememberSecondsLeft
 import com.quietstack.voicetrade.domain.model.periodLabel
 import com.quietstack.voicetrade.domain.repository.ResearchRepository
 import com.quietstack.voicetrade.domain.usecase.UpdateWatchlistUseCase
@@ -88,6 +93,8 @@ import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import javax.inject.Inject
 
+private const val CHART_FRESH_MS = 60_000L
+
 data class StockDetailState(
     val overview: CompanyOverview? = null,
     val chart: ChartData? = null,
@@ -95,6 +102,12 @@ data class StockDetailState(
     val chartLoading: Boolean = true,
     val error: AppError? = null,
     val watchlistMessage: String? = null,
+    /** A hand-entered order: which side is open in the ticket, its preview once reviewed, and how it ended. */
+    val orderSide: Side? = null,
+    val orderPreview: OrderPreview? = null,
+    val orderBusy: Boolean = false,
+    val orderError: AppError? = null,
+    val orderResult: String? = null,
 )
 
 @HiltViewModel
@@ -103,11 +116,17 @@ class StockDetailViewModel @Inject constructor(
     private val research: ResearchRepository,
     private val alerts: com.quietstack.voicetrade.domain.repository.AlertsRepository,
     private val watchlist: UpdateWatchlistUseCase,
+    private val orders: OrderRepository,
 ) : ViewModel() {
     private val conid = savedStateHandle.toRoute<StockDetail>().conid
     private val _state = MutableStateFlow(StockDetailState())
     val state: StateFlow<StockDetailState> = _state.asStateFlow()
     private var chartJob: Job? = null
+
+    /** Charts already fetched for this stock, with when: switching back to a period shows at once instead of waiting again. */
+    private val charts = mutableMapOf<String, Pair<Long, ChartData>>()
+
+    private var prefetched = false
 
     init {
         load()
@@ -129,13 +148,31 @@ class StockDetailViewModel @Inject constructor(
         loadChart(period)
     }
 
+    private fun freshChart(period: String): ChartData? =
+        charts[period]?.takeIf { System.currentTimeMillis() - it.first < CHART_FRESH_MS }?.second
+
     private fun loadChart(period: String) {
         chartJob?.cancel()
-        _state.update { it.copy(chartLoading = true) }
+        freshChart(period)?.let { c -> _state.update { it.copy(chart = c, chartLoading = false) }; return }
+        // Drop the old period's line right away: leaving it up while the new one loads looks like the tap did nothing.
+        _state.update { it.copy(chart = null, chartLoading = true) }
         chartJob = viewModelScope.launch {
             research.chart(conid, period)
-                .onSuccess { c -> _state.update { it.copy(chart = c, chartLoading = false) } }
+                .onSuccess { c ->
+                    charts[period] = System.currentTimeMillis() to c
+                    _state.update { it.copy(chart = c, chartLoading = false) }
+                    prefetchOtherPeriods(period)
+                }
                 .onFailure { _state.update { it.copy(chart = null, chartLoading = false) } }
+        }
+    }
+
+    /** Once one chart has loaded, fetch the other periods in the background so tapping 1W, 1M... is instant. */
+    private fun prefetchOtherPeriods(loaded: String) {
+        if (prefetched) return
+        prefetched = true
+        ChartPeriods.filter { it != loaded }.forEach { p ->
+            viewModelScope.launch { research.chart(conid, p).onSuccess { c -> charts[p] = System.currentTimeMillis() to c } }
         }
     }
 
@@ -158,6 +195,39 @@ class StockDetailViewModel @Inject constructor(
     }
 
     fun messageShown() = _state.update { it.copy(watchlistMessage = null) }
+
+    fun openOrder(side: Side) = _state.update { it.copy(orderSide = side, orderPreview = null, orderError = null, orderResult = null) }
+
+    fun closeOrder() {
+        _state.value.orderPreview?.let { p -> viewModelScope.launch { orders.reject(p.previewId) } }
+        _state.update { it.copy(orderSide = null, orderPreview = null, orderBusy = false, orderError = null, orderResult = null) }
+    }
+
+    /** Back from the review to the entry form, dropping the preview so it can't be confirmed by accident. */
+    fun editOrder() {
+        _state.value.orderPreview?.let { p -> viewModelScope.launch { orders.reject(p.previewId) } }
+        _state.update { it.copy(orderPreview = null, orderError = null) }
+    }
+
+    fun reviewOrder(quantity: Int, limitPrice: String?) {
+        val side = _state.value.orderSide ?: return
+        _state.update { it.copy(orderBusy = true, orderError = null) }
+        viewModelScope.launch {
+            orders.previewOrder(conid, side, quantity, limitPrice)
+                .onSuccess { p -> _state.update { it.copy(orderBusy = false, orderPreview = p) } }
+                .onFailure { e -> _state.update { it.copy(orderBusy = false, orderError = e.asAppError()) } }
+        }
+    }
+
+    fun confirmOrder() {
+        val preview = _state.value.orderPreview ?: return
+        _state.update { it.copy(orderBusy = true, orderError = null) }
+        viewModelScope.launch {
+            orders.confirm(preview.previewId)
+                .onSuccess { r -> _state.update { it.copy(orderBusy = false, orderPreview = null, orderResult = r.status) } }
+                .onFailure { e -> _state.update { it.copy(orderBusy = false, orderError = e.asAppError()) } }
+        }
+    }
 }
 
 @Composable
@@ -199,6 +269,8 @@ fun StockDetailScreen(
         )
     }
 
+    if (s.orderSide != null && ov != null) OrderTicketSheet(ov, s, viewModel)
+
     ScreenScaffold(title = ov?.instrument?.symbol.orEmpty(), onBack = onBack) { padding ->
         when {
             ov == null && s.error == null -> LoadingBox(Modifier.padding(padding))
@@ -208,8 +280,8 @@ fun StockDetailScreen(
             else -> Box(Modifier.fillMaxSize().padding(padding)) {
             LazyColumn(
                 Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 150.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 150.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 item { Header(ov) }
                 item {
@@ -256,12 +328,12 @@ fun StockDetailScreen(
                     )
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                    OutlinedButton(
-                        onClick = { onAsk("Sell ${ov.instrument.name}") }, modifier = Modifier.weight(1f).height(54.dp),
+                    AppOutlinedButton(
+                        onClick = { viewModel.openOrder(Side.SELL) }, modifier = Modifier.weight(1f).height(54.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.extra.loss),
                         border = BorderStroke(1.dp, MaterialTheme.extra.loss.copy(alpha = 0.4f)),
                     ) { Text(tr("Sell"), fontWeight = FontWeight.Bold) }
-                    Button(onClick = { onAsk("Buy ${ov.instrument.name}") }, modifier = Modifier.weight(1f).height(54.dp)) {
+                    AppButton(onClick = { viewModel.openOrder(Side.BUY) }, modifier = Modifier.weight(1f).height(54.dp)) {
                         Text(tr("Buy"), fontWeight = FontWeight.Bold)
                     }
                 }
@@ -298,15 +370,16 @@ private fun Header(ov: CompanyOverview) {
     val q = ov.quote
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            SymbolAvatar(i.symbol, size = 52.dp)
             Column(Modifier.weight(1f)) {
                 Text(i.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 2)
-                Text("${i.symbol} · ${i.exchange}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    "${i.symbol} · ${i.exchange}" + (q?.marketOpen?.let { " · " + stringResource(if (it) R.string.market_open else R.string.market_closed) } ?: ""),
+                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
-            MarketStatePill(q?.marketOpen)
         }
         if (q != null) {
-            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
                     MoneyFormatter.format(q.last, i.currency),
                     style = MaterialTheme.typography.displaySmall.merge(TabularNumbers), fontWeight = FontWeight.Bold,
@@ -343,6 +416,72 @@ private fun ChartBlock(chart: ChartData?, loading: Boolean) {
                     )
                 }
             }
+        }
+    }
+}
+
+/** Buy or sell typed in by hand: quantity (and a limit price if wanted), review, place. Mira is not involved. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun OrderTicketSheet(ov: CompanyOverview, s: StockDetailState, viewModel: StockDetailViewModel) {
+    val side = s.orderSide ?: return
+    val context = LocalContext.current
+    val cur = ov.instrument.currency
+    val sideWord = if (side == Side.BUY) tr("Buy") else tr("Sell")
+    androidx.compose.material3.ModalBottomSheet(onDismissRequest = viewModel::closeOrder) {
+        Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            val preview = s.orderPreview
+            when {
+                s.orderResult != null -> {
+                    Text(tr("Order placed"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text("${ov.instrument.symbol}: ${s.orderResult}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    AppButton(onClick = viewModel::closeOrder, modifier = Modifier.fillMaxWidth()) { Text(tr("Done")) }
+                }
+                preview != null -> {
+                    val seconds = rememberSecondsLeft(preview)
+                    OrderPreviewCard(
+                        preview = preview, state = PreviewState.ACTIVE, secondsLeft = seconds, isSubmitting = s.orderBusy,
+                        onConfirm = viewModel::confirmOrder, onCancel = viewModel::editOrder,
+                    )
+                }
+                else -> {
+                    var qty by remember { mutableStateOf("") }
+                    var limit by remember { mutableStateOf("") }
+                    var useLimit by remember { mutableStateOf(false) }
+                    val last = ov.quote?.last
+                    Text("$sideWord ${ov.instrument.symbol}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    last?.let { Text(tr("Price now") + " " + MoneyFormatter.format(it, cur), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    androidx.compose.material3.OutlinedTextField(
+                        value = qty, onValueChange = { qty = it.filter(Char::isDigit).take(7) }, singleLine = true, modifier = Modifier.fillMaxWidth(),
+                        label = { Text(tr("Quantity (shares)")) },
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                    )
+                    val marketLabel = tr("Market")
+                    val limitLabel = tr("Limit")
+                    SegmentedTabs(
+                        options = listOf(marketLabel, limitLabel), selected = if (useLimit) limitLabel else marketLabel,
+                        onSelect = { useLimit = it == limitLabel }, modifier = Modifier.fillMaxWidth(), equalWidth = true,
+                    )
+                    if (useLimit) {
+                        androidx.compose.material3.OutlinedTextField(
+                            value = limit, onValueChange = { limit = it.filter { c -> c.isDigit() || c == '.' } }, singleLine = true, modifier = Modifier.fillMaxWidth(),
+                            label = { Text(tr("Limit price")) },
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
+                        )
+                    }
+                    val shares = qty.toIntOrNull() ?: 0
+                    val each = if (useLimit) limit.toBigDecimalOrNull() else last
+                    if (shares > 0 && each != null) {
+                        Text(tr("About") + " " + MoneyFormatter.format(each.multiply(BigDecimal(shares)), cur), fontWeight = FontWeight.SemiBold)
+                    }
+                    AppButton(
+                        onClick = { viewModel.reviewOrder(shares, if (useLimit) limit else null) },
+                        enabled = shares > 0 && (!useLimit || limit.toBigDecimalOrNull() != null) && !s.orderBusy,
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                    ) { Text(tr("Review order"), fontWeight = FontWeight.Bold) }
+                }
+            }
+            s.orderError?.let { Text(messageText(context, it), color = MaterialTheme.colorScheme.error) }
         }
     }
 }

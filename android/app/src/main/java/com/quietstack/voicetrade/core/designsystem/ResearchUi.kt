@@ -138,7 +138,6 @@ fun ChartCardView(chart: ChartData, modifier: Modifier = Modifier, onOpen: (Inst
     Panel(modifier) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                SymbolAvatar(i.symbol)
                 Column(Modifier.weight(1f)) {
                     Text(i.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(
@@ -179,22 +178,34 @@ fun HeadlineRow(headline: Headline, modifier: Modifier = Modifier, onClick: (() 
     }
 }
 
-/** Label on the left, figure on the right, one per line. */
+/** Label on the left, figure on the right, one per line. A long figure (a company or bank name) goes under its
+ * label at full width instead, where it reads as a sentence rather than wrapping in a narrow right-hand column. */
 @Composable
 fun KeyFigures(rows: List<com.quietstack.voicetrade.domain.model.InfoRow>, modifier: Modifier = Modifier) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         rows.forEach { r ->
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                Text(r.label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
-                Text(
-                    r.value, style = MaterialTheme.typography.bodyMedium.merge(TabularNumbers), fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1.2f), maxLines = 2,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.End,
-                )
+            val label = @Composable {
+                Text(r.label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (r.value.length > LONG_FIGURE) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    label()
+                    Text(r.value, style = MaterialTheme.typography.bodyMedium.merge(TabularNumbers), fontWeight = FontWeight.SemiBold)
+                }
+            } else {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Box(Modifier.weight(1f)) { label() }
+                    Text(
+                        r.value, style = MaterialTheme.typography.bodyMedium.merge(TabularNumbers), fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.weight(1.2f), textAlign = androidx.compose.ui.text.style.TextAlign.End,
+                    )
+                }
             }
         }
     }
 }
+
+private const val LONG_FIGURE = 22
 
 @Composable
 fun OverviewCardView(overview: CompanyOverview, modifier: Modifier = Modifier, onOpen: (Instrument) -> Unit = {}) {
@@ -203,7 +214,6 @@ fun OverviewCardView(overview: CompanyOverview, modifier: Modifier = Modifier, o
     Panel(modifier) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                SymbolAvatar(i.symbol)
                 Column(Modifier.weight(1f)) {
                     Text(i.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text("${i.symbol} · ${i.exchange}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

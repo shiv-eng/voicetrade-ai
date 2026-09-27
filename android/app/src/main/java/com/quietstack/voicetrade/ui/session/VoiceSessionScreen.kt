@@ -1,5 +1,6 @@
 package com.quietstack.voicetrade.ui.session
 
+import com.quietstack.voicetrade.core.designsystem.ButtonShape
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
@@ -257,7 +258,7 @@ private fun orbColor(state: OrbState): Color {
 @Composable
 private fun TopBar(state: VoiceSessionUiState) {
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp),
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -323,7 +324,7 @@ private fun VoiceStatusPill(state: VoiceSessionUiState, onOpenSettings: () -> Un
     }
     Box(Modifier.fillMaxWidth().padding(bottom = 6.dp), contentAlignment = Alignment.Center) {
         Surface(
-            shape = RoundedCornerShape(50),
+            shape = ButtonShape,
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
             modifier = Modifier.let { if (action) it.clickable(onClick = onOpenSettings) else it },
         ) {
@@ -351,7 +352,7 @@ private fun Transcript(state: VoiceSessionUiState, actions: CardActions, onSugge
                     AssistChip(
                         onClick = { onSuggest(text) },
                         label = { Text(text) },
-                        shape = RoundedCornerShape(50),
+                        shape = ButtonShape,
                         modifier = Modifier.padding(vertical = 3.dp),
                         border = AssistChipDefaults.assistChipBorder(enabled = true, borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)),
                     )
@@ -518,29 +519,29 @@ private fun ControlBar(
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                         keyboardActions = KeyboardActions(onSend = { submit() }),
                     )
-                    FilledIconButton(onClick = ::submit, modifier = Modifier.size(52.dp)) {
+                    FilledIconButton(onClick = ::submit, modifier = Modifier.size(52.dp), shape = ButtonShape) {
                         Icon(Icons.AutoMirrored.Filled.Send, contentDescription = stringResource(R.string.send))
                     }
                 }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                FilledTonalIconButton(onClick = onMute, modifier = Modifier.size(56.dp), enabled = !state.textOnly) {
+                FilledTonalIconButton(onClick = onMute, modifier = Modifier.size(56.dp), shape = ButtonShape, enabled = !state.textOnly) {
                     Icon(
                         if (state.isMuted) Icons.Filled.MicOff else Icons.Filled.Mic,
                         contentDescription = stringResource(if (state.isMuted) R.string.unmute else R.string.mute),
                     )
                 }
-                FilledTonalIconButton(onClick = onPause, modifier = Modifier.size(56.dp), enabled = !state.textOnly && state.connection == Connection.Connected) {
+                FilledTonalIconButton(onClick = onPause, modifier = Modifier.size(56.dp), shape = ButtonShape, enabled = !state.textOnly && state.connection == Connection.Connected) {
                     Icon(
                         if (state.isPaused) Icons.Filled.PlayArrow else Icons.Filled.Pause,
                         contentDescription = stringResource(if (state.isPaused) R.string.resume else R.string.pause),
                     )
                 }
-                FilledTonalIconButton(onClick = onKeyboard, modifier = Modifier.size(56.dp)) {
+                FilledTonalIconButton(onClick = onKeyboard, modifier = Modifier.size(56.dp), shape = ButtonShape) {
                     Icon(Icons.Filled.Keyboard, contentDescription = stringResource(R.string.keyboard))
                 }
                 Row(
-                    Modifier.weight(1f).height(56.dp).clip(RoundedCornerShape(28.dp))
+                    Modifier.weight(1f).height(56.dp).clip(ButtonShape)
                         .background(MaterialTheme.colorScheme.error).clickable(onClick = onEnd),
                     horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
                 ) {

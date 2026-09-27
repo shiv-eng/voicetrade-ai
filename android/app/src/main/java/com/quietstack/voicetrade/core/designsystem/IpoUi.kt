@@ -13,6 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -25,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.quietstack.voicetrade.domain.model.InfoRow
 import com.quietstack.voicetrade.domain.model.IpoCategory
 import com.quietstack.voicetrade.domain.model.IpoDetail
 import com.quietstack.voicetrade.domain.model.IpoItem
@@ -33,7 +37,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-/** Live, Upcoming, Closed, Listed: a small coloured label. */
+/** Live, Upcoming, Closed, Listed: one coloured word, with a dot when it is open right now. */
 @Composable
 fun StatusBadge(status: String, modifier: Modifier = Modifier) {
     if (status.isBlank()) return
@@ -43,64 +47,71 @@ fun StatusBadge(status: String, modifier: Modifier = Modifier) {
         "listed", "priced" -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
-    Row(
-        modifier.background(color.copy(alpha = 0.16f), RoundedCornerShape(50)).padding(horizontal = 10.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         if (status.equals("live", true)) Box(Modifier.size(6.dp).background(color, CircleShape))
-        Text(tr(status), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = color)
+        Text(tr(status), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = color)
     }
 }
 
-@Composable
-private fun TypeTag(tag: String) {
-    if (tag.isBlank()) return
-    val sme = tag == "SME"
-    Text(
-        tag, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,
-        color = if (sme) MaterialTheme.extra.onPaper else MaterialTheme.colorScheme.onSecondaryContainer,
-        modifier = Modifier
-            .background(if (sme) MaterialTheme.extra.paper else MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(50))
-            .padding(horizontal = 8.dp, vertical = 2.dp),
-    )
-}
-
-@Composable
-private fun LabelledValue(label: String, value: String?, modifier: Modifier = Modifier, align: TextAlign = TextAlign.Start) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = align)
-        Text(
-            value ?: "—", style = MaterialTheme.typography.titleSmall.merge(TabularNumbers), fontWeight = FontWeight.SemiBold,
-            maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = align,
-        )
-    }
-}
-
-/** One IPO as a card: who, what state it is in, when, at what price, how big a lot is and how popular it is. */
+/** One IPO in a list. How much it shows depends on where it is: open ones show price, lot and demand; the rest stay short. */
 @Composable
 fun IpoCard(item: IpoItem, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
+    val kind = if (item.tag == "SME") tr("Small and medium enterprise") else item.tag
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
     Panel(modifier, onClick = onClick) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(item.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    TypeTag(item.tag)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(item.name, style = MaterialTheme.typography.titleSmall)
+                    val sub = when (item.status.lowercase()) {
+                        "live" -> listOf(kind, item.detail)
+                        "upcoming" -> listOf(item.detail.replaceFirstChar { it.uppercase() }, item.price)
+                        "listed" -> listOf(item.price?.let { tr("Issue") + " " + it }, item.detail)
+                        else -> listOf(item.detail.replaceFirstChar { it.uppercase() }, item.price)
+                    }.filter { !it.isNullOrBlank() }.joinToString("  ·  ")
+                    Text(sub, style = MaterialTheme.typography.bodySmall, color = muted)
                 }
-                StatusBadge(item.status)
+                if (item.status.equals("listed", true) && item.now != null) {
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(item.now, style = MaterialTheme.typography.titleSmall.merge(TabularNumbers))
+                        item.gain?.let { ChangeText(java.math.BigDecimal.valueOf(it)) }
+                    }
+                } else if (onClick != null) {
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = muted)
+                }
             }
-            Hairline(Modifier.padding(start = 0.dp))
-            Row(Modifier.fillMaxWidth()) {
-                LabelledValue(tr("Offer date"), item.detail.ifBlank { null }, Modifier.weight(1f))
-                LabelledValue(tr("Offer price"), item.price, Modifier.weight(1f), TextAlign.End)
-            }
-            if (item.lot != null || item.minInvest != null || item.extra != null) {
-                Row(Modifier.fillMaxWidth()) {
-                    LabelledValue(tr("Lot size"), item.lot, Modifier.weight(1f))
-                    LabelledValue(tr("Min. investment"), item.minInvest, Modifier.weight(1f), TextAlign.Center)
-                    LabelledValue(tr("Subscribed"), item.extra?.removeSuffix(" subscribed"), Modifier.weight(1f), TextAlign.End)
+            if (item.status.equals("live", true)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    InfoBox(tr("Price band"), item.price, Modifier.weight(1f))
+                    InfoBox(tr("Lot size"), item.lot, Modifier.weight(1f))
+                }
+                item.sub?.let { times ->
+                    val gain = MaterialTheme.extra.gain
+                    val color = if (times >= 1) gain else MaterialTheme.colorScheme.primary
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row {
+                            Text(tr("Subscribed"), style = MaterialTheme.typography.bodySmall, color = muted, modifier = Modifier.weight(1f))
+                            Text("%.1f×".format(times), style = MaterialTheme.typography.bodySmall.merge(TabularNumbers), fontWeight = FontWeight.Bold, color = color)
+                        }
+                        Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                            Box(Modifier.fillMaxWidth((times / 5.0).coerceIn(0.02, 1.0).toFloat()).height(4.dp).clip(RoundedCornerShape(2.dp)).background(color))
+                        }
+                    }
                 }
             }
         }
+    }
+}
+
+/** A small label over a figure, on a slightly darker tile. */
+@Composable
+private fun InfoBox(label: String, value: String?, modifier: Modifier = Modifier) {
+    Column(
+        modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value ?: "—", style = MaterialTheme.typography.titleSmall.merge(TabularNumbers), fontWeight = FontWeight.Bold)
     }
 }
 
@@ -143,7 +154,7 @@ fun SubscriptionBars(overall: Double?, categories: List<IpoCategory>, modifier: 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(tr("Total subscription"), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                 Text(
-                    "${"%.2f".format(total)}x", style = MaterialTheme.typography.titleMedium.merge(TabularNumbers), fontWeight = FontWeight.Bold,
+                    "${"%.2f".format(total)} times", style = MaterialTheme.typography.titleMedium.merge(TabularNumbers), fontWeight = FontWeight.Bold,
                     color = if (total >= 1) gain else MaterialTheme.colorScheme.onSurface,
                 )
             }
@@ -151,8 +162,8 @@ fun SubscriptionBars(overall: Double?, categories: List<IpoCategory>, modifier: 
         categories.forEach { c ->
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(c.name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text("${"%.2f".format(c.times)}x", style = MaterialTheme.typography.bodyMedium.merge(TabularNumbers), fontWeight = FontWeight.SemiBold)
+                    Text(c.name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f).padding(end = 8.dp))
+                    Text("${"%.2f".format(c.times)} times", style = MaterialTheme.typography.bodyMedium.merge(TabularNumbers), fontWeight = FontWeight.SemiBold)
                 }
                 Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50)).background(track)) {
                     val fraction = (c.times / 5.0).coerceIn(0.0, 1.0).toFloat()
@@ -169,20 +180,23 @@ fun IpoDetailCardView(detail: IpoDetail, modifier: Modifier = Modifier, onOpen: 
     Panel(modifier) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(detail.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    TypeTag(if (detail.isSme) "SME" else tr("Mainboard"))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(detail.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        if (detail.isSme) tr("Small and medium enterprise") else tr("Mainboard"),
+                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
                 StatusBadge(detail.status)
             }
-            Row(Modifier.fillMaxWidth()) {
-                val band = if (detail.priceLow != null && detail.priceHigh != null) {
-                    if (detail.priceLow == detail.priceHigh) "₹%.0f".format(detail.priceHigh) else "₹%.0f – ₹%.0f".format(detail.priceLow, detail.priceHigh)
-                } else null
-                LabelledValue(tr("Offer price"), band, Modifier.weight(1f))
-                LabelledValue(tr("Lot size"), detail.lotSize?.let { "$it shares" }, Modifier.weight(1f), TextAlign.Center)
-                LabelledValue(tr("Min. investment"), detail.minInvestment?.let { "₹%,d".format(it) }, Modifier.weight(1f), TextAlign.End)
-            }
+            val band = if (detail.priceLow != null && detail.priceHigh != null) {
+                if (detail.priceLow == detail.priceHigh) "₹%.0f".format(detail.priceHigh) else "₹%.0f – ₹%.0f".format(detail.priceLow, detail.priceHigh)
+            } else null
+            KeyFigures(listOfNotNull(
+                band?.let { InfoRow(tr("Offer price"), it) },
+                detail.lotSize?.let { InfoRow(tr("Lot size"), "$it shares") },
+                detail.minInvestment?.let { InfoRow(tr("Minimum investment"), "₹%,d".format(it)) },
+            ))
             IpoTimeline(detail.timeline)
             detail.overallTimes?.let { SubscriptionBars(it, emptyList()) }
             TextButton(onClick = { onOpen(detail) }, modifier = Modifier.align(Alignment.End)) { Text(tr("Full details"), fontWeight = FontWeight.SemiBold) }

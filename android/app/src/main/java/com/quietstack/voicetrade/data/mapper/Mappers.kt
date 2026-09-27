@@ -185,7 +185,7 @@ fun CardDto.Overview.toDomain() = CompanyOverview(
 fun CardDto.Ipos.toDomain() = IpoList(
     market = market,
     sections = sections.map { s ->
-        IpoSection(s.title, s.items.map { IpoItem(it.name, it.tag, it.detail, it.price, it.extra, it.symbol, it.series, it.status, it.lot, it.minInvest) })
+        IpoSection(s.title, s.items.map { IpoItem(it.name, it.tag, it.detail, it.price, it.extra, it.symbol, it.series, it.status, it.lot, it.minInvest, it.sub, it.now, it.gain) })
     },
 )
 
@@ -273,7 +273,7 @@ fun ActionCard.toDto(): CardDto = when (this) {
     is ActionCard.IposCard -> CardDto.Ipos(
         ipos.market,
         ipos.sections.map { s ->
-            IpoSectionDto(s.title, s.items.map { IpoItemDto(it.name, it.tag, it.detail, it.price, it.extra, it.symbol, it.series, it.status, it.lot, it.minInvest) })
+            IpoSectionDto(s.title, s.items.map { IpoItemDto(it.name, it.tag, it.detail, it.price, it.extra, it.symbol, it.series, it.status, it.lot, it.minInvest, it.sub, it.now, it.gain) })
         },
     )
     is ActionCard.IpoDetailCard -> CardDto.IpoDetail(

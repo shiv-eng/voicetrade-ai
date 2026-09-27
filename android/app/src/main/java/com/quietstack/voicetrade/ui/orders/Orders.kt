@@ -1,5 +1,17 @@
 package com.quietstack.voicetrade.ui.orders
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material3.ButtonDefaults
+import com.quietstack.voicetrade.core.designsystem.AppOutlinedButton
+import com.quietstack.voicetrade.core.designsystem.TabularNumbers
+import com.quietstack.voicetrade.core.util.MoneyFormatter
+import androidx.compose.ui.Alignment
+import com.quietstack.voicetrade.domain.model.Side
+import com.quietstack.voicetrade.domain.model.OrderStatus
+import com.quietstack.voicetrade.core.designsystem.extra
+import com.quietstack.voicetrade.core.designsystem.Hairline
+import com.quietstack.voicetrade.core.designsystem.Panel
+import com.quietstack.voicetrade.core.designsystem.TextTabs
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -178,14 +190,12 @@ fun OrdersScreen(onBack: (() -> Unit)?, viewModel: OrdersViewModel = hiltViewMod
         },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)
-                    .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(16.dp)).padding(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                OrderTab(stringResource(R.string.tab_filled), tab == 0, Modifier.weight(1f)) { tab = 0 }
-                OrderTab(stringResource(R.string.tab_open), tab == 1, Modifier.weight(1f)) { tab = 1 }
-            }
+            val filledLabel = stringResource(R.string.tab_filled)
+            val openLabel = stringResource(R.string.tab_open)
+            TextTabs(
+                listOf(filledLabel, openLabel), if (tab == 0) filledLabel else openLabel, { tab = if (it == filledLabel) 0 else 1 },
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp), equalWidth = true,
+            )
             state.error?.let {
                 InlineError(messageText(context, it), { viewModel.onEvent(OrdersEvent.Refresh) }, Modifier.padding(16.dp))
             }
@@ -198,8 +208,13 @@ fun OrdersScreen(onBack: (() -> Unit)?, viewModel: OrdersViewModel = hiltViewMod
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    items(list, key = { it.orderId }) { order ->
-                        OrderStatusCard(order, onCancel = { viewModel.onEvent(OrdersEvent.CancelTapped(it.orderId)) })
+                    item {
+                        Panel {
+                            list.forEachIndexed { i, order ->
+                                if (i > 0) Hairline()
+                                OrderRow(order, onCancel = { viewModel.onEvent(OrdersEvent.CancelTapped(order.orderId)) })
+                            }
+                        }
                     }
                 }
             }
@@ -224,25 +239,46 @@ fun OrdersScreen(onBack: (() -> Unit)?, viewModel: OrdersViewModel = hiltViewMod
     }
 }
 
+/** One order: what it was and how it went, and a Cancel button only while it is still open. */
 @Composable
-private fun OrderTab(label: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Row(
-        modifier
-            .background(if (selected) MaterialTheme.colorScheme.surfaceContainerHigh else Color.Transparent, RoundedCornerShape(12.dp))
-            .then(if (selected) Modifier.border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(12.dp)) else Modifier)
-            .clickable(onClick = onClick)
-            .padding(vertical = 10.dp),
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold,
-            color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+private fun OrderRow(order: Order, onCancel: () -> Unit) {
+    val extra = MaterialTheme.extra
+    val (status, color) = when (val st = order.status) {
+        OrderStatus.Working -> stringResource(R.string.status_working) to extra.orbListening
+        is OrderStatus.PartiallyFilled -> stringResource(R.string.status_partial, st.filled, order.quantity) to extra.orbListening
+        is OrderStatus.Filled -> stringResource(R.string.status_filled) to extra.gain
+        OrderStatus.Cancelled -> stringResource(R.string.status_cancelled) to MaterialTheme.colorScheme.onSurfaceVariant
+        is OrderStatus.Rejected -> stringResource(R.string.status_rejected) to extra.loss
+    }
+    val side = stringResource(if (order.side == Side.BUY) R.string.side_buy else R.string.side_sell)
+    val price = when (val st = order.status) {
+        is OrderStatus.Filled -> st.avgPrice
+        is OrderStatus.PartiallyFilled -> st.avgPrice
+        else -> null
+    }
+    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(order.instrument.name, style = MaterialTheme.typography.titleSmall)
+                Text(
+                    "$side ${order.quantity}" + (price?.let { " · " + MoneyFormatter.format(it, order.instrument.currency) } ?: ""),
+                    style = MaterialTheme.typography.bodySmall.merge(TabularNumbers), color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Text(status, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = color, modifier = Modifier.padding(top = 2.dp))
+        }
+        if (!order.status.isTerminal) {
+            AppOutlinedButton(
+                onClick = onCancel, modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = extra.loss),
+                border = BorderStroke(1.dp, extra.loss.copy(alpha = 0.45f)),
+            ) { Text(stringResource(R.string.cancel_order), fontWeight = FontWeight.Bold) }
+        }
     }
 }
 
 @Composable
-private fun rememberSecondsLeft(preview: OrderPreview): Int {
+fun rememberSecondsLeft(preview: OrderPreview): Int {
     val clock = remember { Clock.systemUTC() }
     var seconds by remember(preview.previewId) { mutableIntStateOf(secondsUntil(clock, preview)) }
     LaunchedEffect(preview.previewId) {

@@ -51,7 +51,7 @@ import com.quietstack.voicetrade.core.common.asAppError
 import com.quietstack.voicetrade.core.designsystem.Hairline
 import com.quietstack.voicetrade.core.designsystem.Panel
 import com.quietstack.voicetrade.core.designsystem.SectionHeader
-import com.quietstack.voicetrade.core.designsystem.SegmentedTabs
+import com.quietstack.voicetrade.core.designsystem.TextTabs
 import com.quietstack.voicetrade.core.designsystem.Stat
 import com.quietstack.voicetrade.core.designsystem.StatusChip
 import com.quietstack.voicetrade.core.designsystem.StockRow
@@ -199,17 +199,16 @@ fun PortfolioScreen(onBack: (() -> Unit)?, onOpenStock: (Long) -> Unit = {}, vie
 
                 LazyColumn(
                     Modifier.fillMaxSize().padding(padding),
-                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 28.dp),
-                    verticalArrangement = Arrangement.spacedBy(18.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 28.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     if (wallets.size > 1) item {
-                        SegmentedTabs(wallets.map { it.currency }, currency.orEmpty(), { selected = it })
+                        TextTabs(wallets.map { it.currency }, currency.orEmpty(), { selected = it })
                     }
                     if (wallet != null) item {
-                        Summary(wallet, daily = line?.daily, unrealized = line?.unrealized ?: BigDecimal.ZERO, realized = line?.realized ?: BigDecimal.ZERO)
+                        Summary(wallet, daily = line?.daily, unrealized = line?.unrealized ?: BigDecimal.ZERO)
                     }
-                    item { HistoryCard(state.history[currency]) }
-                    if (wallet != null) item { AllocationCard(wallet, positions) }
+                    state.history[currency]?.takeIf { it.points.size >= 2 }?.let { h -> item { HistoryCard(h) } }
                     item {
                         SectionHeader(
                             if (positions.isEmpty()) stringResource(R.string.holdings)
@@ -220,11 +219,6 @@ fun PortfolioScreen(onBack: (() -> Unit)?, onOpenStock: (Long) -> Unit = {}, vie
                         item { EmptyState(stringResource(R.string.no_positions), Modifier.height(200.dp)) }
                     } else {
                         item {
-                            val invested = positions.fold(BigDecimal.ZERO) { acc, p -> acc + p.avgCost.multiply(p.quantity) }
-                            val current = positions.fold(BigDecimal.ZERO) { acc, p -> acc + p.marketValue }
-                            HoldingsSummaryCard(invested, current, currency.orEmpty())
-                        }
-                        item {
                             Panel {
                                 positions.forEachIndexed { i, p ->
                                     if (i > 0) Hairline()
@@ -233,10 +227,9 @@ fun PortfolioScreen(onBack: (() -> Unit)?, onOpenStock: (Long) -> Unit = {}, vie
                                     val ret = if (cost.signum() > 0) p.unrealizedPnl.multiply(BigDecimal(100)).divide(cost, 2, RoundingMode.HALF_UP) else BigDecimal.ZERO
                                     StockRow(
                                         p.instrument,
-                                        subtitle = stringResource(R.string.qty_avg, p.quantity.stripTrailingZeros().toPlainString(), MoneyFormatter.format(p.avgCost, c)),
+                                        subtitle = p.quantity.stripTrailingZeros().toPlainString() + " " + tr("shares"),
                                         price = MoneyFormatter.format(p.marketValue, c, 0),
-                                        secondary = MoneyFormatter.formatSigned(p.unrealizedPnl, c, 0) + "  (" + MoneyFormatter.formatPercent(ret) + ")",
-                                        secondaryColor = pnlColor(p.unrealizedPnl),
+                                        changePct = ret,
                                         onClick = { onOpenStock(p.instrument.conid) },
                                     )
                                 }
@@ -255,7 +248,7 @@ private fun HoldingsSummaryCard(invested: BigDecimal, current: BigDecimal, curre
     val pnl = current.subtract(invested)
     val pct = if (invested.signum() > 0) pnl.multiply(BigDecimal(100)).divide(invested, 2, RoundingMode.HALF_UP) else BigDecimal.ZERO
     Panel {
-        Column(Modifier.padding(horizontal = 20.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(Modifier.fillMaxWidth()) {
                 Stat(stringResource(R.string.invested), MoneyFormatter.format(invested, currency, 0), Modifier.weight(1f))
                 Stat(stringResource(R.string.current_value), MoneyFormatter.format(current, currency, 0), Modifier.weight(1f), align = TextAlign.End)
@@ -278,9 +271,9 @@ private fun HoldingsSummaryCard(invested: BigDecimal, current: BigDecimal, curre
     }
 }
 
-/** One wallet: the big number first, then the day, then what it is made of. */
+/** One wallet: the big number, the day, then three plain lines. */
 @Composable
-private fun Summary(wallet: Wallet, daily: BigDecimal?, unrealized: BigDecimal, realized: BigDecimal) {
+private fun Summary(wallet: Wallet, daily: BigDecimal?, unrealized: BigDecimal) {
     val c = wallet.currency
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -297,83 +290,38 @@ private fun Summary(wallet: Wallet, daily: BigDecimal?, unrealized: BigDecimal, 
             }
         }
         Panel {
-            Column(Modifier.padding(horizontal = 20.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Stat(stringResource(R.string.cash), MoneyFormatter.format(wallet.cash, c, 0), Modifier.weight(1f))
-                    Stat(stringResource(R.string.invested), MoneyFormatter.format(wallet.positionsValue, c, 0), Modifier.weight(1f))
-                }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Stat(stringResource(R.string.unrealized), MoneyFormatter.formatSigned(unrealized, c, 0), Modifier.weight(1f), valueColor = pnlColor(unrealized))
-                    Stat(stringResource(R.string.realized), MoneyFormatter.formatSigned(realized, c, 0), Modifier.weight(1f), valueColor = pnlColor(realized))
-                }
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                FigureLine(stringResource(R.string.cash), MoneyFormatter.format(wallet.cash, c, 0))
+                FigureLine(stringResource(R.string.invested), MoneyFormatter.format(wallet.positionsValue, c, 0))
+                FigureLine(stringResource(R.string.pnl), MoneyFormatter.formatSigned(unrealized, c, 0), pnlColor(unrealized))
             }
         }
     }
 }
 
+@Composable
+private fun FigureLine(label: String, value: String, valueColor: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color.Unspecified) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+        Text(value, style = MaterialTheme.typography.bodyMedium.merge(TabularNumbers), fontWeight = FontWeight.SemiBold, color = valueColor)
+    }
+}
 
 /** Account value since the first trade, rebuilt from your orders and daily closing prices. */
 @Composable
-private fun HistoryCard(history: com.quietstack.voicetrade.domain.model.PortfolioHistory?) {
+private fun HistoryCard(history: com.quietstack.voicetrade.domain.model.PortfolioHistory) {
     Panel {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(tr("Account value"), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (history == null) {
-                Text(tr("Loading…"), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            } else if (history.points.size < 2) {
+            var scrub by remember(history) { mutableStateOf<com.quietstack.voicetrade.domain.model.ChartPoint?>(null) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    tr("Your value history appears here after your first trade."),
-                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    MoneyFormatter.format(BigDecimal.valueOf(scrub?.close ?: history.last), history.currency, 0),
+                    style = MaterialTheme.typography.titleLarge.merge(TabularNumbers), fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f),
                 )
-            } else {
-                var scrub by remember(history) { mutableStateOf<com.quietstack.voicetrade.domain.model.ChartPoint?>(null) }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        MoneyFormatter.format(BigDecimal.valueOf(scrub?.close ?: history.last), history.currency, 0),
-                        style = MaterialTheme.typography.titleLarge.merge(TabularNumbers), fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f),
-                    )
-                    com.quietstack.voicetrade.core.designsystem.ChangeText(BigDecimal.valueOf(history.changePct))
-                }
-                com.quietstack.voicetrade.core.designsystem.PriceChart(history.points, positive = history.changePct >= 0, height = 140.dp, onScrub = { scrub = it })
-                Text(
-                    tr("Since your first trade"), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                com.quietstack.voicetrade.core.designsystem.ChangeText(BigDecimal.valueOf(history.changePct))
             }
-        }
-    }
-}
-
-private val allocationColors = listOf(
-    androidx.compose.ui.graphics.Color(0xFF14B8A6), androidx.compose.ui.graphics.Color(0xFF6366F1), androidx.compose.ui.graphics.Color(0xFFF59E0B),
-    androidx.compose.ui.graphics.Color(0xFFEC4899), androidx.compose.ui.graphics.Color(0xFF3B82F6), androidx.compose.ui.graphics.Color(0xFF10B981),
-)
-
-/** What the account is made of: cash and each holding, as a share of the total. */
-@Composable
-private fun AllocationCard(wallet: Wallet, positions: List<Position>) {
-    val total = wallet.netLiquidation.toDouble()
-    if (total <= 0) return
-    data class Slice(val label: String, val value: Double, val color: androidx.compose.ui.graphics.Color)
-    val held = positions.sortedByDescending { it.marketValue }
-    val slices = buildList {
-        held.take(5).forEachIndexed { i, p -> add(Slice(p.instrument.name, p.marketValue.toDouble(), allocationColors[i % allocationColors.size])) }
-        val rest = held.drop(5).sumOf { it.marketValue.toDouble() }
-        if (rest > 0) add(Slice(tr("Other holdings"), rest, androidx.compose.ui.graphics.Color(0xFF94A3B8)))
-        add(Slice("Cash", wallet.cash.toDouble(), androidx.compose.ui.graphics.Color(0xFF64748B)))
-    }.filter { it.value > 0 }
-    Panel {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(tr("Allocation"), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Row(Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(50))) {
-                slices.forEach { s -> Box(Modifier.weight(s.value.toFloat().coerceAtLeast(0.001f)).fillMaxHeight().background(s.color)) }
-            }
-            slices.forEach { s ->
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Box(Modifier.size(10.dp).background(s.color, CircleShape))
-                    Text(s.label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-                    Text("%.1f%%".format(s.value / total * 100), style = MaterialTheme.typography.bodyMedium.merge(TabularNumbers), fontWeight = FontWeight.SemiBold)
-                }
-            }
+            com.quietstack.voicetrade.core.designsystem.PriceChart(history.points, positive = history.changePct >= 0, height = 140.dp, onScrub = { scrub = it })
         }
     }
 }

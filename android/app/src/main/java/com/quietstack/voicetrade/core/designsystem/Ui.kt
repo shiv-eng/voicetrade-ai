@@ -7,11 +7,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
@@ -45,19 +48,19 @@ fun Panel(
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val shape = RoundedCornerShape(24.dp)
+    val shape = RoundedCornerShape(12.dp)
     val base = modifier.fillMaxWidth()
     Surface(
         modifier = if (onClick != null) base.clickable(onClick = onClick) else base,
         shape = shape,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.14f)),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.10f)),
     ) { Column(content = content) }
 }
 
 @Composable
-fun Hairline(modifier: Modifier = Modifier) {
-    HorizontalDivider(modifier.padding(start = 74.dp), color = MaterialTheme.colorScheme.outline.copy(alpha = 0.14f))
+fun Hairline(modifier: Modifier = Modifier, start: Dp = 16.dp) {
+    HorizontalDivider(modifier.padding(start = start), color = MaterialTheme.colorScheme.outline.copy(alpha = 0.14f))
 }
 
 /** Title on the left, optional text action on the right. */
@@ -110,11 +113,10 @@ fun StockRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            SymbolAvatar(instrument.symbol, size = 40.dp)
             Column(Modifier.weight(1f, fill = true), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    instrument.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold,
-                    maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = MaterialTheme.typography.titleSmall.fontSize * 1.15f,
+                    instrument.name, style = MaterialTheme.typography.titleSmall,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -123,7 +125,7 @@ fun StockRow(
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 if (price != null) {
-                    Text(price, style = MaterialTheme.typography.titleSmall.merge(TabularNumbers), fontWeight = FontWeight.SemiBold, maxLines = 1)
+                    Text(price, style = MaterialTheme.typography.titleSmall.merge(TabularNumbers), maxLines = 1)
                 } else {
                     Text("—", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -146,14 +148,14 @@ fun SegmentedTabs(
     options: List<String>, selected: String, onSelect: (String) -> Unit, modifier: Modifier = Modifier, equalWidth: Boolean = false,
 ) {
     Row(
-        modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(50)).padding(4.dp),
+        modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh, ButtonShape).padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         options.forEach { option ->
             val on = option == selected
             Box(
                 (if (equalWidth) Modifier.weight(1f) else Modifier)
-                    .background(if (on) MaterialTheme.colorScheme.primary else Color.Transparent, RoundedCornerShape(50))
+                    .background(if (on) MaterialTheme.colorScheme.primary else Color.Transparent, RoundedCornerShape(9.dp))
                     .clickable { onSelect(option) }
                     .padding(horizontal = if (equalWidth) 4.dp else 18.dp, vertical = 8.dp),
                 contentAlignment = Alignment.Center,
@@ -193,5 +195,25 @@ fun Stat(label: String, value: String, modifier: Modifier = Modifier, valueColor
             value, style = MaterialTheme.typography.titleSmall.merge(TabularNumbers), fontWeight = FontWeight.SemiBold,
             color = valueColor, maxLines = 1, textAlign = align,
         )
+    }
+}
+
+/** Two or three words in a row; the chosen one is bold, in the accent colour, with a line under it. */
+@Composable
+fun TextTabs(options: List<String>, selected: String, onSelect: (String) -> Unit, modifier: Modifier = Modifier, equalWidth: Boolean = false) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(if (equalWidth) 0.dp else 16.dp), verticalAlignment = Alignment.CenterVertically) {
+        options.forEach { option ->
+            val on = option == selected
+            Column(
+                (if (equalWidth) Modifier.weight(1f) else Modifier.width(IntrinsicSize.Max)).clickable { onSelect(option) }.heightIn(min = 48.dp),
+                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    option, style = MaterialTheme.typography.titleSmall, fontWeight = if (on) FontWeight.Bold else FontWeight.Medium,
+                    color = if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Box(Modifier.padding(top = 2.dp).height(2.dp).fillMaxWidth().background(if (on) MaterialTheme.colorScheme.primary else Color.Transparent))
+            }
+        }
     }
 }

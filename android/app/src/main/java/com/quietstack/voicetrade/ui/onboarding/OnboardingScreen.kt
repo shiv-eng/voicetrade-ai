@@ -1,5 +1,6 @@
 package com.quietstack.voicetrade.ui.onboarding
 
+import com.quietstack.voicetrade.core.designsystem.AppButton
 import android.Manifest
 import android.app.Activity
 import android.os.Build
@@ -36,7 +37,6 @@ import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.VerifiedUser
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -125,12 +125,12 @@ fun OnboardingScreen(onDone: () -> Unit, viewModel: OnboardingViewModel = hiltVi
             PageDots(state.page)
             Spacer(Modifier.height(16.dp))
             when (state.page) {
-                0, 1 -> Button(
+                0, 1 -> AppButton(
                     onClick = { viewModel.onEvent(OnboardingEvent.Next) },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp),
                 ) { Text(stringResource(R.string.next)) }
                 2 -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
+                    AppButton(
                         onClick = {
                             val wanted = buildList {
                                 add(Manifest.permission.RECORD_AUDIO)
@@ -146,7 +146,7 @@ fun OnboardingScreen(onDone: () -> Unit, viewModel: OnboardingViewModel = hiltVi
                     ) { Text(stringResource(R.string.not_now)) }
                 }
                 else -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
+                    AppButton(
                         onClick = ::googleTapped,
                         enabled = !state.isSigningIn,
                         modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp),

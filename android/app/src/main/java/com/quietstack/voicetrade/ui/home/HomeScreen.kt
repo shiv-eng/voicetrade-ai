@@ -1,5 +1,6 @@
 package com.quietstack.voicetrade.ui.home
 
+import com.quietstack.voicetrade.core.designsystem.ButtonShape
 import android.Manifest
 import com.quietstack.voicetrade.core.i18n.tr
 import android.content.pm.PackageManager
@@ -85,7 +86,6 @@ import java.time.LocalTime
 fun HomeScreen(
     onStartSession: (micGranted: Boolean, prompt: String?) -> Unit,
     onOpenPortfolio: () -> Unit,
-    onOpenWatchlist: () -> Unit,
     onOpenHistory: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenStock: (Long) -> Unit = {},
@@ -136,15 +136,15 @@ fun HomeScreen(
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
             HomeTopBar(name = state.name, onHistory = onOpenHistory, onSettings = onOpenSettings, onAlerts = onOpenAlerts)
             if (state.isRefreshing) {
-                LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 20.dp))
+                LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp))
             } else {
                 Spacer(Modifier.height(4.dp))
             }
 
             LazyColumn(
                 Modifier.weight(1f),
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 28.dp),
-                verticalArrangement = Arrangement.spacedBy(22.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 if (state.isOffline) item { InlineError(stringResource(R.string.banner_offline), null) }
                 state.error?.let { err -> item { InlineError(messageText(context, err), { viewModel.onEvent(HomeEvent.Refresh) }) } }
@@ -163,68 +163,6 @@ fun HomeScreen(
                 item { IpoEntry(onOpenIpos) }
 
                 if (state.market != null) item { TopMovers(state.market, onOpenStock) }
-
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        SectionHeader(
-                            stringResource(R.string.holdings),
-                            action = if (state.positions.isNotEmpty()) stringResource(R.string.see_all) else null,
-                            onAction = onOpenPortfolio,
-                        )
-                        if (state.positions.isEmpty() && state.loaded) {
-                            EmptyHint(stringResource(R.string.holdings_empty))
-                        } else if (state.positions.isNotEmpty()) {
-                            Panel {
-                                state.positions.take(3).forEachIndexed { i, p ->
-                                    if (i > 0) Hairline()
-                                    val cost = p.avgCost.multiply(p.quantity)
-                                    val ret = if (cost.signum() > 0) {
-                                        p.unrealizedPnl.multiply(BigDecimal(100)).divide(cost, 2, RoundingMode.HALF_UP)
-                                    } else {
-                                        BigDecimal.ZERO
-                                    }
-                                    StockRow(
-                                        p.instrument,
-                                        subtitle = stringResource(
-                                            R.string.qty_at, p.quantity.stripTrailingZeros().toPlainString(),
-                                            MoneyFormatter.format(p.marketPrice, p.instrument.currency),
-                                        ),
-                                        price = MoneyFormatter.format(p.marketValue, p.instrument.currency, 0),
-                                        secondary = MoneyFormatter.formatSigned(p.unrealizedPnl, p.instrument.currency, 0) +
-                                            "  (" + MoneyFormatter.formatPercent(ret) + ")",
-                                        secondaryColor = pnlColor(p.unrealizedPnl),
-                                        onClick = { onOpenStock(p.instrument.conid) },
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        SectionHeader(
-                            stringResource(R.string.watchlist),
-                            action = if (state.watchlist.isNotEmpty()) stringResource(R.string.see_all) else null,
-                            onAction = onOpenWatchlist,
-                        )
-                        if (state.watchlist.isEmpty() && state.loaded) {
-                            EmptyHint(stringResource(R.string.watchlist_empty_home))
-                        } else if (state.watchlist.isNotEmpty()) {
-                            Panel {
-                                state.watchlist.take(4).forEachIndexed { i, row ->
-                                    if (i > 0) Hairline()
-                                    StockRow(
-                                        row.instrument,
-                                        price = row.quote?.let { MoneyFormatter.format(it.last, row.instrument.currency) },
-                                        changePct = row.quote?.changePct,
-                                        onClick = { onOpenStock(row.instrument.conid) },
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
             }
             SnackbarHost(snackbar)
         }
@@ -243,7 +181,7 @@ private fun HomeTopBar(name: String?, onHistory: () -> Unit, onSettings: () -> U
         },
     )
     Row(
-        Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 10.dp, bottom = 4.dp),
+        Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 0.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -272,29 +210,29 @@ private fun VoiceCard(onTap: () -> Unit, onPick: (String) -> Unit) {
     Column(
         Modifier.fillMaxWidth().background(
             Brush.verticalGradient(listOf(primary.copy(alpha = 0.22f), MaterialTheme.colorScheme.surfaceContainer)),
-            RoundedCornerShape(32.dp),
-        ).padding(top = 20.dp, bottom = 18.dp),
+            RoundedCornerShape(16.dp),
+        ).padding(top = 28.dp, bottom = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         MicOrb(
             state = OrbState.IDLE, level = 0f, contentDescription = stringResource(R.string.tap_to_talk),
-            size = 132.dp, onClick = onTap, tint = primary,
+            size = 150.dp, onClick = onTap, tint = primary,
         )
         Text(
-            stringResource(R.string.talk_to_mira), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 2.dp),
+            stringResource(R.string.talk_to_mira), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(top = 8.dp),
         )
         Text(
             stringResource(R.string.hero_subtitle), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 28.dp, vertical = 4.dp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
         )
         Text(
             stringResource(R.string.try_saying).uppercase(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.ExtraBold,
             letterSpacing = 0.1.em, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.align(Alignment.Start).padding(start = 18.dp, top = 14.dp),
+            modifier = Modifier.align(Alignment.Start).padding(start = 16.dp, top = 20.dp),
         )
         LazyRow(
-            Modifier.padding(top = 8.dp),
+            Modifier.padding(top = 6.dp),
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -302,9 +240,9 @@ private fun VoiceCard(onTap: () -> Unit, onPick: (String) -> Unit) {
                 Text(
                     p, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium, maxLines = 1,
                     modifier = Modifier
-                        .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(50))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh, ButtonShape)
                         .clickable { onPick(p) }
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
                 )
             }
         }
@@ -320,7 +258,7 @@ private fun BalanceCard(wallets: List<Wallet>, dayByCurrency: Map<String, BigDec
     val w = wallets.firstOrNull { it.currency == selected } ?: wallets.first()
     Surface(
         onClick = onOpenPortfolio,
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(16.dp),
         color = Color.Transparent,
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -331,7 +269,7 @@ private fun BalanceCard(wallets: List<Wallet>, dayByCurrency: Map<String, BigDec
                 Modifier.align(Alignment.TopEnd).offset(x = 70.dp, y = (-90).dp).size(240.dp)
                     .background(Brush.radialGradient(listOf(Color.White.copy(alpha = 0.14f), Color.Transparent)), CircleShape),
             )
-            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         stringResource(R.string.balance_title) + " · " + stringResource(if (w.currency == "INR") R.string.wallet_india else R.string.wallet_us),
@@ -340,7 +278,7 @@ private fun BalanceCard(wallets: List<Wallet>, dayByCurrency: Map<String, BigDec
                     )
                     if (wallets.size > 1) {
                         Row(
-                            Modifier.background(Color.Black.copy(alpha = 0.28f), RoundedCornerShape(50)).padding(3.dp),
+                            Modifier.background(Color.Black.copy(alpha = 0.28f), ButtonShape).padding(3.dp),
                         ) {
                             wallets.forEach { ww ->
                                 val on = ww.currency == selected
@@ -348,7 +286,7 @@ private fun BalanceCard(wallets: List<Wallet>, dayByCurrency: Map<String, BigDec
                                     ww.currency, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.ExtraBold,
                                     color = if (on) Color(0xFF042F2E) else Color.White.copy(alpha = 0.78f),
                                     modifier = Modifier
-                                        .background(if (on) Color.White else Color.Transparent, RoundedCornerShape(50))
+                                        .background(if (on) Color.White else Color.Transparent, RoundedCornerShape(8.dp))
                                         .clickable { selected = ww.currency }
                                         .padding(horizontal = 10.dp, vertical = 4.dp),
                                 )
@@ -382,7 +320,7 @@ private fun BalanceCard(wallets: List<Wallet>, dayByCurrency: Map<String, BigDec
                     }
                 }
                 Row(
-                    Modifier.fillMaxWidth().background(Color.Black.copy(alpha = 0.22f), RoundedCornerShape(18.dp)).padding(horizontal = 14.dp, vertical = 12.dp),
+                    Modifier.fillMaxWidth().background(Color.Black.copy(alpha = 0.22f), RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -408,7 +346,7 @@ private fun BalanceCard(wallets: List<Wallet>, dayByCurrency: Map<String, BigDec
 @Composable
 private fun IpoEntry(onClick: () -> Unit) {
     Panel(onClick = onClick) {
-        Row(Modifier.padding(horizontal = 18.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(tr("IPOs"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(
@@ -419,12 +357,4 @@ private fun IpoEntry(onClick: () -> Unit) {
             Text("›", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
         }
     }
-}
-
-@Composable
-private fun EmptyHint(text: String) {
-    Text(
-        text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(20.dp)).padding(18.dp),
-    )
 }

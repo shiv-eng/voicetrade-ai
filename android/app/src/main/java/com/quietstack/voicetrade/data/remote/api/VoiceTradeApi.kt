@@ -17,6 +17,7 @@ import com.quietstack.voicetrade.data.remote.dto.OrderPreviewDto
 import com.quietstack.voicetrade.data.remote.dto.AuthResponse
 import com.quietstack.voicetrade.data.remote.dto.GoogleLoginRequest
 import com.quietstack.voicetrade.data.remote.dto.PnlDto
+import com.quietstack.voicetrade.data.remote.dto.PreviewOrderRequest
 import com.quietstack.voicetrade.data.remote.dto.PositionDto
 import com.quietstack.voicetrade.data.remote.dto.SessionDto
 import com.quietstack.voicetrade.data.remote.dto.StartSessionRequest
@@ -51,6 +52,7 @@ interface VoiceTradeApi {
     @GET("positions") suspend fun positions(): List<PositionDto>
     @GET("pnl") suspend fun pnl(): PnlDto
     @GET("orders") suspend fun orders(@Query("status") status: String): List<OrderDto>
+    @POST("orders/preview") suspend fun previewOrder(@Body body: PreviewOrderRequest): OrderPreviewDto
     @POST("orders/{id}/cancel-preview") suspend fun previewCancel(@Path("id") id: String): OrderPreviewDto
 
     @GET("search") suspend fun search(@Query("q") query: String): List<InstrumentDto>

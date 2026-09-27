@@ -100,6 +100,9 @@ data class PnlDto(val items: List<PnlLineDto>)
 data class WatchRowDto(val instrument: InstrumentDto, val quote: QuoteDto? = null)
 
 @Serializable
+data class PreviewOrderRequest(val conid: Long, val side: String, val quantity: Int, val type: String, val limitPrice: String? = null)
+
+@Serializable
 data class OrderPreviewDto(
     val previewId: String,
     val instrument: InstrumentDto,
@@ -159,6 +162,8 @@ data class StartSessionRequest(
     val speechRate: Float,
     /** A past conversation to pick up: Mira is told about it and greets differently. */
     val resumeHistory: List<ResumeTurnDto>? = null,
+    /** The user already asked something (tapped a suggestion): Mira answers it instead of greeting first. */
+    val skipGreeting: Boolean = false,
 )
 
 @Serializable
@@ -320,6 +325,7 @@ data class HeadlineDto(val title: String, val publisher: String = "", val age: S
 data class IpoItemDto(
     val name: String, val tag: String = "", val detail: String = "", val price: String? = null, val extra: String? = null,
     val symbol: String = "", val series: String = "EQ", val status: String = "", val lot: String? = null, val minInvest: String? = null,
+    val sub: Double? = null, val now: String? = null, val gain: Double? = null,
 )
 
 @Serializable

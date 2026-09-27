@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material3.Button
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -25,7 +23,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -64,7 +61,7 @@ import java.math.BigDecimal
 fun PaperBadge(modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(50),
+        shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.extra.paper,
         contentColor = MaterialTheme.extra.onPaper,
     ) {
@@ -81,7 +78,7 @@ fun PaperBadge(modifier: Modifier = Modifier) {
 fun StatusChip(text: String, color: Color, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(50),
+        shape = RoundedCornerShape(8.dp),
         color = color.copy(alpha = 0.14f),
         contentColor = color,
         border = BorderStroke(1.dp, color.copy(alpha = 0.5f)),
@@ -132,7 +129,6 @@ fun QuoteCard(
     )
     CardFrame(modifier.semantics(mergeDescendants = true) { contentDescription = speech }) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            SymbolAvatar(i.symbol)
             Column(Modifier.weight(1f)) {
                 Text(i.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text("${i.symbol} · ${i.exchange}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -159,8 +155,8 @@ fun QuoteCard(
         val wHigh = quote.week52High
         if (wLow != null && wHigh != null) RangeBar(wLow, wHigh, quote.last, i.currency)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilledTonalButton(onClick = { onBuy(i) }, contentPadding = PaddingValues(horizontal = 18.dp)) { Text(stringResource(R.string.buy)) }
-            OutlinedButton(onClick = { onSell(i) }, contentPadding = PaddingValues(horizontal = 18.dp)) { Text(stringResource(R.string.sell)) }
+            AppTonalButton(onClick = { onBuy(i) }, contentPadding = PaddingValues(horizontal = 18.dp)) { Text(stringResource(R.string.buy)) }
+            AppOutlinedButton(onClick = { onSell(i) }, contentPadding = PaddingValues(horizontal = 18.dp)) { Text(stringResource(R.string.sell)) }
             TextButton(onClick = { onAddToWatchlist(i) }) { Text(stringResource(R.string.add_watchlist)) }
         }
     }
@@ -177,7 +173,6 @@ fun PositionsCard(
         Text(stringResource(R.string.your_positions), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         positions.take(5).forEach { p ->
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                SymbolAvatar(p.instrument.symbol, size = 36.dp)
                 Column(Modifier.weight(1f)) {
                     Text(p.instrument.name, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(
@@ -284,12 +279,12 @@ fun OrderPreviewCard(
             Spacer(Modifier.size(4.dp))
             // Confirm and Cancel are deliberately far apart to avoid mis-taps (PRD 8.4).
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                OutlinedButton(
+                AppOutlinedButton(
                     onClick = onCancel,
                     enabled = !isSubmitting,
                     modifier = Modifier.weight(1f).heightIn(min = 52.dp),
                 ) { Text(stringResource(R.string.cancel)) }
-                Button(
+                AppButton(
                     onClick = onConfirm,
                     enabled = !isSubmitting,
                     modifier = Modifier.weight(1f).heightIn(min = 52.dp),
@@ -353,7 +348,7 @@ fun OrderStatusCard(order: Order, modifier: Modifier = Modifier, onCancel: (Orde
                 color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f),
             )
             if (!order.status.isTerminal) {
-                OutlinedButton(
+                AppOutlinedButton(
                     onClick = { onCancel(order) },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = extra.loss),
                     border = BorderStroke(1.dp, extra.loss.copy(alpha = 0.45f)),
@@ -369,7 +364,7 @@ fun DisambiguationCard(candidates: List<Instrument>, modifier: Modifier = Modifi
     CardFrame(modifier) {
         Text(stringResource(R.string.which_one), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         candidates.take(4).forEach { c ->
-            OutlinedButton(onClick = { onPick(c) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+            AppOutlinedButton(onClick = { onPick(c) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                 Text("${c.name} (${c.symbol}) · ${c.exchange}", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }

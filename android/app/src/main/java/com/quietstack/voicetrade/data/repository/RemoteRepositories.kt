@@ -64,6 +64,13 @@ class OrderRepositoryImpl @Inject constructor(private val gateway: BackendGatewa
     override suspend fun previewCancel(orderId: String): Result<OrderPreview> =
         apiCall { gateway.api().previewCancel(orderId).toDomain() }
 
+    override suspend fun previewOrder(conid: Long, side: com.quietstack.voicetrade.domain.model.Side, quantity: Int, limitPrice: String?): Result<OrderPreview> =
+        apiCall {
+            gateway.api().previewOrder(
+                com.quietstack.voicetrade.data.remote.dto.PreviewOrderRequest(conid, side.name, quantity, if (limitPrice == null) "MKT" else "LMT", limitPrice),
+            ).toDomain()
+        }
+
     override suspend fun confirm(previewId: String): Result<ConfirmResult> =
         apiCall { gateway.api().confirmPreview(previewId).let { ConfirmResult(it.orderId, it.status) } }
 

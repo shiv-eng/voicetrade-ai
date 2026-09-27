@@ -61,7 +61,6 @@ import com.quietstack.voicetrade.domain.model.VoiceGender
 import com.quietstack.voicetrade.domain.usecase.ManageHistoryUseCase
 import com.quietstack.voicetrade.domain.usecase.ObserveSettingsUseCase
 import com.quietstack.voicetrade.domain.usecase.SignOutUseCase
-import com.quietstack.voicetrade.core.designsystem.SymbolAvatar
 import com.quietstack.voicetrade.domain.usecase.UpdateSettingsUseCase
 import com.quietstack.voicetrade.ui.common.ScreenScaffold
 import com.quietstack.voicetrade.ui.common.messageText
@@ -166,7 +165,6 @@ fun SettingsScreen(onBack: () -> Unit, onUnlinked: () -> Unit, viewModel: Settin
 
                 state.connection.profile?.let { p ->
                     Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                        SymbolAvatar(p.name.ifBlank { "U" }, size = 52.dp)
                         Column {
                             Text(p.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                             p.email?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
@@ -190,6 +188,17 @@ fun SettingsScreen(onBack: () -> Unit, onUnlinked: () -> Unit, viewModel: Settin
                     )
                 }
                 }
+                Section(R.string.settings_appearance)
+                Panel {
+                Column(Modifier.padding(16.dp)) {
+                    ChipRow(
+                        options = listOf(ThemeMode.SYSTEM to R.string.theme_system, ThemeMode.LIGHT to R.string.theme_light, ThemeMode.DARK to R.string.theme_dark),
+                        selected = s.theme,
+                        onSelect = { viewModel.onEvent(SettingsEvent.SetTheme(it)) },
+                    )
+                }
+                }
+
                 Section(R.string.settings_voice)
                 Panel {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -211,17 +220,6 @@ fun SettingsScreen(onBack: () -> Unit, onUnlinked: () -> Unit, viewModel: Settin
                         subtitle = "A notification at 8:30 am with Nifty, Sensex, your holdings and IPOs today. Tap it to hear Mira read it.",
                         checked = briefing,
                         onChecked = { briefing = it; com.quietstack.voicetrade.notifications.Scheduler.setBriefingEnabled(context, it) },
-                    )
-                }
-                }
-
-                Section(R.string.settings_appearance)
-                Panel {
-                Column(Modifier.padding(16.dp)) {
-                    ChipRow(
-                        options = listOf(ThemeMode.SYSTEM to R.string.theme_system, ThemeMode.LIGHT to R.string.theme_light, ThemeMode.DARK to R.string.theme_dark),
-                        selected = s.theme,
-                        onSelect = { viewModel.onEvent(SettingsEvent.SetTheme(it)) },
                     )
                 }
                 }
@@ -280,7 +278,7 @@ private fun Section(title: Int) {
         fontWeight = FontWeight.ExtraBold,
         letterSpacing = 0.1.em,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(top = 8.dp, start = 4.dp),
+        modifier = Modifier.padding(top = 8.dp),
     )
 }
 

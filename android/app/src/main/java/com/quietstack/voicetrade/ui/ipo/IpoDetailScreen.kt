@@ -13,14 +13,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -39,7 +42,7 @@ import com.quietstack.voicetrade.core.designsystem.Panel
 import com.quietstack.voicetrade.core.designsystem.SectionHeader
 import com.quietstack.voicetrade.core.designsystem.StatusBadge
 import com.quietstack.voicetrade.core.designsystem.SubscriptionBars
-import com.quietstack.voicetrade.core.designsystem.TabularNumbers
+import com.quietstack.voicetrade.domain.model.InfoRow
 import com.quietstack.voicetrade.domain.model.IpoDetail
 import com.quietstack.voicetrade.domain.repository.ResearchRepository
 import com.quietstack.voicetrade.ui.common.InlineError
@@ -102,20 +105,20 @@ fun IpoDetailScreen(onBack: () -> Unit, viewModel: IpoDetailViewModel = hiltView
                             StatusBadge(d.status)
                         }
                         Text(
-                            (if (d.isSme) tr("SME IPO") else tr("Mainboard IPO")) + " · ${d.symbol}",
+                            (if (d.isSme) tr("Small and medium enterprise IPO") else tr("Mainboard IPO")) + " · ${d.symbol}",
                             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
                 item {
                     Panel {
-                        Row(Modifier.padding(horizontal = 16.dp, vertical = 18.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Big(tr("Offer price"), if (d.priceLow != null && d.priceHigh != null) {
-                                if (d.priceLow == d.priceHigh) "₹%.0f".format(d.priceHigh) else "₹%.0f – ₹%.0f".format(d.priceLow, d.priceHigh)
-                            } else "—", Modifier.weight(1.3f))
-                            Big(tr("Lot size"), d.lotSize?.let { "$it shares" } ?: "—", Modifier.weight(1f), TextAlign.Center)
-                            Big(tr("Min. investment"), d.minInvestment?.let { "₹%,d".format(it) } ?: "—", Modifier.weight(1f), TextAlign.End)
-                        }
+                        KeyFigures(listOfNotNull(
+                            if (d.priceLow != null && d.priceHigh != null) {
+                                InfoRow(tr("Offer price"), if (d.priceLow == d.priceHigh) "₹%.0f".format(d.priceHigh) else "₹%.0f – ₹%.0f".format(d.priceLow, d.priceHigh))
+                            } else null,
+                            d.lotSize?.let { InfoRow(tr("Lot size"), "$it shares") },
+                            d.minInvestment?.let { InfoRow(tr("Minimum investment"), "₹%,d".format(it)) },
+                        ), Modifier.padding(16.dp))
                     }
                 }
                 if (d.timeline.isNotEmpty()) {
@@ -126,18 +129,18 @@ fun IpoDetailScreen(onBack: () -> Unit, viewModel: IpoDetailViewModel = hiltView
                     item { SectionHeader(tr("Subscription")) }
                     item { Panel { SubscriptionBars(d.overallTimes, d.categories, Modifier.padding(16.dp)) } }
                 }
-                if (!d.issueSize.isNullOrBlank() || d.facts.isNotEmpty()) {
+                if (!d.issueSize.isNullOrBlank()) {
+                    item { SectionHeader(tr("About the issue")) }
+                    item { Panel { ExpandableText(d.issueSize, Modifier.padding(16.dp)) } }
+                }
+                val (issueFacts, peopleFacts) = d.facts.partition { it.label in ISSUE_FACT_LABELS }
+                if (issueFacts.isNotEmpty()) {
                     item { SectionHeader(tr("Issue details")) }
-                    item {
-                        Panel {
-                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                d.issueSize?.takeIf { it.isNotBlank() }?.let {
-                                    Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                                if (d.facts.isNotEmpty()) KeyFigures(d.facts)
-                            }
-                        }
-                    }
+                    item { Panel { KeyFigures(issueFacts, Modifier.padding(16.dp)) } }
+                }
+                if (peopleFacts.isNotEmpty()) {
+                    item { SectionHeader(tr("Managers and registrar")) }
+                    item { Panel { KeyFigures(peopleFacts, Modifier.padding(16.dp)) } }
                 }
                 if (d.links.isNotEmpty()) {
                     item { SectionHeader(tr("Documents")) }
@@ -177,13 +180,17 @@ fun IpoDetailScreen(onBack: () -> Unit, viewModel: IpoDetailViewModel = hiltView
     }
 }
 
+private val ISSUE_FACT_LABELS = setOf("Issue type", "Face value", "Bidding hours", "Retail limit")
+
+/** A long paragraph shows three lines and opens up on request, so it doesn't crowd the facts around it. */
 @Composable
-private fun Big(label: String, value: String, modifier: Modifier = Modifier, align: TextAlign = TextAlign.Start) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = align, modifier = Modifier.fillMaxWidth())
+private fun ExpandableText(text: String, modifier: Modifier = Modifier) {
+    var expanded by remember { mutableStateOf(false) }
+    Column(modifier) {
         Text(
-            value, style = MaterialTheme.typography.titleMedium.merge(TabularNumbers), fontWeight = FontWeight.Bold, textAlign = align,
-            maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.fillMaxWidth(),
+            text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = if (expanded) Int.MAX_VALUE else 3, overflow = TextOverflow.Ellipsis,
         )
+        TextButton(onClick = { expanded = !expanded }) { Text(tr(if (expanded) "Show less" else "Show more"), fontWeight = FontWeight.SemiBold) }
     }
 }

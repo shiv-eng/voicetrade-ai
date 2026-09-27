@@ -110,7 +110,7 @@ fun WalletCard(wallet: Wallet, dayChange: BigDecimal?, modifier: Modifier = Modi
                     color = soft, style = MaterialTheme.typography.bodySmall,
                 )
             }
-            Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+            Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 Column {
                     Text(stringResource(R.string.cash), color = soft, style = MaterialTheme.typography.labelSmall)
                     Text(MoneyFormatter.format(wallet.cash, wallet.currency, 0), color = onCard, fontWeight = FontWeight.SemiBold)

@@ -140,12 +140,8 @@ fun HistoryScreen(onBack: () -> Unit, onOpen: (Long) -> Unit, viewModel: History
                                         Modifier.fillMaxWidth().clickable { onOpen(s.id) }.padding(14.dp),
                                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
                                     ) {
-                                        Box(
-                                            Modifier.size(42.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), CircleShape),
-                                            contentAlignment = Alignment.Center,
-                                        ) { Icon(Icons.Filled.GraphicEq, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
                                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                                            Text(s.summary, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                                            Text(s.summary, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                                             val duration = minutesBetween(s.startedAt, s.endedAt)
                                             Text(
                                                 timeFormat.format(s.startedAt) + (duration?.let { " · $it" } ?: ""),
@@ -161,18 +157,10 @@ fun HistoryScreen(onBack: () -> Unit, onOpen: (Long) -> Unit, viewModel: History
                         }
                     }
                     item {
-                        Row(
-                            Modifier.fillMaxWidth()
-                                .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.28f), RoundedCornerShape(20.dp))
-                                .padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            Icon(Icons.Filled.PlayCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                            Text(
-                                stringResource(R.string.history_resume_hint), style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
+                        Text(
+                            stringResource(R.string.history_resume_hint), style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp),
+                        )
                     }
                 }
             }

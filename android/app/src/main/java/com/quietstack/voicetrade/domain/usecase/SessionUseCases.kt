@@ -19,8 +19,8 @@ import javax.inject.Inject
 
 /** Mic permission is checked by the UI; without it the session runs in text-only mode. */
 class StartSessionUseCase @Inject constructor(private val session: VoiceSessionRepository) {
-    suspend operator fun invoke(micGranted: Boolean, resumeFrom: List<ConversationMessage> = emptyList()): Result<Unit> =
-        session.start(micGranted, resumeFrom)
+    suspend operator fun invoke(micGranted: Boolean, resumeFrom: List<ConversationMessage> = emptyList(), skipGreeting: Boolean = false): Result<Unit> =
+        session.start(micGranted, resumeFrom, skipGreeting)
 }
 
 class EndSessionUseCase @Inject constructor(

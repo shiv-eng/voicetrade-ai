@@ -167,7 +167,6 @@ fun AppNavHost(
                     onOpenIpos = { navController.navigate(Ipos) },
                     onStartSession = { mic, prompt -> navController.navigate(Session(mic, prompt)) { launchSingleTop = true } },
                     onOpenPortfolio = { goTab(Portfolio) },
-                    onOpenWatchlist = { goTab(Watchlist) },
                     onOpenHistory = { navController.navigate(History) },
                     onOpenSettings = { navController.navigate(Settings) },
                     onOpenAlerts = { navController.navigate(Alerts) },

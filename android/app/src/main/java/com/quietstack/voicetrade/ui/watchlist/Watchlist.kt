@@ -1,5 +1,6 @@
 package com.quietstack.voicetrade.ui.watchlist
 
+import com.quietstack.voicetrade.core.designsystem.ButtonShape
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -61,7 +62,6 @@ import com.quietstack.voicetrade.R
 import com.quietstack.voicetrade.core.designsystem.Hairline
 import com.quietstack.voicetrade.core.designsystem.Panel
 import com.quietstack.voicetrade.core.designsystem.StockRow
-import com.quietstack.voicetrade.core.designsystem.SymbolAvatar
 import com.quietstack.voicetrade.core.designsystem.extra
 import com.quietstack.voicetrade.core.util.MoneyFormatter
 import com.quietstack.voicetrade.domain.model.Instrument
@@ -195,9 +195,9 @@ fun WatchlistScreen(onBack: (() -> Unit)?, onOpenStock: (Long) -> Unit = {}, vie
         } else {
             Column(Modifier.padding(padding).fillMaxSize()) {
                 Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)
-                        .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(16.dp))
-                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.16f), RoundedCornerShape(16.dp))
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                        .background(MaterialTheme.colorScheme.surfaceContainer, ButtonShape)
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.16f), ButtonShape)
                         .clickable { viewModel.onEvent(WatchlistEvent.SetSearchOpen(true)) }
                         .padding(horizontal = 14.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -208,23 +208,8 @@ fun WatchlistScreen(onBack: (() -> Unit)?, onOpenStock: (Long) -> Unit = {}, vie
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                Row(
-                    Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    val alpha by rememberBlink(state.isPolling)
-                    Box(
-                        Modifier.size(8.dp).background(
-                            (if (state.isPolling) MaterialTheme.extra.gain else MaterialTheme.colorScheme.outline).copy(alpha = alpha), CircleShape,
-                        ),
-                    )
-                    Text(
-                        stringResource(if (state.isPolling) R.string.watchlist_live else R.string.watchlist_paused),
-                        style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
                 LazyColumn(
-                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 28.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 28.dp),
                     verticalArrangement = Arrangement.spacedBy(0.dp),
                 ) {
                     item {
@@ -264,7 +249,6 @@ fun WatchlistScreen(onBack: (() -> Unit)?, onOpenStock: (Long) -> Unit = {}, vie
                             Modifier.fillMaxWidth().clickable { viewModel.onEvent(WatchlistEvent.Add(inst)) }.padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            SymbolAvatar(inst.symbol, size = 36.dp)
                             Column {
                                 Text(inst.name, fontWeight = FontWeight.SemiBold, maxLines = 1)
                                 Text("${inst.symbol} · ${inst.exchange}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -278,14 +262,6 @@ fun WatchlistScreen(onBack: (() -> Unit)?, onOpenStock: (Long) -> Unit = {}, vie
             },
         )
     }
-}
-
-/** A slow fade in and out, for a "this is live" dot; still while paused. */
-@Composable
-private fun rememberBlink(active: Boolean): State<Float> {
-    if (!active) return remember { mutableFloatStateOf(1f) }
-    val transition = rememberInfiniteTransition(label = "blink")
-    return transition.animateFloat(1f, 0.35f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "blink")
 }
 
 @Composable

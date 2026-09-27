@@ -6,10 +6,7 @@ import com.quietstack.voicetrade.core.common.AppError
 import com.quietstack.voicetrade.core.common.asAppError
 import com.quietstack.voicetrade.domain.model.AccountSummary
 import com.quietstack.voicetrade.domain.model.Pnl
-import com.quietstack.voicetrade.domain.model.Position
-import com.quietstack.voicetrade.domain.model.WatchRow
 import com.quietstack.voicetrade.domain.usecase.GetPortfolioUseCase
-import com.quietstack.voicetrade.domain.usecase.GetWatchlistUseCase
 import com.quietstack.voicetrade.domain.usecase.ObserveNetworkUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
@@ -28,8 +25,6 @@ import javax.inject.Inject
 data class HomeUiState(
     val account: AccountSummary? = null,
     val pnl: Pnl? = null,
-    val positions: List<Position> = emptyList(),
-    val watchlist: List<WatchRow> = emptyList(),
     val market: com.quietstack.voicetrade.domain.model.MarketOverview? = null,
     val loaded: Boolean = false,
     val name: String? = null,
@@ -52,7 +47,6 @@ sealed interface HomeEffect {
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val getPortfolio: GetPortfolioUseCase,
-    private val getWatchlist: GetWatchlistUseCase,
     private val research: com.quietstack.voicetrade.domain.repository.ResearchRepository,
     observeNetwork: ObserveNetworkUseCase,
     settings: com.quietstack.voicetrade.domain.usecase.ObserveSettingsUseCase,
@@ -88,19 +82,18 @@ class HomeViewModel @Inject constructor(
         if (_state.value.isRefreshing) return
         _state.update { it.copy(isRefreshing = true) }
         viewModelScope.launch {
+            // Each part shows the moment it arrives, so a slow one never holds the others back.
             coroutineScope {
-                val portfolio = async { getPortfolio() }
-                val watch = async { getWatchlist() }
-                val market = async { research.marketOverview() }
-                portfolio.await()
-                    .onSuccess { snap ->
-                        _state.update {
-                            it.copy(account = snap.summary, pnl = snap.pnl, positions = snap.positions.sortedByDescending { p -> p.marketValue }, error = null)
+                launch {
+                    getPortfolio()
+                        .onSuccess { snap ->
+                            _state.update {
+                                it.copy(account = snap.summary, pnl = snap.pnl, error = null)
+                            }
                         }
-                    }
-                    .onFailure { err -> _state.update { it.copy(error = err.asAppError()) } }
-                watch.await().onSuccess { rows -> _state.update { it.copy(watchlist = rows) } }
-                market.await().onSuccess { m -> _state.update { it.copy(market = m) } }
+                        .onFailure { err -> _state.update { it.copy(error = err.asAppError()) } }
+                }
+                launch { research.marketOverview().onSuccess { m -> _state.update { it.copy(market = m) } } }
             }
             _state.update { it.copy(isRefreshing = false, loaded = true) }
         }

@@ -46,7 +46,7 @@ import com.quietstack.voicetrade.core.designsystem.ChangeText
 import com.quietstack.voicetrade.core.designsystem.Hairline
 import com.quietstack.voicetrade.core.designsystem.Panel
 import com.quietstack.voicetrade.core.designsystem.SectionHeader
-import com.quietstack.voicetrade.core.designsystem.SegmentedTabs
+import com.quietstack.voicetrade.core.designsystem.TextTabs
 import com.quietstack.voicetrade.core.designsystem.StockRow
 import com.quietstack.voicetrade.core.designsystem.TabularNumbers
 import com.quietstack.voicetrade.core.designsystem.extra
@@ -135,7 +135,7 @@ fun TopMovers(market: MarketOverview?, onOpenStock: (Long) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
             SectionHeader(tr("Top movers"), Modifier.weight(1f))
-            SegmentedTabs(listOf(gainersLabel, losersLabel), if (gainersTab) gainersLabel else losersLabel, { gainersTab = it == gainersLabel })
+            TextTabs(listOf(gainersLabel, losersLabel), if (gainersTab) gainersLabel else losersLabel, { gainersTab = it == gainersLabel })
         }
         Panel {
             rows.forEachIndexed { i, m ->

@@ -111,7 +111,7 @@ class VoiceSessionRepositoryImpl @Inject constructor(
     private var voiceLoop: Job? = null
     private var pendingReply: CompletableDeferred<String>? = null
 
-    override suspend fun start(micGranted: Boolean, resumeFrom: List<ConversationMessage>): Result<Unit> = lifecycleLock.withLock {
+    override suspend fun start(micGranted: Boolean, resumeFrom: List<ConversationMessage>, skipGreeting: Boolean): Result<Unit> = lifecycleLock.withLock {
         if (_isLive.value) return Result.success(Unit)
         this.micGranted = micGranted
         _messages.value = emptyList()
@@ -138,7 +138,7 @@ class VoiceSessionRepositoryImpl @Inject constructor(
         }.takeIf { it.isNotEmpty() }
         val info = apiCall {
             gateway.api().startSession(
-                StartSessionRequest(talkLanguage(), prefs.voice.code, prefs.speechRate, resumeHistory),
+                StartSessionRequest(talkLanguage(), prefs.voice.code, prefs.speechRate, resumeHistory, skipGreeting),
             ).toDomain()
         }.getOrElse { return Result.failure(it) }
         session = info

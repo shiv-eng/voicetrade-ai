@@ -213,7 +213,7 @@ class VoiceSessionViewModel @Inject constructor(
         _state.update { it.copy(connection = Connection.Connecting, textOnly = !micGranted, micDenied = !micGranted) }
         viewModelScope.launch {
             val resumeFrom = resumeSessionId?.let { observeHistory.messages(it).first() }.orEmpty()
-            startSession(micGranted, resumeFrom)
+            startSession(micGranted, resumeFrom, skipGreeting = !prompt.isNullOrBlank())
                 .onSuccess {
                     // Text-only also when the server has no Agora voice configured.
                     val voice = sessionStatus.voiceConnected.value

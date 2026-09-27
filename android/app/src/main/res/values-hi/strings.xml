@@ -69,9 +69,6 @@
     <string name="today_move">आज %1$s</string>
     <string name="holdings">होल्डिंग्स</string>
     <string name="holdings_count">होल्डिंग्स (%1$d)</string>
-    <string name="see_all">सब देखें</string>
-    <string name="holdings_empty">अभी आपके पास कोई शेयर नहीं है। बोलकर देखें \"10 इंफोसिस खरीदो\"।</string>
-    <string name="watchlist_empty_home">आपकी वॉचलिस्ट खाली है। बोलकर देखें \"टाटा मोटर्स को मेरी वॉचलिस्ट में जोड़ो\"।</string>
     <string name="market_open">बाज़ार खुला है</string>
     <string name="market_closed">बाज़ार बंद है</string>
     <string name="today">आज</string>
@@ -131,7 +128,7 @@
     <string name="quote_speech">%1$s, %2$s, आज %3$s</string>
 
     <!-- Order cards -->
-    <string name="confirm_order">ऑर्डर की पुष्टि करें</string>
+    <string name="confirm_order">पुष्टि करें</string>
     <string name="cancel_order">ऑर्डर रद्द करें</string>
     <string name="market_order">मार्केट ऑर्डर</string>
     <string name="limit_at">%1$s पर लिमिट</string>

@@ -47,6 +47,8 @@ interface PortfolioRepository {
 interface OrderRepository {
     suspend fun orders(filter: OrderFilter): Result<List<Order>>
     suspend fun previewCancel(orderId: String): Result<OrderPreview>
+    /** A buy or sell entered by hand on the stock page; [type] is "MKT" or "LMT". */
+    suspend fun previewOrder(conid: Long, side: com.quietstack.voicetrade.domain.model.Side, quantity: Int, limitPrice: String?): Result<OrderPreview>
     suspend fun confirm(previewId: String): Result<ConfirmResult>
     suspend fun reject(previewId: String): Result<Unit>
 }
@@ -93,7 +95,7 @@ interface VoiceSessionRepository {
     val startedAtMillis: Long?
 
     /** [resumeFrom] seeds Mira with a past conversation (user/agent turns only) so the user can pick up where they left off. */
-    suspend fun start(micGranted: Boolean, resumeFrom: List<ConversationMessage> = emptyList()): Result<Unit>
+    suspend fun start(micGranted: Boolean, resumeFrom: List<ConversationMessage> = emptyList(), skipGreeting: Boolean = false): Result<Unit>
     suspend fun end(): Result<Unit>
     /** Stops Mira mid-sentence (barge-in). Returns true if something was actually interrupted. */
     fun interrupt(): Boolean

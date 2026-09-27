@@ -73,7 +73,7 @@ fun AlertsScreen(onBack: () -> Unit, viewModel: AlertsViewModel = hiltViewModel(
             alerts.isEmpty() -> EmptyState("No alerts yet. Say \"tell me when Reliance crosses 1,300\", or tap the bell on any stock page.", Modifier.padding(padding))
             else -> LazyColumn(
                 Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 28.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 28.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 val waiting = alerts.filter { it.active }

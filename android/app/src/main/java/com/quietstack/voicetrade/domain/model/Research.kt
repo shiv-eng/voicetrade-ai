@@ -38,6 +38,9 @@ data class IpoItem(
     val status: String = "",
     val lot: String? = null,
     val minInvest: String? = null,
+    val sub: Double? = null,
+    val now: String? = null,
+    val gain: Double? = null,
 )
 
 data class IpoSection(val title: String, val items: List<IpoItem>)

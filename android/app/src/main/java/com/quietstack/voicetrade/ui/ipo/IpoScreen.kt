@@ -34,7 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.quietstack.voicetrade.core.common.AppError
 import com.quietstack.voicetrade.core.common.asAppError
-import com.quietstack.voicetrade.core.designsystem.SegmentedTabs
+import com.quietstack.voicetrade.core.designsystem.TextTabs
 import com.quietstack.voicetrade.domain.model.IpoList
 import com.quietstack.voicetrade.domain.repository.ResearchRepository
 import com.quietstack.voicetrade.ui.common.EmptyState
@@ -91,18 +91,18 @@ fun IpoScreen(
 ) {
     val s by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val indiaLabel = tr("India")
+    val usLabel = tr("US")
     ScreenScaffold(
         title = tr("IPOs"), onBack = onBack,
-        actions = { IconButton(onClick = viewModel::load) { Icon(Icons.Filled.Refresh, contentDescription = tr("Refresh")) } },
-    ) { padding ->
-        val indiaLabel = tr("India")
-        val usLabel = tr("US")
-        Column(Modifier.fillMaxSize().padding(padding), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            SegmentedTabs(
+        actions = {
+            TextTabs(
                 options = listOf(indiaLabel, usLabel), selected = if (s.market == "US") usLabel else indiaLabel,
-                onSelect = { viewModel.setMarket(if (it == usLabel) "US" else "IN") },
-                modifier = Modifier.padding(horizontal = 20.dp),
+                onSelect = { viewModel.setMarket(if (it == usLabel) "US" else "IN") }, modifier = Modifier.padding(end = 16.dp),
             )
+        },
+    ) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             val list = s.ipos
             when {
                 s.loading && list == null -> LoadingBox()
