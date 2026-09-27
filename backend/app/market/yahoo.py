@@ -31,6 +31,7 @@ EXCHANGES: dict[str, tuple[str, str]] = {
     "PCX": ("NYSE Arca", "USD"),
 }
 _TRADABLE_TYPES = {"EQUITY", "ETF"}
+_QUOTE_STALE_S = 60.0  # how old a price may be and still be shown while a new one loads
 _QUOTE_TTL_S = 8.0  # a stock's price does not need sub-5s freshness in a paper-trading app; a wider window means
 # navigating between screens (home -> portfolio -> watchlist) is far more likely to hit a warm cache
 _SEARCH_TTL_S = 24 * 3600
@@ -48,6 +49,8 @@ class YahooMarketData:
             headers={"User-Agent": _UA, "Accept": "application/json"}, timeout=8.0, follow_redirects=True,
         )
         self._quotes: dict[str, tuple[float, RawQuote]] = {}
+        self._refreshing: set[str] = set()
+        self._bg: set[asyncio.Task] = set()
         self._searches: dict[str, tuple[float, list[SymbolInfo]]] = {}
 
     async def aclose(self) -> None:
@@ -102,9 +105,31 @@ class YahooMarketData:
         return results[:limit]
 
     async def quote(self, symbol: str) -> RawQuote:
+        """Fresh within a few seconds; a slightly older price is returned at once while a new one is fetched in the
+        background, so a screen never waits on Yahoo just because its cached price is a few seconds past due."""
         cached = self._quotes.get(symbol)
-        if cached and time.monotonic() - cached[0] < _QUOTE_TTL_S:
-            return cached[1]
+        if cached:
+            age = time.monotonic() - cached[0]
+            if age < _QUOTE_TTL_S:
+                return cached[1]
+            if age < _QUOTE_STALE_S:
+                if symbol not in self._refreshing:
+                    self._refreshing.add(symbol)
+                    task = asyncio.ensure_future(self._refresh(symbol))
+                    self._bg.add(task)
+                    task.add_done_callback(self._bg.discard)
+                return cached[1]
+        return await self._fetch_quote(symbol)
+
+    async def _refresh(self, symbol: str) -> None:
+        try:
+            await self._fetch_quote(symbol)
+        except Exception:  # the stale price stays; the next call tries again
+            pass
+        finally:
+            self._refreshing.discard(symbol)
+
+    async def _fetch_quote(self, symbol: str) -> RawQuote:
         data = await self._get_json(
             f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}", {"range": "1d", "interval": "1d"},
         )

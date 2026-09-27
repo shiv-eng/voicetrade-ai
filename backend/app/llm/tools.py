@@ -359,21 +359,26 @@ class ToolBox:
         if data["market"] == "IN":
             status_of = {"open_now": "Live", "coming_soon": "Upcoming", "closed_awaiting_listing": "Closed", "recently_listed": "Listed"}
             for key, title in (("open_now", "Open now"), ("coming_soon", "Coming soon"),
-                               ("closed_awaiting_listing", "Closed, awaiting listing"), ("recently_listed", "Recently listed")):
+                               ("closed_awaiting_listing", "Closed, awaiting listing"), ("recently_listed", "Just listed")):
                 items = []
                 for i in data.get(key, []):
                     low, high = i.get("price_low"), i.get("price_high")
-                    dates = f"{short(i.get('opens'))} – {short(i.get('closes'))}" if i.get("opens") else (
-                        f"Closed {short(i['closed_on'])}" if i.get("closed_on") else (f"Listed {short(i['listed_on'])}" if i.get("listed_on") else ""))
+                    when = {"open_now": f"closes {short(i.get('closes')) or ''}", "coming_soon": f"opens {short(i.get('opens')) or ''}",
+                            "closed_awaiting_listing": f"closed {short(i.get('closed_on')) or ''}",
+                            "recently_listed": f"listed {short(i.get('listed_on')) or ''}"}[key]
                     price = (f"₹{low:g} – ₹{high:g}" if low and high and low != high else f"₹{high:g}" if high else
                              (i.get("price_band") or "").replace("Rs.", "₹").replace(" to ", " – ") or None)
                     times = i.get("overall_times") if i.get("overall_times") is not None else i.get("subscribed_times")
+                    now = i.get("now")
                     items.append({
                         "name": i["name"], "symbol": i.get("symbol") or "", "series": "SME" if i["type"] == "SME" else "EQ",
-                        "tag": "SME" if i["type"] == "SME" else "Mainboard", "status": status_of[key], "detail": dates, "price": price,
+                        "tag": "SME" if i["type"] == "SME" else "Mainboard", "status": status_of[key], "detail": when, "price": price,
                         "lot": f"{i['lot_size']} shares" if i.get("lot_size") else None,
                         "minInvest": show_money(i["min_investment"], "INR", 0) if i.get("min_investment") else None,
-                        "extra": f"{times:g}x subscribed" if times is not None else None,
+                        "extra": f"{times:g} times subscribed" if times is not None else None,
+                        "sub": times,
+                        "now": f"₹{now:,.2f}" if now else None,
+                        "gain": round((now - high) / high * 100, 1) if now and high else None,
                     })
                 if items:
                     sections.append({"title": title, "items": items})
@@ -479,7 +484,7 @@ class ToolBox:
         max_lots = max(1, int(limit // one_lot))
         min_lots = 2 if sme else 1
         want = max(min_lots, int(a.get("lots") or min_lots))
-        retail = next((c["times"] for c in d["subscription"]["categories"] if c["name"] == "Retail"), None) or d["subscription"]["overall"]
+        retail = next((c["times"] for c in d["subscription"]["categories"] if c["name"] == "Retail individual investors"), None) or d["subscription"]["overall"]
         if retail is None:
             chance = "The issue has not opened, so there is no subscription figure yet."
         elif retail <= 1:

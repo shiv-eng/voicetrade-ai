@@ -90,7 +90,9 @@ def build_ipo_detail(symbol: str, series: str, raw: dict[str, Any], today: date)
             t["done"] = date.fromisoformat(t["date"]) < today
 
     rows = raw.get("bidDetails") or []
-    names = {"1": "QIB", "2": "NII", "2.1": "bNII (above ₹10 lakh)", "2.2": "sNII (₹2 to 10 lakh)", "3": "Retail", "4": "Employees"}
+    names = {"1": "Qualified institutional buyers", "2": "Non-institutional investors",
+             "2.1": "Big non-institutional investors (above ₹10 lakh)", "2.2": "Small non-institutional investors (₹2 to 10 lakh)",
+             "3": "Retail individual investors", "4": "Employees"}
     categories = []
     for r in rows:
         label = names.get(str(r.get("srNo")))
@@ -166,6 +168,7 @@ class Research:
         self._crumb: str | None = None
         self._nse_ready = 0.0
         self._bg_tasks: set[asyncio.Task] = set()  # keeps fire-and-forget warm-up tasks from being GC'd mid-flight
+        self._failed: dict[str, float] = {}  # detail keys NSE couldn't give us, and when — not retried for a few seconds
         self._warming: set[str] = set()  # detail keys being fetched right now, so a repeat request doesn't fetch them twice
 
     async def aclose(self) -> None:
@@ -187,7 +190,8 @@ class Research:
     async def history(self, symbol: str, period: str = "1m") -> dict[str, Any]:
         period = period if period in PERIODS else "1m"
         key = f"hist:{symbol}:{period}"
-        if (hit := self._cached(key, 60)) is not None:
+        # Intraday charts go stale in a minute; a month or more of daily closes barely changes within ten.
+        if (hit := self._cached(key, 60 if period in ("1d", "1w") else 600)) is not None:
             return hit
         rng, interval = PERIODS[period]
         try:
@@ -432,16 +436,28 @@ class Research:
             try:
                 return await self.ipo_detail(symbol, series)
             except Exception:
+                self._failed[f"ipod:{symbol}:{series}"] = time.monotonic()
                 return None
 
     @staticmethod
     def _detail_key(item: dict[str, Any]) -> str:
         return f"ipod:{item['symbol']}:{'SME' if item['type'] == 'SME' else 'EQ'}"
 
+    async def _listed_price(self, sem: asyncio.Semaphore, symbol: str) -> None:
+        async with sem:
+            try:
+                self._store(f"px:{symbol}", (await self.index_quote(f"{symbol}.NS", symbol))["last"])
+            except Exception:
+                pass  # no price shown for this one; the rest of its row is unaffected
+
+    def _recently_failed(self, key: str) -> bool:
+        return time.monotonic() - self._failed.get(key, -1e9) < 20
+
     def _ipo_details_ready(self, data: dict[str, Any]) -> bool:
         """True once every IPO on an India list has had its detail fetched (US lists have none to fetch)."""
         return data["market"] == "US" or all(
-            self._cached(self._detail_key(i), 300) is not None for i in data["open_now"] + data["coming_soon"])
+            self._cached(self._detail_key(i), 300) is not None or self._recently_failed(self._detail_key(i))
+            for key in ("open_now", "coming_soon", "closed_awaiting_listing", "recently_listed") for i in data[key])
 
     def _enrich_from_cache(self, items: list[dict[str, Any]]) -> None:
         """Lot size, minimum investment and overall subscription for the IPOs on the list — but only ever
@@ -453,6 +469,8 @@ class Research:
             if hit:
                 item.update(lot_size=hit["lot_size"], min_investment=hit["min_investment"], price_low=hit["price_low"],
                             price_high=hit["price_high"], overall_times=hit["subscription"]["overall"])
+            if item.get("listed_on") and (px := self._cached(f"px:{item['symbol']}", 120)) is not None:
+                item["now"] = px  # what a newly listed share trades at today, to show its gain over the issue price
 
     async def _warm_enrich(self, items: list[dict[str, Any]]) -> None:
         """Fire-and-forget, off the request path: fetches per-item detail for whichever of these aren't
@@ -460,13 +478,16 @@ class Research:
         them already warm. Never raises — a failed fetch here just means that item stays unenriched."""
         sem = asyncio.Semaphore(4)
         try:
-            await asyncio.gather(*(self._brief(sem, i["symbol"], "SME" if i["type"] == "SME" else "EQ") for i in items),
-                                 return_exceptions=True)
+            await asyncio.gather(
+                *(self._brief(sem, i["symbol"], "SME" if i["type"] == "SME" else "EQ") for i in items),
+                *(self._listed_price(sem, i["symbol"]) for i in items if i.get("listed_on")),
+                return_exceptions=True)
         finally:
             self._warming.difference_update(self._detail_key(i) for i in items)
 
     def _enrich_in_background(self, items: list[dict[str, Any]]) -> asyncio.Task | None:
-        missing = [i for i in items if i.get("lot_size") is None and self._detail_key(i) not in self._warming]
+        missing = [i for i in items if (i.get("lot_size") is None or (i.get("listed_on") and i.get("now") is None))
+                   and self._detail_key(i) not in self._warming and not self._recently_failed(self._detail_key(i))]
         if not missing:
             return None
         self._warming.update(self._detail_key(i) for i in missing)
@@ -507,16 +528,18 @@ class Research:
         } for p in past if (c := _day(p.get("ipoEndDate"))) and today - timedelta(days=7) <= c < today and (p.get("listingDate") or "-") == "-"]
         by_type = lambda rows: sorted(rows, key=lambda r: r["type"] != "mainboard")  # noqa: E731
         open_now, coming = by_type(open_now)[:8], by_type(coming)[:6]
-        self._enrich_from_cache(open_now + coming)
+        closed_wait, recent = by_type(closed_wait)[:6], by_type(recent)[:8]
+        everything = open_now + coming + closed_wait + recent
+        self._enrich_from_cache(everything)
         # Give enrichment a short budget so the FIRST list of the day still comes back with lot size and
         # minimum investment for most items, instead of only the list AFTER this one being complete.
         # Whatever doesn't finish in time keeps warming in the background for the next request.
-        task = self._enrich_in_background(open_now + coming)
+        task = self._enrich_in_background(everything)
         if task is not None:
-            await asyncio.wait({task}, timeout=3.0)
-            self._enrich_from_cache(open_now + coming)
+            await asyncio.wait({task}, timeout=5.0)
+            self._enrich_from_cache(everything)
         return {"market": "IN", "as_of": today.isoformat(), "open_now": open_now, "coming_soon": coming,
-                "closed_awaiting_listing": by_type(closed_wait)[:6], "recently_listed": by_type(recent)[:8]}
+                "closed_awaiting_listing": closed_wait, "recently_listed": recent}
 
     async def _ipos_us(self) -> dict[str, Any]:
         today = date.today()

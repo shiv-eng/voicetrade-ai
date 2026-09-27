@@ -286,6 +286,21 @@ def create_app(
                 out.append(order_dto(o, inst))
         return out
 
+    @app.post("/orders/preview")
+    async def order_preview(body: dict, user: str = Depends(current_user)):
+        """A buy or sell typed in on the stock page: the same preview-then-confirm flow Mira uses, without Mira."""
+        try:
+            conid, quantity = int(body["conid"]), int(body["quantity"])
+            limit = Decimal(str(body["limitPrice"])) if body.get("limitPrice") else None
+        except (KeyError, TypeError, ValueError, InvalidOperation) as e:
+            raise ApiError(400, "BAD_ORDER", "Enter a whole number of shares.") from e
+        result = await svc.trading.preview_order(
+            user, None, conid, str(body.get("side", "")), quantity=quantity,
+            order_type=str(body.get("type", "MKT")), limit_price=limit)
+        if result.get("blocked"):
+            raise ApiError(409, result["code"], result["reason"])
+        return result["_dto"]
+
     @app.post("/orders/{order_id}/cancel-preview")
     async def cancel_preview(order_id: str, user: str = Depends(current_user)):
         result = await svc.trading.preview_cancel(user, None, order_id)
@@ -375,6 +390,8 @@ def create_app(
                 greeting = f"Namaste{' ' + first if first else ''}! Main Mira hoon. Aaj market ya aapke portfolio ke baare mein kya jaanna hai?"
             else:
                 greeting = f"Hi{' ' + first if first else ''}! I'm Mira. What would you like to look at today?"
+            if body.get("skipGreeting"):
+                greeting = ""  # the user already asked something; Mira answers it instead of greeting first
             t_agent = time.monotonic()
             try:
                 agent_token = build_rtc_token(settings.agora_app_id, settings.agora_app_certificate, session.channel, settings.agora_agent_uid)
@@ -714,7 +731,7 @@ async def _keep_warm(svc: Services) -> None:
         try:
             if svc.insights:
                 await svc.insights.overview()
-            if svc.research and tick % 6 == 0:
+            if svc.research and tick % 3 == 0:
                 await svc.research.ipos("IN")
         except Exception:
             log.warning("cache warm-up failed", exc_info=True)

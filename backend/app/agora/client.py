@@ -72,7 +72,7 @@ class AgoraClient:
                     "api_key": llm_secret,
                     "style": "openai",
                     "system_messages": [],  # the real prompt lives on our server, with live account context
-                    "greeting_message": greeting,
+                    **({"greeting_message": greeting} if greeting else {}),
                     "failure_message": "Sorry, I couldn't get that. Please try again.",
                     "max_history": 20,
                     "params": {"model": "voicetrade-orchestrator"},
