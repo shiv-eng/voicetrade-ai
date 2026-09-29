@@ -189,10 +189,3 @@ class Database:
                 self._conn.execute("COMMIT")
             finally:
                 self._in_tx = False
-
-
-_UNSAFE = re.compile(r"[^a-zA-Z0-9_]")
-
-
-def safe_ident(name: str) -> str:
-    return _UNSAFE.sub("", name)

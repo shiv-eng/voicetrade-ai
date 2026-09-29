@@ -9,7 +9,7 @@ import json
 import secrets
 from datetime import datetime, timedelta
 from decimal import ROUND_DOWN, Decimal
-from typing import Awaitable, Callable
+from typing import Callable
 
 from .config import Settings
 from .db import Database
@@ -20,9 +20,6 @@ from .ledger import Ledger, LedgerError, OrderRow, utcnow
 from .market.base import MarketData, MarketDataError, RawQuote
 from .risk import RiskBlock, RiskEngine
 from .speech import speak_money
-
-Notifier = Callable[[str, str], Awaitable[None]]
-
 
 class TradeError(Exception):
     def __init__(self, code: str, message: str) -> None:
@@ -38,7 +35,6 @@ class TradingService:
     ) -> None:
         self.db, self.ledger, self.instruments, self.market = db, ledger, instruments, market
         self.risk, self.settings, self.hub, self.clock = risk, settings, hub, clock
-        self.notify: Notifier | None = None  # makes the voice agent speak a result (set by the app wiring)
 
     # ---- preview ---------------------------------------------------------------------------------
 

@@ -57,9 +57,27 @@ class Instruments:
                 pass
         if not found:
             found = await self._market.search(query, limit)
+        # Almost every large Indian company is listed on both NSE and BSE, so a name search routinely returns
+        # the SAME company twice — that used to look like two different companies to disambiguate between.
+        # Keep just the best-ranked exchange for each company name, in the order it was first seen.
+        order = {"NSE": 0, "BSE": 1, "NASDAQ": 2, "NYSE": 3}
+        best_by_name: dict[str, SymbolInfo] = {}
+        for info in found:
+            key = info.name.strip().lower()
+            current = best_by_name.get(key)
+            if current is None or order.get(info.exchange, 9) < order.get(current.exchange, 9):
+                best_by_name[key] = info
+        deduped: list[SymbolInfo] = []
+        seen_names: set[str] = set()
+        for info in found:
+            key = info.name.strip().lower()
+            if key in seen_names:
+                continue
+            seen_names.add(key)
+            deduped.append(best_by_name[key])
         seen: set[str] = set()
         out: list[Instrument] = []
-        for info in found:
+        for info in deduped:
             if info.symbol in seen:
                 continue
             seen.add(info.symbol)

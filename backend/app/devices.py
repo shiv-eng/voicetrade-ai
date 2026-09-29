@@ -19,7 +19,3 @@ class Devices:
 
     def tokens_for(self, user_id: str) -> list[str]:
         return [r["token"] for r in self.db.query("SELECT token FROM device_tokens WHERE user_id = ?", (user_id,))]
-
-    def forget(self, token: str) -> None:
-        """A token FCM reports as no longer valid (app uninstalled, etc.)."""
-        self.db.execute("DELETE FROM device_tokens WHERE token = ?", (token,))

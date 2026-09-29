@@ -21,13 +21,21 @@ _THANKS = re.compile(r"\b(thanks?|thank you|shukriya|dhanyavaad|ok thanks)\b", r
 _WHO = re.compile(r"\b(who are you|what can you do|help|kya kar sakti|what do you do)\b", re.I)
 _STOCK_INTENT = re.compile(
     r"\b(price|quote|rate|bhav|how is|how\'?s|doing|trading|stock|share|shares|kaisa|kya haal|watchlist|worth|"
-    r"value|chart|range|high|low|52|buy|sell|add|remove)\b", re.I)
+    r"value|chart|range|high|low|52|buy|sell|add|remove|sector)\b", re.I)
 _NUM = re.compile(r"(\d[\d,]*(?:\.\d+)?)")
 _STOPWORDS = re.compile(
     r"\b(buy|sell|kharid\w*|bech\w*|purchase|shares?|stocks?|of|the|my|to|from|for|at|worth|rupees?|rs|dollars?|"
     r"add|remove|delete|watchlist|watch|list|price|quote|how|is|doing|what|whats|about|me|tell|show|please|a|an|in|"
     r"ka|ki|ke|kya|hai|haal|aaj|today|market|limit|all|half|my|and|on|nse|bse|"
-    r"confirm\w*|yes|yeah|haan|ok|okay|now|it|place|go|ahead|do|kar|karo|sab|saare)\b",
+    r"confirm\w*|yes|yeah|haan|ok|okay|now|it|place|go|ahead|do|kar|karo|sab|saare|"
+    # Common ways a request is phrased ("I want to look at...", "can you check...") that carry no company
+    # meaning themselves; left in, these words got swept up into the extracted "company" and broke the search.
+    r"i|we|you|your|want\w*|would|like|can|could|get|check|checking|know|need|see|looking|look|up|"
+    r"are|does|did|will|which|good|bad|give|any|some|these|those|there|"
+    # Interjections/barge-in words: said on their own or ahead of a correction ("hey Figma", "no no no stop
+    # Figma"), these carry no company meaning and previously got swept into the extracted "company" text,
+    # making a perfectly fine correction fail to resolve.
+    r"hey|hi|hello|oh|arey|stop|wait|listen|no)\b",
     re.I,
 )
 

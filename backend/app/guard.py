@@ -9,9 +9,10 @@ import re
 
 _CONFIRM = re.compile(
     r"\b(confirm(ed)?|yes|yeah|yep|yup|sure|go ahead|place it|place the order|do it|proceed|"
-    r"haan|han|ha|kar do|kardo|karo|theek hai|thik hai|ok(ay)?)\b",
+    r"haan|han|kar do|kardo|karo|theek hai|thik hai|ok(ay)?)\b",
     re.I,
-)
+)  # deliberately no bare "ha": indistinguishable from a transcribed laugh ("ha ha"), and would confirm a real
+   # pending order on nothing more than a chuckle. "haan"/"han" (the actual Hindi word for "yes") stay.
 _NEGATE = re.compile(
     r"\b(no|not|don'?t|do not|nahi|nahin|na|cancel|stop|wait|hold|ruk|ruko|mat|reject|abort|never ?mind|instead|actually|change)\b",
     re.I,

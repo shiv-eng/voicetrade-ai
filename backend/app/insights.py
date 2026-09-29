@@ -20,10 +20,6 @@ _IST = timezone(timedelta(hours=5, minutes=30))
 INDICES = (("Nifty 50", "^NSEI"), ("Sensex", "^BSESN"), ("Nasdaq", "^IXIC"), ("S&P 500", "^GSPC"))
 
 
-def _pct(value: float) -> str:
-    return f"{'up' if value >= 0 else 'down'} {abs(value):.1f}%"
-
-
 class Insights:
     def __init__(self, settings: Settings, db: Database, research: Research, market: MarketData, instruments: Instruments,
                  portfolio: Portfolio, ledger: Ledger) -> None:

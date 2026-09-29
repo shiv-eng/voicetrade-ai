@@ -12,10 +12,11 @@ from .ledger import Ledger
 import logging
 
 from .llm.basic import BasicChat
-from .llm.orchestrator import ChatClient, OpenAIChat, Orchestrator, RoutedChat
+from .llm.orchestrator import ChatClient, OpenAIChat, Orchestrator
 from .llm.tools import ToolBox
 from .market.base import MarketData
 from .market.research import Research
+from .market.websearch import WebSearch
 from .alerts import Alerts
 from .devices import Devices
 from .insights import Insights
@@ -24,8 +25,6 @@ from .push import PushClient
 from .risk import RiskEngine
 from .sessions import SessionRegistry
 from .trading import TradingService
-
-_SARVAM_LLM_BASE_URL = "https://api.sarvam.ai/v1"
 
 
 @dataclass
@@ -61,19 +60,18 @@ def build_services(settings: Settings, market: MarketData, chat: ChatClient | No
     research = Research()
     alerts = Alerts(db, instruments, market)
     insights = Insights(settings, db, research, market, instruments, portfolio, ledger)
-    tools = ToolBox(db, instruments, market, ledger, trading, portfolio, hub, research, alerts, insights)
+    websearch = WebSearch()
+    tools = ToolBox(db, instruments, market, ledger, trading, portfolio, hub, research, alerts, insights, websearch)
     if chat is None:
         if settings.llm_api_key:
-            english: ChatClient = OpenAIChat(settings.llm_base_url, settings.llm_api_key, settings.llm_model,
-                                              settings.llm_timeout_s, settings.llm_patience)
-            # Sarvam's own model for Hindi/Hinglish turns (tuned for Indian languages); English keeps using
-            # whichever model LLM_* points at. Reuses SARVAM_API_KEY — no separate credential to configure.
-            if settings.sarvam_api_key:
-                hindi: ChatClient = OpenAIChat(_SARVAM_LLM_BASE_URL, settings.sarvam_api_key, settings.sarvam_llm_model,
-                                                settings.llm_timeout_s, 1.0)
-                chat = RoutedChat(english, hindi)
-            else:
-                chat = english
+            # Every turn's reasoning and tool-calling goes through this one model regardless of language.
+            # Sarvam's own LLM was tried for Hindi/Hinglish turns (routed via RoutedChat) but proved unreliable
+            # for tool-calling — live testing got a correct answer, a wrong price, and an empty reply from three
+            # identical requests. This model already follows the prompt's Hindi output rules directly, and
+            # Sarvam's TTS speaks whatever text it's given regardless of which model wrote it, so nothing about
+            # Sarvam's actual job (speech in/out) needs its LLM in the loop at all.
+            chat = OpenAIChat(settings.llm_base_url, settings.llm_api_key, settings.llm_model,
+                              settings.llm_timeout_s, settings.llm_patience)
         else:
             logging.getLogger("voicetrade").warning("LLM_API_KEY not set: using the basic keyless command parser.")
             chat = BasicChat()

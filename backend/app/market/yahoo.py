@@ -98,10 +98,24 @@ class YahooMarketData:
                 exchange=exch[0],
                 currency=exch[1],
             ))
-        # Prefer NSE, then other Indian, then US, so "Infosys" lands on the NSE line first.
+        # How well the name matches comes first — "Figma" must outrank "Figure Technology Solutions" — and
+        # exchange preference (NSE, then other Indian, then US) only breaks ties among equally good matches.
         order = {"NSE": 0, "BSE": 1, "NASDAQ": 2, "NYSE": 3}
-        results.sort(key=lambda s: order.get(s.exchange, 9))
-        self._searches[q.lower()] = (time.monotonic(), results)
+        ql = q.lower()
+
+        def match_rank(s: SymbolInfo) -> int:
+            name = s.name.lower()
+            if ql == s.symbol.lower() or ql == name:
+                return 0
+            if name.startswith(ql):
+                return 1
+            if ql in name:
+                return 2
+            return 3
+
+        results.sort(key=lambda s: (match_rank(s), order.get(s.exchange, 9)))
+        if results:  # a transient miss (Yahoo hiccup, rate limit) must not stick as "not found" for a full day
+            self._searches[q.lower()] = (time.monotonic(), results)
         return results[:limit]
 
     async def quote(self, symbol: str) -> RawQuote:

@@ -55,6 +55,8 @@ The JSON the app expects is in [`../android/docs/BACKEND_CONTRACT.md`](../androi
 - `POST .../agents/{id}/speak` and `.../interrupt` are used (best effort) to voice typed messages,
   tap-confirmed order results, and to pause/replay an answer.
 - Speech-to-text and text-to-speech go through Sarvam (`SARVAM_API_KEY`); the voice is fixed to one
-  female speaker so replies always sound the same.
-- The reply language (Hindi or English) is decided per session from what the user picked at onboarding,
-  not auto-detected turn by turn.
+  female speaker so replies always sound the same. Sarvam handles voice only: reasoning and tool-calling
+  always go through the LLM configured by `LLM_*`, regardless of language.
+- The reply language (Hindi or English) is decided fresh each turn from what the user actually said, with
+  the language chosen at onboarding used only as a fallback when a message carries no language signal at
+  all (a bare number, a company name on its own).

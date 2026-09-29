@@ -24,9 +24,11 @@ from .tools import ToolBox, ToolContext
 log = logging.getLogger(__name__)
 
 MAX_ROUNDS = 5
-ACK_AFTER_S = 0.6           # nothing said yet after this long: say a quick filler (voice always lags text, so start early)
-REPEAT_ACK_AFTER_S = 2.2    # a slow multi-step lookup: keep filling the silence, spaced further apart
-MAX_ACKS = 3                # never turn into a wall of "hmm"s if something is genuinely stuck
+ACK_AFTER_S = 1.6           # nothing said yet after this long: say a quick filler. Long enough that a normal, fast
+                            # lookup (most of them) finishes and starts speaking before this ever fires.
+REPEAT_ACK_AFTER_S = 5.0    # unused while MAX_ACKS = 1, kept only as the spacing if that's ever raised again
+MAX_ACKS = 1                # explicitly asked to be limited: never more than a single filler per turn, full stop —
+                            # a genuinely slow answer waits in silence rather than getting a second "umm"
 FIRST_EVENT_TIMEOUT_S = 7.0
 NEXT_EVENT_TIMEOUT_S = 4.0
 _SENTENCE_END = re.compile(r"[.!?।]\s*$|[.!?।]\s")
@@ -34,7 +36,8 @@ _DONE = object()
 # Signs that the model is talking about the instructions instead of to the user.
 _LEAK = re.compile(
     r"the user'?s? (latest|last|message|question|spoke|is speaking)|latest message|\bI must (answer|respond|translate|speak)\b|"
-    r"\bas per the (language )?instruction|\bLet'?s see\b|the tool (returned|result)|internal localization",
+    r"\bas per the (language )?instruction|\bLet'?s see\b|the tool (returned|result)|internal localization|"
+    r"</?invoke|</?arpt|</?antml|function_calls>|parameter name=",
     re.I,
 )
 
@@ -44,6 +47,17 @@ class _Leaked(Exception):
 _ACKS_EN = ["Hmm, ", "Umm, let's see... ", "Okay, ", "Alright, one sec... ", "Let me check... "]
 _ACKS_HI = ["हम्म, ", "उम्म, एक सेकंड... ", "ठीक है... ", "अच्छा, देखती हूँ... ", "जी, एक सेकंड... "]
 FAILURE_TEXT = "Sorry, I had trouble with that. Please try again."
+FAILURE_TEXT_HI = "माफ़ कीजिए, कुछ दिक्कत हुई। फिर से कोशिश करें।"
+TOO_MANY_STEPS = " Sorry, that took too many steps. Could you say it again?"
+TOO_MANY_STEPS_HI = " माफ़ कीजिए, इसमें बहुत ज़्यादा कदम लग गए। फिर से बोलिए।"
+
+
+def _failure_text() -> str:
+    return FAILURE_TEXT_HI if speech_language.get() == "hi" else FAILURE_TEXT
+
+
+def _too_many_steps() -> str:
+    return TOO_MANY_STEPS_HI if speech_language.get() == "hi" else TOO_MANY_STEPS
 
 
 @dataclass
@@ -157,7 +171,9 @@ class OpenAIChat:
 
     async def _stream_once(self, messages: list[dict], tools: list[dict], n: int = 0) -> AsyncIterator[ChatEvent]:
         client, model, extra = self._backends[n % len(self._backends)]
-        limits: dict = {"max_completion_tokens": 400} if model.startswith(("gpt-5", "o1", "o3", "o4")) else {"temperature": 0.3, "max_tokens": 400}
+        # Low, not zero: this is a tool-grounded assistant reading real numbers back, not writing prose, so it
+        # should stick close to the tool result every time rather than vary company or figures between runs.
+        limits: dict = {"max_completion_tokens": 400} if model.startswith(("gpt-5", "o1", "o3", "o4")) else {"temperature": 0.1, "max_tokens": 400}
         resp = await client.chat.completions.create(
             model=model, messages=messages, tools=tools or None, stream=True, **limits, **extra,
         )
@@ -192,22 +208,6 @@ class OpenAIChat:
             yield ChatEvent(tool_calls=[ToolCall(calls[k]["id"] or f"call_{i}", calls[k]["name"], calls[k]["args"], calls[k]["extra"]) for i, k in enumerate(order)])
 
 
-class RoutedChat:
-    """Two models, picked per turn by which language was just spoken (see [speech_language] in speech.py,
-    set once per turn by `reply()` before this ever runs): Sarvam's own model for Hindi/Hinglish, since it's
-    tuned for Indian languages, and a separate fast model for English. Both need real tool-calling — this is
-    an agent either way, not a chat toy — so the choice is purely about which one writes the better turn."""
-
-    def __init__(self, english: ChatClient, hindi: ChatClient | None) -> None:
-        self._english = english
-        self._hindi = hindi
-
-    def stream(self, messages: list[dict], tools: list[dict]) -> AsyncIterator[ChatEvent]:
-        from ..speech import speech_language
-        chat = self._hindi if (self._hindi is not None and speech_language.get() == "hi") else self._english
-        return chat.stream(messages, tools)
-
-
 class Orchestrator:
     def __init__(self, chat: ChatClient, tools: ToolBox, trading: TradingService,
                  ledger: Ledger, portfolio: Portfolio, settings: Settings) -> None:
@@ -230,7 +230,19 @@ class Orchestrator:
         except Exception as e:  # never block the answer on a prefetch
             log.warning("prefetch skipped: %s", e)
             return ""
-        return "\n".join(f"{name}({json.dumps(args)}) -> {res}" for (name, args), res in zip(calls, results))
+        # A failed or ambiguous guess must never be handed to the model as settled fact — the system prompt
+        # tells it not to call these tools again, so a bad guess left in here would force it to either answer
+        # from the wrong company or from nothing, instead of resolving it properly like any other turn.
+        usable = []
+        for (name, args), res in zip(calls, results):
+            try:
+                parsed = json.loads(res)
+            except json.JSONDecodeError:
+                parsed = None
+            if isinstance(parsed, dict) and ("error" in parsed or parsed.get("ambiguous")):
+                continue
+            usable.append(f"{name}({json.dumps(args)}) -> {res}")
+        return "\n".join(usable)
 
     async def reply(self, session: Session, convo: list[dict], last_user_text: str) -> AsyncIterator[str]:
         """Yield the text to speak, in order. Never raises: failures become a spoken apology.
@@ -308,14 +320,19 @@ class Orchestrator:
                 for attempt in range(2):
                     # Hold the first words until a sentence is complete: if the model stalls before that, nothing
                     # half-spoken has gone out and the round can simply be tried again.
-                    held, released = "", False
+                    held, released, tail = "", False, ""
                     try:
                         async for ev in self._with_timeout(self.chat.stream(msgs, tool_schemas)):
                             if ev.text:
                                 round_text.append(ev.text)
                                 if released:
+                                    # A closing tag can arrive split across chunks, so check against the tail
+                                    # of what was already spoken too, not just this chunk on its own.
+                                    if _LEAK.search(tail + ev.text):
+                                        raise _Leaked()
                                     spoke = True
                                     yield ev.text
+                                    tail = (tail + ev.text)[-24:]
                                 else:
                                     held += ev.text
                                     if _SENTENCE_END.search(held) or len(held) > 90:
@@ -323,7 +340,7 @@ class Orchestrator:
                                             raise _Leaked()
                                         released, spoke = True, True
                                         yield held
-                                        held = ""
+                                        tail, held = held[-24:], ""
                             if ev.tool_calls:
                                 calls = ev.tool_calls
                         if held:
@@ -333,9 +350,9 @@ class Orchestrator:
                     except (asyncio.TimeoutError, _Leaked, APIStatusError, APIConnectionError) as problem:
                         if released or attempt == 1:
                             if isinstance(problem, _Leaked):
-                                log.warning("model leaked its reasoning twice; apologising instead")
+                                log.warning("model leaked its reasoning or tool-call syntax; ending the turn instead of repeating it")
                                 if not spoke:
-                                    yield FAILURE_TEXT
+                                    yield _failure_text()
                                 return
                             raise
                         reason = (
@@ -359,13 +376,13 @@ class Orchestrator:
                 results = await asyncio.gather(*(self.tools.call(c.name, c.arguments, ctx) for c in calls))
                 for c, r in zip(calls, results):
                     msgs.append({"role": "tool", "tool_call_id": c.id, "content": r})
-            yield " Sorry, that took too many steps. Could you say it again?"
+            yield _too_many_steps()
         except asyncio.CancelledError:
             raise  # the user interrupted (barge-in): stop quietly
         except Exception as e:
             log.exception("orchestrator failed: %s", e)
             if not spoke:
-                yield FAILURE_TEXT
+                yield _failure_text()
 
     async def _with_timeout(self, stream: AsyncIterator[ChatEvent]) -> AsyncIterator[ChatEvent]:
         """Bound the wait for each event: a stalled free-tier model must not hold the line for 20 s."""

@@ -17,9 +17,10 @@ from ..events import Hub
 from ..guard import is_confirmation
 from ..instruments import Instruments
 from ..ledger import Ledger
-from ..market.aliases import resolve_alias
+from ..market.aliases import resolve_alias, resolve_sector
 from ..market.base import MarketData, MarketDataError
 from ..market.research import _day
+from ..market.websearch import WebSearchError
 from ..portfolio import Portfolio
 from ..speech import show_big_money, show_money, speak_big_money, speak_money, speak_percent
 from ..trading import TradeError, TradingService
@@ -80,6 +81,22 @@ SCHEMAS: list[dict[str, Any]] = [
         ["company"]),
     _fn("get_market_status", "Whether an exchange is open right now.",
         {"exchange": {"type": "string", "enum": ["NSE", "BSE", "NASDAQ", "NYSE"]}}, ["exchange"]),
+    _fn("get_sector_overview", "How an Indian market sector is doing today: the sector's own Nifty index move, plus "
+        "the day's move for a few of its biggest, best-known stocks. Use for 'how are IT stocks doing', 'banking "
+        "sector today', 'auto stocks', 'PSU banks', 'solar/renewable/green energy stocks' and similar. Covers IT, "
+        "banking, PSU banks, auto, pharma, FMCG, metals, energy (including renewables), real estate and financial "
+        "services/NBFCs only — for anything else, say plainly that you can't screen by sector and offer to look up "
+        "a specific company by name instead.",
+        {"sector": {"type": "string", "description": "The sector as the user said it, e.g. 'IT', 'banking', 'solar'."}}, ["sector"]),
+    _fn("get_top_movers", "Today's biggest Nifty 50 gainers and losers, with each one's price move. Use for 'biggest "
+        "gainers', 'top losers', 'which stocks are up/down the most today', 'top gainers and losers'.", {}),
+    _fn("search_web", "Search the live internet. Use for anything the other tools don't cover by name: which real "
+        "companies belong to a theme or trend (EV stocks, semiconductor stocks, defence stocks, AI stocks), recent "
+        "market news or events, or any other stock-market question you are not otherwise sure of. Returns a few "
+        "titles and snippets — read them, then call get_quote or get_company_overview on the specific real companies "
+        "you find to give the user live numbers, don't just repeat the snippets.",
+        {"query": {"type": "string", "description": "A focused web search query, e.g. 'top EV stocks in India 2026'."}},
+        ["query"]),
     _fn("get_account_summary", "The user's rupee and dollar paper wallets: cash, buying power and total value.", {}),
     _fn("get_positions", "The user's holdings with quantity, average cost, live price and profit or loss.", {}),
     _fn("get_pnl", "Today's move, unrealised and realised profit or loss, per currency.", {}),
@@ -110,11 +127,34 @@ def _short_day(text: str | None) -> str:
     return f"{d.day} {d:%b}" if d else (text or "")
 
 
+_DERIVATIVE = re.compile(r"\b(etf|adr\w*|leverage\w*|leveraged|\d+x|bull|bear|inverse|daily|trust|fund)\b", re.I)
+
+
 def _clear_winner(query: str, found: list) -> bool:
-    """The top hit is obviously the one meant: every word the user said appears in its name."""
+    """The top hit is obviously the one meant: every word the user said appears in its name, and no other
+    result is an equally plain match for the same words. A second result that only matches because it's an
+    ETF/ADR/leveraged wrapper around the same underlying company doesn't count as real competition — nobody
+    casually saying "ASML" means a 2x leveraged ETF on it, even though its name also contains "ASML".
+
+    An exact ticker match always wins outright, full stop, even over other companies whose NAME happens to
+    contain the same letters — e.g. "FIG" is the exact symbol for Figma, and also a name-substring of "Figure
+    Technology Solutions" and "FIGS, Inc.", three unrelated real companies. The model is meant to reuse a
+    conid once it has one rather than retype a short symbol, but it doesn't always reliably do that, so this
+    has to be decisive here rather than rely on the prompt alone."""
+    if query.strip().lower() == found[0].symbol.lower():
+        return True
     words = [w for w in re.findall(r"[a-z0-9]+", query.lower()) if w not in {"ltd", "limited", "inc", "corp", "the"}]
-    top = found[0].name.lower()
-    return bool(words) and all(w in top for w in words) and not all(w in found[1].name.lower() for w in words)
+    if not words or not all(w in found[0].name.lower() for w in words):
+        return False
+    query_wants_derivative = bool(_DERIVATIVE.search(query))
+    top_is_derivative = bool(_DERIVATIVE.search(found[0].name))
+    for other in found[1:]:
+        if not all(w in other.name.lower() for w in words):
+            continue  # not actually a competing match for these words
+        if not query_wants_derivative and not top_is_derivative and _DERIVATIVE.search(other.name):
+            continue  # only a derivative product matches too; the plain company is still the obvious answer
+        return False
+    return True
 
 
 _REMEMBER = {"get_ipo_details", "ipo_application", "get_company_overview", "get_quote", "get_ipos", "get_positions", "get_account_summary"}
@@ -124,21 +164,23 @@ _REMEMBER = {"get_ipo_details", "ipo_application", "get_company_overview", "get_
 # or fast/lower-effort model re-verifying data it already has is common too. Saves a real network/DB round
 # trip each time, not just a duplicate card (see ToolBox._card for that half of the same problem).
 _CACHEABLE = {"get_quote", "get_positions", "get_account_summary", "get_pnl", "get_watchlist", "get_orders",
-              "get_company_overview", "get_ipos", "get_ipo_details"}
+              "get_company_overview", "get_ipos", "get_ipo_details", "get_top_movers"}
 
 _REPRESENTATIVE = {"NSE": "RELIANCE.NS", "BSE": "RELIANCE.BO", "NASDAQ": "AAPL", "NYSE": "KO"}
 
 
 class ToolBox:
     def __init__(self, db: Database, instruments: Instruments, market: MarketData, ledger: Ledger, trading: TradingService,
-                 portfolio: Portfolio, hub: Hub, research: Any = None, alerts: Any = None, insights: Any = None) -> None:
-        self.research, self.alerts, self.insights = research, alerts, insights
+                 portfolio: Portfolio, hub: Hub, research: Any = None, alerts: Any = None, insights: Any = None,
+                 websearch: Any = None) -> None:
+        self.research, self.alerts, self.insights, self.websearch = research, alerts, insights, websearch
         self._recent_cards: dict[tuple, float] = {}
         self._recent: dict[str, list[dict]] = {}
         self.db, self.instruments, self.market, self.ledger = db, instruments, market, ledger
         self.trading, self.portfolio, self.hub = trading, portfolio, hub
         self._handlers: dict[str, Callable[[ToolContext, dict], Awaitable[dict]]] = {
             "search_instrument": self._search, "get_quote": self._quote, "get_market_status": self._market_status,
+            "get_sector_overview": self._sector_overview, "get_top_movers": self._top_movers, "search_web": self._search_web,
             "get_account_summary": self._account, "get_positions": self._positions, "get_pnl": self._pnl,
             "get_orders": self._orders, "get_watchlist": self._watchlist, "update_watchlist": self._update_watchlist,
             "preview_order": self._preview, "confirm_order": self._confirm, "discard_preview": self._discard,
@@ -214,7 +256,7 @@ class ToolBox:
         found = await self.instruments.search(query, 5)
         if not found:
             return {"results": [], "note": "No matching stock. Ask the user to repeat or spell the name."}
-        ambiguous = len(found) > 1 and resolve_alias(query) is None
+        ambiguous = len(found) > 1 and resolve_alias(query) is None and not _clear_winner(query, found)
         if ambiguous:
             self._card(ctx, {"kind": "disambiguation", "candidates": [i.to_dto() for i in found]})
         return {"results": [i.to_dto() for i in found], "ambiguous": ambiguous,
@@ -552,6 +594,59 @@ class ToolBox:
         exchange = str(a.get("exchange", "NSE")).upper()
         q = await self.market.quote(_REPRESENTATIVE.get(exchange, "RELIANCE.NS"))
         return {"exchange": exchange, "open": q.market_open, "last_trade_time": q.as_of.isoformat()}
+
+    async def _sector_overview(self, ctx: ToolContext, a: dict) -> dict:
+        found = resolve_sector(str(a.get("sector") or ""))
+        if not found:
+            return {"error": "SECTOR_NOT_FOUND",
+                     "message": "Only IT, banking, PSU banks, auto, pharma, FMCG, metals, energy (including "
+                                "renewables), real estate and financial services are covered. Say this plainly "
+                                "and offer to look up a specific company by name instead."}
+        index_symbol, display, stock_symbols = found
+        r = self._need_research()
+        index_result, *stock_results = await asyncio.gather(
+            r.index_quote(index_symbol, display), *(self.market.quote(s) for s in stock_symbols),
+            return_exceptions=True,
+        )
+        if isinstance(index_result, Exception):
+            raise index_result if isinstance(index_result, MarketDataError) else MarketDataError(str(index_result))
+        movers = []
+        for sym, res in zip(stock_symbols, stock_results):
+            if isinstance(res, Exception):
+                continue
+            movers.append({"symbol": sym.removesuffix(".NS"), "spoken_move": speak_percent(res.change_pct),
+                           "change_pct": str(res.change_pct)})
+        movers.sort(key=lambda m: abs(float(m["change_pct"])), reverse=True)
+        return {
+            "sector": display, "index_level": index_result["last"], "index_spoken_move": speak_percent(Decimal(str(index_result["changePct"]))),
+            "top_movers": movers[:3],
+            "note": "Mention the sector index move first, then name one or two of the biggest individual movers. "
+                    "This is information, not a recommendation.",
+        }
+
+    async def _top_movers(self, ctx: ToolContext, a: dict) -> dict:
+        data = await self.insights.movers()
+
+        def top(rows: list[dict]) -> list[dict]:
+            return [{"name": r["name"], "spoken_move": speak_percent(Decimal(str(r["changePct"])))} for r in rows[:3]]
+
+        return {
+            "gainers": top(data["gainers"]), "losers": top(data["losers"]),
+            "note": "Nifty 50 stocks only. Name two or three gainers and losers with their move — don't read out "
+                    "every one unless the user asks for more.",
+        }
+
+    async def _search_web(self, ctx: ToolContext, a: dict) -> dict:
+        query = str(a.get("query") or "").strip()
+        if not query:
+            return {"error": "SEARCH_FAILED", "message": "No search query given."}
+        try:
+            results = await self.websearch.search(query)
+        except WebSearchError as e:
+            return {"error": "SEARCH_FAILED", "message": f"Web search isn't available right now ({e})."}
+        return {"results": results,
+                "note": "These are search snippets, not verified facts — for any specific company you find here, "
+                        "call get_quote or get_company_overview before telling the user numbers about it."}
 
     # ---- account ---------------------------------------------------------------------------------
 

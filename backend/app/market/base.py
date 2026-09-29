@@ -31,7 +31,6 @@ class RawQuote:
     volume: int | None
     market_open: bool
     as_of: datetime
-    is_delayed: bool = False
 
     @property
     def change(self) -> Decimal:
