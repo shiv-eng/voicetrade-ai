@@ -6,6 +6,8 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.messaging.FirebaseMessaging
 import com.quietstack.voicetrade.core.common.ApplicationScope
+import com.quietstack.voicetrade.data.local.prefs.SettingsDataStore
+import com.quietstack.voicetrade.data.repository.BackendGateway
 import com.quietstack.voicetrade.domain.repository.VoiceSessionRepository
 import com.quietstack.voicetrade.domain.usecase.RegisterPushTokenUseCase
 import dagger.hilt.android.HiltAndroidApp
@@ -32,11 +34,15 @@ class VoiceTradeApp : Application() {
     @Inject lateinit var voiceSession: VoiceSessionRepository
     @Inject lateinit var registerPushToken: RegisterPushTokenUseCase
     @Inject @ApplicationScope lateinit var appScope: CoroutineScope
+    @Inject lateinit var gateway: BackendGateway
+    @Inject lateinit var settingsStore: SettingsDataStore
 
     override fun onCreate() {
         super.onCreate()
         if (BuildConfig.DEBUG) Timber.plant(Timber.DebugTree())
         com.quietstack.voicetrade.notifications.Scheduler.start(this)
+        // Build the voice engine in the background now so the first tap on "Talk to Mira" doesn't wait for it.
+        appScope.launch { settingsStore.lastAgoraAppId()?.let { gateway.rtc().warmUp(it) } }
         // If the process was killed mid-session, stop the orphaned agent so it does not burn minutes.
         appScope.launch { voiceSession.cleanupOrphan() }
         if (FirebaseApp.getApps(this).isNotEmpty()) {

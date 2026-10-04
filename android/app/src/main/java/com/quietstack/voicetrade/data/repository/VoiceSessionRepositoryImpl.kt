@@ -136,11 +136,14 @@ class VoiceSessionRepositoryImpl @Inject constructor(
             val text = m.text?.trim()
             if (role != null && !text.isNullOrBlank()) com.quietstack.voicetrade.data.remote.dto.ResumeTurnDto(role, text) else null
         }.takeIf { it.isNotEmpty() }
+        // The server spends 1-2 s starting the agent; build the Agora engine meanwhile instead of after it.
+        scope.launch { settingsStore.lastAgoraAppId()?.let { gateway.rtc().warmUp(it) } }
         val info = apiCall {
             gateway.api().startSession(
                 StartSessionRequest(talkLanguage(), prefs.voice.code, prefs.speechRate, resumeHistory, skipGreeting),
             ).toDomain()
         }.getOrElse { return Result.failure(it) }
+        if (info.appId.isNotBlank()) scope.launch { settingsStore.rememberAgoraAppId(info.appId) }
         session = info
         store.activeSessionId = info.sessionId
         if (resumeHistory != null) _messages.value = resumeFrom // show the earlier turns right away, not just new ones

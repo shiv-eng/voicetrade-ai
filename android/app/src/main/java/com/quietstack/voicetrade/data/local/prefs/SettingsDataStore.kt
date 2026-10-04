@@ -13,6 +13,7 @@ import com.quietstack.voicetrade.domain.model.ThemeMode
 import com.quietstack.voicetrade.domain.model.VoiceGender
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -35,6 +36,13 @@ class SettingsDataStore @Inject constructor(@ApplicationContext private val cont
         }
     }
 
+    /** The Agora app id from the last session: lets the voice engine be created before the server answers. */
+    suspend fun lastAgoraAppId(): String? = context.dataStore.data.first()[AGORA_APP_ID]
+
+    suspend fun rememberAgoraAppId(appId: String) {
+        context.dataStore.edit { it[AGORA_APP_ID] = appId }
+    }
+
     private fun Preferences.toSettings() = AppSettings(
         language = enumOr(this[LANGUAGE], Language.HINGLISH),
         voice = enumOr(this[VOICE], VoiceGender.FEMALE),
@@ -52,5 +60,6 @@ class SettingsDataStore @Inject constructor(@ApplicationContext private val cont
         val RATE = floatPreferencesKey("speech_rate")
         val THEME = stringPreferencesKey("theme_v2")
         val ONBOARDED = booleanPreferencesKey("onboarded")
+        val AGORA_APP_ID = stringPreferencesKey("agora_app_id")
     }
 }

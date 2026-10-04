@@ -20,6 +20,9 @@ sealed interface RtcEvent {
 interface RtcDataSource {
     val events: Flow<RtcEvent>
 
+    /** Creates the engine ahead of time so [join] doesn't pay for it; safe to call repeatedly or not at all. */
+    fun warmUp(appId: String) {}
+
     /** Suspends until the channel is joined; fails after 10 s (PRD 14.3). */
     suspend fun join(appId: String, channel: String, token: String, uid: Int, publishMic: Boolean): Result<Unit>
     fun setMicMuted(muted: Boolean)

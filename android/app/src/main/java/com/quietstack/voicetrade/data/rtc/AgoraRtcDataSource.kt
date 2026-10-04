@@ -113,6 +113,7 @@ class AgoraRtcDataSource @Inject constructor(
         joinResult = pending
 
         rtc.enableAudio()
+        rtc.muteLocalAudioStream(false) // a kept engine would otherwise carry the last session's mute state over
         rtc.enableAudioVolumeIndication(200, 3, true)
         rtc.setAINSMode(true, 0)
         rtc.setEnableSpeakerphone(true)
@@ -142,14 +143,23 @@ class AgoraRtcDataSource @Inject constructor(
         engine?.renewToken(token)
     }
 
+    // Creating the engine is the slowest local step of starting a session, so it is kept between sessions:
+    // leaving only drops the channel and switches audio off, which releases the mic and speaker.
+    @Synchronized
     override fun leave() {
-        engine?.leaveChannel()
+        engine?.let {
+            it.leaveChannel()
+            it.disableAudio()
+        }
         abandonAudioFocus()
-        RtcEngine.destroy()
-        engine = null
-        currentAppId = null
     }
 
+    override fun warmUp(appId: String) {
+        if (appId.isBlank()) return
+        runCatching { ensureEngine(appId) }.onFailure { Timber.w(it, "Agora engine warm-up failed") }
+    }
+
+    @Synchronized
     private fun ensureEngine(appId: String): RtcEngine {
         engine?.let { existing -> if (currentAppId == appId) return existing }
         if (engine != null) RtcEngine.destroy()

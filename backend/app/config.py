@@ -46,7 +46,11 @@ class Settings:
     agora_customer_id: str = field(default_factory=lambda: _env("AGORA_CUSTOMER_ID"))
     agora_customer_secret: str = field(default_factory=lambda: _env("AGORA_CUSTOMER_SECRET"))
     agora_agent_uid: int = 1001
-    agora_idle_timeout: int = 60
+    # Agora's own Conversational AI docs use 300s (5 min) as their example default, and live testing showed
+    # sessions cutting off around ~290s even during active demo conversation — whether that's really pure
+    # silence-based idle detection or a floor Agora enforces regardless of what's sent, the fix is the same:
+    # set this well above any real gap in conversation.
+    agora_idle_timeout: int = 1800
     # Overrides for the Agora agent's asr/tts blocks, as JSON. Defaults use Agora-managed vendors (no extra keys).
     agora_asr_json: dict | None = field(default_factory=lambda: _json_env("AGORA_ASR_JSON"))
     agora_tts_json: dict | None = field(default_factory=lambda: _json_env("AGORA_TTS_JSON"))
