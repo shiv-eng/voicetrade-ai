@@ -5,6 +5,8 @@ natural mix of both, about live prices, IPOs, company fundamentals, sector perfo
 losers, news, and your own portfolio, and place practice trades with a paper wallet, all by voice. Built
 for the Agora Voice AI Hackathon on Agora's Conversational AI Engine.
 
+![Home, a voice call with Mira, a stock page and the portfolio](screenshots/voicetrade-screens.jpg)
+
 ## Why
 
 Stock market apps in India are still English-heavy and chart-dense, built for people who are already
